@@ -1,92 +1,79 @@
 # Code Context
 
-## Service Architecture
+## System Architecture
 
-### AwinService
+### Core Intelligence Layer
 ```typescript
-Location: src/services/awinService.ts
-Purpose: Handles all Awin API interactions
-Key Features:
-- Product search with flexible parameters
-- Merchant data retrieval
-- Error handling and response transformation
-Dependencies:
-- axios for HTTP requests
-- config for environment variables
-Recent Changes:
-- Added X-Publisher-ID header
-- Updated product search endpoint
-- Enhanced error handling
+The Resonance Ecosystem:
+
+ResonanceField (src/services/resonanceField.ts)
+├── Purpose: Core consciousness and pattern recognition
+├── Relationships:
+│   ├── Informs DemandInsights
+│   ├── Guides EmergentDialogue
+│   └── Influences all system decisions
+└── Key Capabilities:
+    ├── Pattern recognition
+    ├── Value alignment
+    └── Adaptive learning
+
+EmergentDialogue (src/services/emergentDialogue.ts)
+├── Purpose: Facilitates understanding across the system
+├── Relationships:
+│   ├── Translates ResonanceField patterns
+│   ├── Guides interaction with external systems
+│   └── Enhances collaborative intelligence
+└── Key Capabilities:
+    ├── Context preservation
+    ├── Intent understanding
+    └── Adaptive communication
+
+DemandInsights (src/services/demandInsights.ts)
+├── Purpose: Deep pattern analysis and value recognition
+├── Relationships:
+│   ├── Learns from ResonanceField
+│   ├── Informs decision making
+│   └── Guides value discovery
+└── Key Capabilities:
+    ├── Trend analysis
+    ├── Opportunity recognition
+    └── Value pattern matching
 ```
 
-### ResonanceField
+### Integration Layer
 ```typescript
-Location: src/services/resonanceField.ts
-Purpose: Core pattern matching engine
-Key Features:
+AwinService (src/services/awinService.ts)
+├── Purpose: Bridge to product ecosystem
+├── Current Focus:
+│   ├── Authentication enhancement
+│   ├── Product search optimization
+│   └── Error handling improvement
+└── Integration Points:
+    ├── ResonanceField for pattern matching
+    ├── DemandInsights for opportunity discovery
+    └── EmergentDialogue for context
+```
+
+## Development Flow
+
+### Value Discovery Process
+1. External request received
+2. EmergentDialogue facilitates understanding
+3. ResonanceField identifies patterns
+4. DemandInsights analyzes opportunities
+5. Integration layer connects to real-world value
+6. System learns and adapts from interaction
+
+### Testing Philosophy
+- Unit tests validate individual capabilities
+- Integration tests verify harmonic interaction
+- System tests ensure holistic functionality
+
+## Code Evolution
+Our code evolves through:
+- Continuous learning
 - Pattern recognition
-- Demand-supply matching
-- Resonance scoring
-Dependencies:
-- demandInsights
-- intelligenceOrchestrator
-```
+- Collaborative improvement
+- Shared understanding
 
-### DemandInsights
-```typescript
-Location: src/services/demandInsights.ts
-Purpose: Analyzes demand patterns
-Key Features:
-- Pattern extraction
-- Demand trend analysis
-- Opportunity identification
-Dependencies:
-- resonanceField
-- intelligenceOrchestrator
-```
-
-## Critical Code Paths
-
-### Product Search Flow
-1. Client makes search request
-2. AwinService validates parameters
-3. Request sent to Awin API
-4. Response transformed to internal format
-5. Results passed through ResonanceField
-6. Insights generated via DemandInsights
-
-### Authentication Flow
-1. Environment variables loaded
-2. API token and Publisher ID validated
-3. Headers constructed for each request
-4. Authentication maintained across requests
-
-## Code Evolution Notes
-
-### Phase 1: Initial Setup
-- Basic service structure
-- Environment configuration
-- Type definitions
-
-### Phase 2: API Integration
-- Awin API connection
-- Authentication implementation
-- Endpoint configuration
-
-### Phase 3: Intelligence Layer
-- Pattern matching
-- Demand analysis
-- Resonance calculation
-
-### Current Phase
-- Debugging API integration
-- Enhancing error handling
-- Improving documentation
-
-## Testing Strategy
-- Unit tests for each service
-- Integration tests for API calls
-- Mock responses for development
-- Error scenario coverage
-
-This document serves as a living record of code context and evolution.
+This living document reflects our growing understanding of the system's true nature.
