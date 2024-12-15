@@ -43,6 +43,32 @@ ValueEx is currently focused on building effective connections between supply an
 - Pattern matching accuracy
 - Performance metrics
 
+## Known Integration Issues
+
+### Awin API Product Search (As of 2024-12-15)
+
+**Status**: Blocked
+**Component**: `src/services/awinService.ts`
+
+The product search functionality is currently not working due to API access issues. While we can successfully access merchant data, attempts to fetch product data result in 404 errors.
+
+#### Attempted Solutions:
+1. Verified API credentials (token and publisher ID)
+2. Tested different endpoint variations:
+   - `/publishers/{publisherId}/product-search`
+   - `/products/search`
+   - `/product-search`
+3. Confirmed authorization headers are being sent correctly
+
+#### Next Steps:
+1. Review latest Awin API documentation for correct product search endpoints
+2. Investigate if additional API permissions are needed
+3. Consider contacting Awin support for guidance
+
+#### Impact:
+- Product search and recommendation features are temporarily disabled
+- Merchant integration remains functional
+
 ## Next Steps
 1. Complete Awin API integration
 2. Implement product search
