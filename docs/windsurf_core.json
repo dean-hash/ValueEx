@@ -1,0 +1,62 @@
+{
+  "product_info": {
+    "name": "Windsurf",
+    "description": "Codeium's next-generation AI IDE built to keep you in the flow",
+    "key_features": [
+      "AI Flows paradigm",
+      "Context-aware coding assistance",
+      "Real-time collaboration",
+      "Integrated development environment"
+    ]
+  },
+  "setup": {
+    "requirements": {
+      "os_support": ["Mac", "Windows", "Ubuntu", "Other Linux distributions"],
+      "minimum_os": {
+        "mac": "OS X Yosemite",
+        "windows": "Windows 10"
+      }
+    },
+    "onboarding_steps": [
+      {
+        "step": 1,
+        "name": "Select setup flow",
+        "options": ["Start fresh", "Import from VS Code", "Import from Cursor"],
+        "features": ["Keybindings selection", "PATH installation option"]
+      },
+      {
+        "step": 2,
+        "name": "Choose editor theme",
+        "description": "Select from default themes, can be changed later"
+      },
+      {
+        "step": 3,
+        "name": "Sign up / Log in",
+        "description": "Authentication required through Codeium account"
+      },
+      {
+        "step": 4,
+        "name": "Start using Windsurf",
+        "initial_features": [
+          "Write with Cascade",
+          "Generate project with Cascade",
+          "Open Folder / Connect to Remote Server",
+          "Configure Windsurf Settings",
+          "Open Command Palette"
+        ]
+      }
+    ],
+    "post_setup": {
+      "updates": {
+        "methods": [
+          "Click 'Restart to Update' button",
+          "Profile icon dropdown > Check for Updates",
+          "Command Palette > Check for Updates"
+        ]
+      },
+      "vs_code_import": {
+        "command": "Open command palette (Mac: ⌘+⇧+P, Windows/Linux: Ctrl+Shift+P)"
+      }
+    }
+  }
+}

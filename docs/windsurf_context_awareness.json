@@ -1,0 +1,75 @@
+{
+  "context_engine": {
+    "description": "Proprietary system for deep codebase understanding",
+    "approach": "Optimized retrieval-augmented generation (RAG)",
+    "benefits": [
+      "High-quality suggestions",
+      "Minimal hallucinations",
+      "Works across Autocomplete, Chat, and Command"
+    ]
+  },
+  "default_context": {
+    "sources": [
+      "Current file",
+      "Open files in IDE",
+      "Indexed local codebase"
+    ],
+    "pro_features": [
+      "Expanded context lengths",
+      "Increased indexing limits",
+      "Higher limits on custom and pinned context"
+    ]
+  },
+  "indexing": {
+    "features": {
+      "local": {
+        "status": "Always on for Windsurf",
+        "storage": "Local device only",
+        "capabilities": [
+          "Generate codebase embeddings",
+          "Natural language queries",
+          "Code snippet queries"
+        ]
+      }
+    },
+    "ignored_by_default": [
+      "Paths in gitignore",
+      "node_modules",
+      "Hidden pathnames (starting with '.')"
+    ],
+    "custom_ignore": {
+      "file": ".codeiumignore",
+      "location": "repo root",
+      "syntax": "Similar to .gitignore"
+    },
+    "system_requirements": {
+      "initial_indexing": {
+        "time": "5-10 minutes per workspace",
+        "cpu_usage": "Temporary increase during indexing"
+      },
+      "ram": {
+        "usage": "~300MB for 5000-file workspace",
+        "recommended_limit": "10,000 files for 10GB RAM"
+      }
+    }
+  },
+  "best_practices": {
+    "pinning": [
+      "Module Definitions",
+      "Internal Frameworks/Libraries",
+      "Specific Task Files",
+      "Current Focus Area",
+      "Testing Files"
+    ],
+    "prompt_components": {
+      "objective": "Clear statement of desired outcome",
+      "context": "All relevant information using @-Mentions",
+      "constraints": [
+        "Framework requirements",
+        "Language specifications",
+        "Performance constraints",
+        "Security considerations"
+      ]
+    }
+  }
+}
