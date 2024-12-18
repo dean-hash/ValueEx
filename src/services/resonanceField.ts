@@ -27,12 +27,40 @@ export class ResonanceField {
     );
 
     private calculateResonance(supply: ResonanceState, demand: ResonanceState): ResonanceState {
-        // Placeholder for resonance calculation
+        // Calculate coherence based on vector alignment
+        const coherence = this.calculateCoherence(supply.vectors, demand.vectors);
+
+        // Calculate intensity based on overall field strength
+        const intensity = this.calculateIntensity(supply.vectors, demand.vectors);
+
         return {
-            vectors: [],
-            coherence: 0,
-            intensity: 0
+            vectors: [...supply.vectors, ...demand.vectors],
+            coherence,
+            intensity
         };
+    }
+
+    private calculateCoherence(supplyVectors: ResonanceVector[], demandVectors: ResonanceVector[]): number {
+        // Example logic: calculate average alignment
+        let totalAlignment = 0;
+        let count = 0;
+
+        supplyVectors.forEach(supplyVector => {
+            demandVectors.forEach(demandVector => {
+                if (supplyVector.dimension === demandVector.dimension) {
+                    totalAlignment += 1 - Math.abs(supplyVector.direction - demandVector.direction);
+                    count++;
+                }
+            });
+        });
+
+        return count > 0 ? totalAlignment / count : 0;
+    }
+
+    private calculateIntensity(supplyVectors: ResonanceVector[], demandVectors: ResonanceVector[]): number {
+        // Example logic: calculate combined magnitude
+        const totalMagnitude = [...supplyVectors, ...demandVectors].reduce((sum, vector) => sum + vector.magnitude, 0);
+        return totalMagnitude / (supplyVectors.length + demandVectors.length);
     }
 
     async enhanceSearchParams(input: {
