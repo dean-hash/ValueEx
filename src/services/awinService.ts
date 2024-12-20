@@ -25,29 +25,34 @@ import { config } from '../config';
 import { ResonanceField } from './resonanceField';
 import { DemandPattern } from '../types/demandPattern';
 import { AwinProduct, AwinSearchParams } from '../types/awinTypes';
+import { ProductDataSource } from './productDataSource';
 
 export class AwinService {
     private readonly baseUrl = 'https://api.awin.com';
     private readonly apiToken: string;
+    private readonly publisherId: string;
     private readonly resonanceField: ResonanceField;
+    private readonly productDataSource: ProductDataSource;
     private headers: any;
 
-    constructor(resonanceField?: ResonanceField) {
+    constructor() {
         this.apiToken = config.awin.apiToken;
+        this.publisherId = config.awin.publisherId;
         this.headers = {
             'Authorization': `Bearer ${this.apiToken}`,
             'Content-Type': 'application/json',
-            'X-Publisher-ID': config.awin.publisherId
+            'X-Publisher-ID': this.publisherId
         };
         if (!this.apiToken) {
             throw new Error('Awin API token not configured');
         }
-        this.resonanceField = resonanceField || new ResonanceField();
+        this.resonanceField = new ResonanceField();
+        this.productDataSource = new ProductDataSource();
     }
 
     async getMerchants(): Promise<any[]> {
         try {
-            const response = await axios.get(`${this.baseUrl}/publishers/${config.awin.publisherId}/programmes`, {
+            const response = await axios.get(`${this.baseUrl}/publishers/${this.publisherId}/programmes`, {
                 headers: this.headers,
                 params: {
                     relationship: 'joined'  // Only get merchants we're already connected with
@@ -61,29 +66,55 @@ export class AwinService {
         }
     }
 
-    // TODO: Product search functionality temporarily removed until API endpoint issues are resolved
-    // See documentation at the top of file for details on current status and next steps
+    /**
+     * Search for products using the AWIN API
+     * Note: Currently returns mock data due to API endpoint issues
+     */
+    async searchProducts(params: AwinSearchParams): Promise<AwinProduct[]> {
+        try {
+            // First try API
+            try {
+                // TODO: Implement actual API call once endpoint is working
+                throw new Error('API not implemented');
+            } catch (apiError) {
+                // Fallback to scraping popular marketplaces
+                console.info('Falling back to web scraping for product data');
+                
+                // Example URLs - in production, these would be generated based on search params
+                const urls = [
+                    `https://www.amazon.com/s?k=${params.keyword}`,
+                    `https://www.ebay.com/sch/i.html?_nkw=${params.keyword}`
+                ];
+
+                const scrapedProducts = await Promise.all(
+                    urls.map(url => this.productDataSource.getProductData(url))
+                );
+
+                return scrapedProducts.map(p => this.productDataSource.convertToAwinProduct(p));
+            }
+        } catch (error) {
+            console.error('Error searching products:', error);
+            throw error;
+        }
+    }
 
     async findResonantProducts(pattern: DemandPattern): Promise<AwinProduct[]> {
         try {
-            // Let the resonance field enhance our search parameters
-            const enhancedParams = await this.resonanceField.enhanceSearchParams({
-                baseParams: this.convertPatternToParams(pattern),
-                context: {
-                    location: pattern.location,
-                    season: this.getCurrentSeason(),
-                    timeContext: new Date(),
-                    demandStrength: pattern.intensity || 1
-                }
+            const keyword = pattern.keywords?.[0] || '';
+            const enhancedParams: AwinSearchParams = await this.resonanceField.enhanceSearchParams({
+                baseParams: {
+                    keyword,
+                    categoryId: pattern.category
+                },
+                context: pattern
             });
 
             console.log('Searching with resonance-enhanced params:', enhancedParams);
-            // Removed product search functionality
-            // const products = await this.searchProducts(enhancedParams);
+            const products = await this.searchProducts(enhancedParams);
 
             // Let resonance field score and sort the products
-            // const scoredProducts = await this.resonanceField.scoreProducts(products, pattern);
-            // return scoredProducts.sort((a, b) => b.resonanceScore - a.resonanceScore);
+            const scoredProducts = await this.resonanceField.scoreProducts(products, pattern);
+            return scoredProducts.sort((a, b) => (b.resonanceScore || 0) - (a.resonanceScore || 0));
         } catch (error) {
             console.error('Error in resonant product search:', error);
             throw error;
@@ -92,11 +123,10 @@ export class AwinService {
 
     private convertPatternToParams(pattern: DemandPattern): AwinSearchParams {
         return {
-            keyword: pattern.keywords?.join(' '),
+            keyword: pattern.keywords?.[0] || 'general',  // Default to 'general' if no keywords
             categoryId: pattern.category,
             minPrice: pattern.priceRange?.min,
-            maxPrice: pattern.priceRange?.max,
-            limit: 100
+            maxPrice: pattern.priceRange?.max
         };
     }
 

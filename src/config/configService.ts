@@ -23,7 +23,7 @@ const configSchema = z.object({
     // Server
     server: z.object({
         port: z.number().default(3000),
-        environment: z.enum(['development', 'production']).default('development'),
+        environment: z.enum(['development', 'production', 'test']).default('development'),
     }),
 
     // Database
@@ -63,7 +63,7 @@ class ConfigService {
             },
             server: {
                 port: parseInt(process.env.PORT || '3000'),
-                environment: (process.env.NODE_ENV || 'development') as 'development' | 'production',
+                environment: (process.env.NODE_ENV || 'development') as 'development' | 'production' | 'test',
             },
             database: {
                 url: process.env.DATABASE_URL,

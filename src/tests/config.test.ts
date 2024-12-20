@@ -20,3 +20,18 @@ console.log('GoDaddy Secret exists:', !!godaddyConfig.secret);
 console.log('\nConfiguration Service Status:');
 console.log('- OpenAI Configured:', !!openaiConfig.apiKey);
 console.log('- GoDaddy Configured:', !!(godaddyConfig.apiKey && godaddyConfig.secret));
+
+describe('ConfigService', () => {
+    it('should load configuration with test environment', () => {
+        const config = configService['config'];
+        expect(config).toBeDefined();
+        expect(config.server.environment).toBe('test');
+    });
+
+    it('should have required configuration fields', () => {
+        const config = configService['config'];
+        expect(config.server).toBeDefined();
+        expect(config.server.port).toBeDefined();
+        expect(typeof config.server.port).toBe('number');
+    });
+});

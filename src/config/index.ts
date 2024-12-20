@@ -5,7 +5,7 @@ const configSchema = z.object({
         apiToken: z.string(),
         publisherId: z.string(),
     }),
-    environment: z.enum(['development', 'production']).default('development'),
+    environment: z.enum(['development', 'production', 'test']).default('development'),
 });
 
 type Config = z.infer<typeof configSchema>;

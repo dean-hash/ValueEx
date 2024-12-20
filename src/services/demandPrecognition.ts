@@ -151,6 +151,18 @@ interface SignalSource {
     };
 }
 
+interface PassiveEngagementMetrics {
+    commercialIntent: {
+        organic: boolean;
+        valueAlignment: number;
+    };
+    genuineInterestScore: number;
+    engagementPattern: {
+        consistency: number;
+    };
+    topicResonance: Map<string, number>;
+}
+
 export class DemandPrecognition {
     private signalStreams = new Map<string, BehaviorSubject<SignalDimension[]>>();
     private patterns = new BehaviorSubject<EmergingPattern[]>([]);
@@ -747,20 +759,86 @@ export class DemandPrecognition {
     }
 
     private async aggregateSignals(context: EmergentContext): Promise<SignalDimension[]> {
-        const signals: SignalDimension[] = [];
+        const scraper = new DemandSignalScraper();
+        const enhancer = new IntelligenceEnhancer();
+        const passiveAnalyzer = new PassiveEngagementAnalyzer();
         
-        for (const [name, source] of this.signalSources) {
-            try {
-                const rawSignals = await this.fetchSignals(source);
-                const processedSignals = this.processSignals(rawSignals, source.type);
-                signals.push(...processedSignals);
-            } catch (error) {
-                console.error(`Error fetching from ${name}:`, error);
-                // Continue with other sources if one fails
-            }
+        try {
+            // Gather signals from multiple sources
+            const [redditSignals, twitterSignals] = await Promise.all([
+                scraper.scrapeRedditDemand('all', context.primaryDrivers.need),
+                scraper.scrapeTwitterDemand(context.primaryDrivers.need)
+            ]);
+
+            const allSignals = [...redditSignals, ...twitterSignals];
+
+            // Convert to engagement signals
+            const engagementSignals = allSignals.map(signal => ({
+                type: this.determineEngagementType(signal),
+                source: signal.type,
+                duration: this.estimateEngagementDuration(signal),
+                context: {
+                    category: signal.context.primaryDrivers.need,
+                    topic: this.extractTopics(signal),
+                    sentiment: this.calculateSentiment(signal)
+                }
+            }));
+
+            // Analyze passive engagement
+            const engagementMetrics = await passiveAnalyzer.analyzeEngagement(engagementSignals);
+
+            // Filter and weight signals based on genuine interest
+            return allSignals
+                .filter(signal => engagementMetrics.commercialIntent.organic)
+                .map(signal => ({
+                    ...signal,
+                    strength: signal.strength * engagementMetrics.genuineInterestScore,
+                    context: {
+                        ...signal.context,
+                        environmentalFactors: {
+                            ...signal.context.environmentalFactors,
+                            market: this.getMarketInsights(engagementMetrics),
+                            temporal: this.getTemporalInsights(engagementMetrics)
+                        }
+                    }
+                }));
+        } catch (error) {
+            console.error('Error aggregating demand signals:', error);
+            return [];
         }
-        
-        return this.correlateSignals(signals, context);
+    }
+
+    private determineEngagementType(signal: SignalDimension): 'article_read' | 'content_share' | 'bookmark' | 'return_visit' | 'dwell_time' {
+        // Logic to determine engagement type based on signal characteristics
+        if (signal.context.primaryDrivers.complexity > 0.8) return 'article_read';
+        if (signal.velocity > 0.7) return 'content_share';
+        return 'dwell_time';
+    }
+
+    private estimateEngagementDuration(signal: SignalDimension): number {
+        // Estimate engagement duration based on signal properties
+        return signal.context.primaryDrivers.complexity * 600; // Up to 10 minutes
+    }
+
+    private extractTopics(signal: SignalDimension): string[] {
+        // Extract topics from signal context
+        return [signal.context.primaryDrivers.need];
+    }
+
+    private calculateSentiment(signal: SignalDimension): number {
+        // Calculate sentiment from -1 to 1
+        return signal.strength * 2 - 1;
+    }
+
+    private getMarketInsights(metrics: PassiveEngagementMetrics): string[] {
+        return Array.from(metrics.topicResonance.entries())
+            .filter(([_, score]) => score > 0.7)
+            .map(([topic]) => topic);
+    }
+
+    private getTemporalInsights(metrics: PassiveEngagementMetrics): string[] {
+        return [`Engagement Pattern: ${metrics.engagementPattern.consistency * 100}% consistent`,
+                `Value Alignment: ${metrics.commercialIntent.valueAlignment * 100}% aligned`];
     }
 
     private async fetchSignals(source: SignalSource): Promise<any[]> {
@@ -806,5 +884,311 @@ export class DemandPrecognition {
         return Array.from(correlatedSignals.values()).map(group => 
             this.mergeSignals(group)
         );
+    }
+
+    private async analyzeSignalQuality(signal: SignalDimension): Promise<number> {
+        const qualityFactors = {
+            // Source credibility based on historical accuracy
+            sourceTrust: this.historicalAccuracy.get(signal.type) || 0.5,
+            
+            // Signal strength and consistency
+            signalStrength: this.calculateSignalStrength(signal),
+            
+            // Context completeness
+            contextCompleteness: this.evaluateContext(signal.context),
+            
+            // Resonance with existing patterns
+            patternResonance: await this.calculatePatternResonance(signal)
+        };
+
+        return Object.values(qualityFactors).reduce((acc, val) => acc + val, 0) / 4;
+    }
+
+    private calculateSignalStrength(signal: SignalDimension): number {
+        const velocityFactor = Math.min(Math.abs(signal.velocity) / 10, 1);
+        const accelerationFactor = Math.min(Math.abs(signal.acceleration) / 5, 1);
+        const strengthFactor = Math.min(signal.strength, 1);
+
+        return (velocityFactor + accelerationFactor + strengthFactor) / 3;
+    }
+
+    private evaluateContext(context: EmergentContext): number {
+        const scores = {
+            drivers: this.evaluateDrivers(context.primaryDrivers),
+            factors: this.evaluateFactors(context.environmentalFactors),
+            dynamics: this.evaluateDecisionDynamics(context.decisionDynamics)
+        };
+
+        return Object.values(scores).reduce((acc, val) => acc + val, 0) / 3;
+    }
+
+    private evaluateDrivers(drivers: EmergentContext['primaryDrivers']): number {
+        if (!drivers.need || drivers.urgency < 0 || drivers.complexity < 0) {
+            return 0;
+        }
+
+        const needScore = drivers.need.length > 10 ? 1 : drivers.need.length / 10;
+        const urgencyScore = Math.min(drivers.urgency, 1);
+        const complexityScore = Math.min(drivers.complexity, 1);
+
+        return (needScore + urgencyScore + complexityScore) / 3;
+    }
+
+    private evaluateFactors(factors: EmergentContext['environmentalFactors']): number {
+        const scores = {
+            market: factors.market.length > 0 ? 1 : 0,
+            organizational: factors.organizational.length > 0 ? 1 : 0,
+            temporal: factors.temporal.length > 0 ? 1 : 0
+        };
+
+        return Object.values(scores).reduce((acc, val) => acc + val, 0) / 3;
+    }
+
+    private evaluateDecisionDynamics(dynamics: EmergentContext['decisionDynamics']): number {
+        if (dynamics.stakeholders.size === 0) {
+            return 0;
+        }
+
+        const stakeholderScores = Array.from(dynamics.stakeholders.values())
+            .map(s => (s.influence + s.readiness) / 2);
+        
+        const avgStakeholderScore = stakeholderScores.reduce((acc, val) => acc + val, 0) / 
+            stakeholderScores.length;
+
+        const catalystScore = dynamics.catalysts.length > 0 ? 1 : 0;
+        const barrierScore = dynamics.barriers.length > 0 ? 1 : 0;
+
+        return (avgStakeholderScore + catalystScore + barrierScore) / 3;
+    }
+
+    private async calculatePatternResonance(signal: SignalDimension): Promise<number> {
+        const currentPatterns = this.patterns.getValue();
+        if (currentPatterns.length === 0) {
+            return 0.5; // Neutral score for first signal
+        }
+
+        const resonanceScores = currentPatterns.map(pattern => {
+            const signalResonance = pattern.signals.map(s => 
+                this.calculateSignalCoherence(s, signal)
+            );
+            return Math.max(...signalResonance);
+        });
+
+        return Math.max(...resonanceScores);
+    }
+
+    private async enhanceSignalContext(signal: SignalDimension): Promise<SignalDimension> {
+        // Enhance resonance patterns
+        signal.resonancePatterns.withHistoricalPatterns = await this.findHistoricalResonance(signal);
+        signal.resonancePatterns.withPredictedOutcomes = await this.predictOutcomes(signal);
+
+        // Enhance context
+        signal.context = await this.enrichContext(signal.context);
+
+        return signal;
+    }
+
+    private async findHistoricalResonance(signal: SignalDimension): Promise<Map<string, number>> {
+        const resonance = new Map<string, number>();
+        const patterns = this.patterns.getValue();
+
+        patterns.forEach(pattern => {
+            const matchScore = this.calculatePatternMatch(signal, pattern);
+            if (matchScore > 0.7) { // Only consider strong matches
+                resonance.set(pattern.signals[0].type, matchScore);
+            }
+        });
+
+        return resonance;
+    }
+
+    private calculatePatternMatch(signal: SignalDimension, pattern: EmergingPattern): number {
+        const velocityMatch = 1 - Math.abs(signal.velocity - pattern.momentum) / Math.max(signal.velocity, pattern.momentum);
+        const strengthMatch = 1 - Math.abs(signal.strength - pattern.confidence) / Math.max(signal.strength, pattern.confidence);
+        const contextMatch = this.compareContexts(signal.context, pattern.signals[0].context);
+
+        return (velocityMatch + strengthMatch + contextMatch) / 3;
+    }
+
+    private compareContexts(c1: EmergentContext, c2: EmergentContext): number {
+        const driverMatch = c1.primaryDrivers.need === c2.primaryDrivers.need ? 1 : 0;
+        const factorMatch = this.compareArrays(
+            c1.environmentalFactors.market,
+            c2.environmentalFactors.market
+        );
+        const dynamicsMatch = this.compareStakeholders(
+            c1.decisionDynamics.stakeholders,
+            c2.decisionDynamics.stakeholders
+        );
+
+        return (driverMatch + factorMatch + dynamicsMatch) / 3;
+    }
+
+    private compareArrays(arr1: any[], arr2: any[]): number {
+        if (arr1.length === 0 || arr2.length === 0) return 0;
+        
+        const intersection = arr1.filter(x => arr2.includes(x));
+        return intersection.length / Math.max(arr1.length, arr2.length);
+    }
+
+    private compareStakeholders(
+        s1: Map<string, { influence: number; readiness: number }>,
+        s2: Map<string, { influence: number; readiness: number }>
+    ): number {
+        const allKeys = new Set([...s1.keys(), ...s2.keys()]);
+        if (allKeys.size === 0) return 0;
+
+        let matchScore = 0;
+        allKeys.forEach(key => {
+            const stake1 = s1.get(key);
+            const stake2 = s2.get(key);
+            if (stake1 && stake2) {
+                const influenceMatch = 1 - Math.abs(stake1.influence - stake2.influence);
+                const readinessMatch = 1 - Math.abs(stake1.readiness - stake2.readiness);
+                matchScore += (influenceMatch + readinessMatch) / 2;
+            }
+        });
+
+        return matchScore / allKeys.size;
+    }
+
+    private async predictOutcomes(signal: SignalDimension): Promise<Map<string, number>> {
+        const outcomes = new Map<string, number>();
+        const patterns = this.patterns.getValue();
+
+        // Find similar historical patterns
+        const similarPatterns = patterns.filter(p => 
+            this.calculatePatternMatch(signal, p) > 0.8
+        );
+
+        // Predict outcomes based on historical pattern success
+        similarPatterns.forEach(pattern => {
+            const predictedSuccess = this.historicalAccuracy.get(pattern.signals[0].type) || 0.5;
+            outcomes.set(pattern.signals[0].type, predictedSuccess);
+        });
+
+        return outcomes;
+    }
+
+    private async enrichContext(context: EmergentContext): Promise<EmergentContext> {
+        // Enrich primary drivers
+        context.primaryDrivers = await this.enrichDrivers(context.primaryDrivers);
+
+        // Enrich environmental factors
+        context.environmentalFactors = await this.enrichFactors(context.environmentalFactors);
+
+        // Enrich decision dynamics
+        context.decisionDynamics = await this.enrichDynamics(context.decisionDynamics);
+
+        return context;
+    }
+
+    private async enrichDrivers(drivers: EmergentContext['primaryDrivers']): Promise<EmergentContext['primaryDrivers']> {
+        return {
+            ...drivers,
+            complexity: this.calculateComplexity(drivers)
+        };
+    }
+
+    private calculateComplexity(drivers: EmergentContext['primaryDrivers']): number {
+        const needComplexity = drivers.need.split(' ').length / 10; // Complexity based on need description
+        const urgencyFactor = drivers.urgency > 0.8 ? 1.2 : 1; // Higher urgency often means more complexity
+
+        return Math.min(needComplexity * urgencyFactor, 1);
+    }
+
+    private async enrichFactors(factors: EmergentContext['environmentalFactors']): Promise<EmergentContext['environmentalFactors']> {
+        return {
+            market: await this.enrichMarketFactors(factors.market),
+            organizational: factors.organizational,
+            temporal: this.updateTemporalFactors(factors.temporal)
+        };
+    }
+
+    private async enrichMarketFactors(factors: any[]): Promise<any[]> {
+        return factors.map(factor => ({
+            ...factor,
+            relevance: this.calculateMarketRelevance(factor),
+            impact: this.estimateMarketImpact(factor)
+        }));
+    }
+
+    private calculateMarketRelevance(factor: any): number {
+        // Implementation depends on factor structure
+        return 0.8; // Placeholder
+    }
+
+    private estimateMarketImpact(factor: any): number {
+        // Implementation depends on factor structure
+        return 0.7; // Placeholder
+    }
+
+    private updateTemporalFactors(factors: any[]): any[] {
+        const now = new Date('2024-12-20T11:45:27-05:00').getTime();
+        
+        return factors.map(factor => ({
+            ...factor,
+            timeToImpact: factor.expectedTime ? factor.expectedTime - now : 0,
+            relevance: this.calculateTemporalRelevance(factor, now)
+        }));
+    }
+
+    private calculateTemporalRelevance(factor: any, now: number): number {
+        if (!factor.expectedTime) return 0.5;
+        
+        const timeDiff = Math.abs(factor.expectedTime - now);
+        const daysDiff = timeDiff / (1000 * 60 * 60 * 24);
+        
+        // Higher relevance for factors within next 30 days
+        return Math.max(0, 1 - (daysDiff / 30));
+    }
+
+    private async enrichDynamics(dynamics: EmergentContext['decisionDynamics']): Promise<EmergentContext['decisionDynamics']> {
+        return {
+            stakeholders: await this.enrichStakeholders(dynamics.stakeholders),
+            catalysts: dynamics.catalysts,
+            barriers: this.prioritizeBarriers(dynamics.barriers)
+        };
+    }
+
+    private async enrichStakeholders(
+        stakeholders: Map<string, { influence: number; readiness: number; constraints: any[] }>
+    ): Promise<Map<string, { influence: number; readiness: number; constraints: any[] }>> {
+        const enriched = new Map();
+        
+        for (const [key, value] of stakeholders) {
+            enriched.set(key, {
+                ...value,
+                influence: this.recalculateInfluence(value),
+                readiness: await this.assessReadiness(value)
+            });
+        }
+        
+        return enriched;
+    }
+
+    private recalculateInfluence(stakeholder: { influence: number; readiness: number; constraints: any[] }): number {
+        const constraintImpact = stakeholder.constraints.length * 0.1;
+        return Math.max(0, Math.min(1, stakeholder.influence - constraintImpact));
+    }
+
+    private async assessReadiness(stakeholder: { influence: number; readiness: number; constraints: any[] }): Promise<number> {
+        const constraintSeverity = stakeholder.constraints.reduce((acc, c) => acc + (c.severity || 0.5), 0);
+        return Math.max(0, Math.min(1, stakeholder.readiness - (constraintSeverity / stakeholder.constraints.length)));
+    }
+
+    private prioritizeBarriers(barriers: any[]): any[] {
+        return barriers.sort((a, b) => {
+            const aImpact = a.impact || 0;
+            const bImpact = b.impact || 0;
+            const aDifficulty = a.difficulty || 0;
+            const bDifficulty = b.difficulty || 0;
+            
+            // Higher impact and lower difficulty gets higher priority
+            const aScore = aImpact / (aDifficulty + 0.1);
+            const bScore = bImpact / (bDifficulty + 0.1);
+            
+            return bScore - aScore;
+        });
     }
 }
