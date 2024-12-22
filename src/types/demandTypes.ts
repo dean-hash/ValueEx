@@ -12,6 +12,28 @@ export interface Feature {
     context: string[];
 }
 
+export interface ProductInsights {
+    category: string;
+    features: string[];
+    targetAudience: string[];
+    pricePoint: string;
+}
+
+export interface DemandContext {
+    marketTrends: string[];
+    competitiveLandscape: string[];
+    consumerBehavior: string[];
+}
+
+export interface GPTResponse {
+    resonanceFactors?: {
+        temporal: number;
+        content: number;
+        interaction: number;
+    };
+    keywords?: string[];
+}
+
 export interface RedditPost {
     id: string;
     title: string;
@@ -127,5 +149,102 @@ export interface DemandSignal extends ScrapedDemandSignal {
     metadata: {
         processedAt: string;
         version: string;
+    };
+}
+
+export interface PrimaryDrivers {
+    need: string;
+    urgency: number;
+    resources: number;
+    timing?: number;
+}
+
+export interface EnvironmentalFactors {
+    competition: number;
+    marketConditions: number;
+    regulations: number;
+}
+
+export interface DecisionDynamics {
+    stakeholders: number;
+    complexity: number;
+    urgency: number;
+}
+
+export interface SignalContext {
+    primaryDrivers: PrimaryDrivers;
+    environmentalFactors: EnvironmentalFactors;
+    decisionDynamics: DecisionDynamics;
+}
+
+export type SignalType = 'behavior' | 'conversation' | 'search' | 'event' | 'social' | 'economic' | 'temporal' | 'content' | 'interaction';
+
+export interface SignalDimension {
+    type: SignalType;
+    strength: number;
+    velocity?: number;
+    acceleration?: number;
+    content?: string;
+    context: SignalContext;
+}
+
+export interface ResonanceVector {
+    dimension: string;
+    magnitude: number;
+    direction: number;
+    type: SignalType;
+    strength: number;
+    context: SignalContext;
+}
+
+export interface TemporalFactors {
+    seasonality: number;
+    trendStrength: number;
+    cyclicality: number;
+}
+
+export interface SpatialFactors {
+    geographicSpread: number;
+    marketPenetration: number;
+    demographicReach: number;
+}
+
+export interface CompetitiveAnalysis {
+    marketShare: number;
+    competitorStrength: number;
+    uniqueSellingPoints: string[];
+}
+
+export interface DemandSignal {
+    source: string;
+    type: string;
+    timestamp: string;
+    confidence: number;
+    analysis: {
+        topics: string[];
+        sentiment: number;
+        urgency: number;
+        intent: string;
+    };
+}
+
+export interface DemandPattern {
+    id: string;
+    timeframe: string;
+    intensity: number;
+    confidence: number;
+    coherence: number;
+    signals: DemandSignal[];
+    temporalFactors: TemporalFactors;
+    spatialFactors: SpatialFactors;
+    context: {
+        marketTrends: string[];
+        userPreferences: string[];
+        competitiveAnalysis: CompetitiveAnalysis;
+    };
+    category?: string;
+    priceRange?: {
+        min: number;
+        max: number;
     };
 }
