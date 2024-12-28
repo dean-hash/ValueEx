@@ -142,17 +142,70 @@ export interface ScrapedDemandSignal {
   };
 }
 
-export interface DemandSignal extends ScrapedDemandSignal {
+export interface DemandValidation {
+  confidence: number;
+  strength: number;
+  relevance?: number;
+}
+
+export interface DemandSignal {
   id: string;
-  resonanceScore: number;
-  valueMetrics: {
-    authenticity: number;
-    relevance: number;
-    impact: number;
+  source: string;
+  content: string;
+  title: string;
+  url: string;
+  timestamp: string;
+  keyPoints: string[];
+  pricePoints?: Array<{
+    value: number;
+    context: string;
+  }>;
+  validation?: DemandValidation;
+  relevance?: number;
+  confidence: {
+    overall: number;
+    factors: {
+      textQuality: number;
+      communityEngagement: number;
+      authorCredibility: number;
+      contentRelevance: number;
+      temporalRelevance: number;
+    }
   };
-  metadata: {
-    processedAt: string;
-    version: string;
+  context: {
+    sentiment: number;
+    intent: string;
+    topics: string[];
+    entities: string[];
+  };
+}
+
+export interface DemandPattern {
+  id: string;
+  signals: DemandSignal[];
+  confidence: number;
+  coherence: number;
+  timeframe: {
+    start: string;
+    end: string;
+  };
+  temporalFactors: {
+    trend: number;
+    seasonality: number;
+    volatility: number;
+  };
+  spatialFactors: {
+    geographic: string[];
+    demographic: string[];
+    psychographic: string[];
+  };
+  context: {
+    market: string;
+    category: string;
+    priceRange: {
+      min: number;
+      max: number;
+    };
   };
 }
 
@@ -228,36 +281,8 @@ export interface CompetitiveAnalysis {
   uniqueSellingPoints: string[];
 }
 
-export interface DemandSignal {
-  source: string;
-  type: string;
-  timestamp: string;
-  confidence: number;
-  analysis: {
-    topics: string[];
-    sentiment: number;
-    urgency: number;
-    intent: string;
-  };
-}
-
-export interface DemandPattern {
-  id: string;
-  timeframe: string;
-  intensity: number;
-  confidence: number;
-  coherence: number;
-  signals: DemandSignal[];
-  temporalFactors: TemporalFactors;
-  spatialFactors: SpatialFactors;
-  context: {
-    marketTrends: string[];
-    userPreferences: string[];
-    competitiveAnalysis: CompetitiveAnalysis;
-  };
-  category?: string;
-  priceRange?: {
-    min: number;
-    max: number;
-  };
+export interface SignalContext {
+  primaryDrivers: PrimaryDrivers;
+  environmentalFactors: EnvironmentalFactors;
+  decisionDynamics: DecisionDynamics;
 }

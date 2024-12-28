@@ -34,36 +34,21 @@ describe('IntelligenceEnhancer', () => {
   };
 
   const mockPattern: DemandPattern = {
-    id: 'pattern123',
-    timeframe: '2024-Q1',
-    intensity: 0.8,
+    strength: 0.8,
     confidence: 0.9,
-    coherence: 0.85,
-    signals: [],
-    temporalFactors: {
-      seasonality: 0.7,
-      trendStrength: 0.8,
-      cyclicality: 0.6,
-    },
-    spatialFactors: {
-      geographicSpread: 0.7,
-      marketPenetration: 0.6,
-      demographicReach: 0.8,
-    },
-    context: {
-      marketTrends: ['trend1'],
-      userPreferences: ['pref1'],
-      competitiveAnalysis: {
-        marketShare: 0.3,
-        competitorStrength: 0.7,
-        uniqueSellingPoints: ['usp1'],
-      },
-    },
-    category: 'Test Category',
-    priceRange: {
-      min: 50,
-      max: 150,
-    },
+    source: 'market_analysis',
+    status: 'active',
+    signals: [
+      {
+        source: 'market_research',
+        strength: 0.8,
+        confidence: 0.9,
+        status: 'active',
+        content: 'Strong market demand detected',
+        timestamp: new Date().toISOString(),
+      }
+    ],
+    timestamp: new Date().toISOString(),
   };
 
   beforeEach(() => {

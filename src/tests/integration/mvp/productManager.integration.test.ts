@@ -16,6 +16,8 @@ describe('MVP Product Manager Integration Tests', () => {
       category: 'Gaming Accessories',
       vertical: MARKET_VERTICALS.electronics,
       tags: ['gaming', 'wireless', 'audio'],
+      source: 'manual',
+      status: 'active'
     });
 
     expect(product).toHaveProperty('id');
@@ -32,6 +34,8 @@ describe('MVP Product Manager Integration Tests', () => {
       category: 'Gaming Accessories',
       vertical: MARKET_VERTICALS.electronics,
       tags: ['gaming', 'budget', 'audio'],
+      source: 'manual',
+      status: 'active'
     });
 
     await productManager.addProduct({
@@ -41,6 +45,8 @@ describe('MVP Product Manager Integration Tests', () => {
       category: 'Gaming Accessories',
       vertical: MARKET_VERTICALS.electronics,
       tags: ['gaming', 'premium', 'audio'],
+      source: 'manual',
+      status: 'active'
     });
 
     // Test price range filtering
@@ -66,6 +72,8 @@ describe('MVP Product Manager Integration Tests', () => {
       category: 'Test Category',
       vertical: MARKET_VERTICALS.electronics,
       tags: ['test'],
+      source: 'manual',
+      status: 'active'
     });
 
     const updated = productManager.updateProductStatus(product.id, 'inactive');

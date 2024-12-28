@@ -2,12 +2,14 @@ import { RedditScraper } from '../../services/demandSources/redditScraper';
 import { DigitalIntelligence } from '../../services/digitalIntelligence';
 import { DemandSourceManager } from '../../services/demandSources/demandSourceManager';
 import { logger } from '../../utils/logger';
+import { DemandSignal, DemandValidation } from '../../types/demandTypes';
+import { DemandScraper } from '../../services/demandScraper';
+import { DemandValidator } from '../../services/mvp/demandValidator';
 import { ScrapedDemandSignal } from '../../types/demandTypes';
-import { DemandAnalysis } from '../../types/demand';
 
 interface AnalysisResult {
-  signal: ScrapedDemandSignal;
-  analysis: DemandAnalysis;
+  signal: DemandSignal;
+  analysis: any;
   isGenuine: boolean;
   confidence: number;
   recommendedActions: string[];
@@ -96,4 +98,207 @@ describe('Demand Analysis Integration', () => {
     logger.info(`Found ${actionableInsights.length} actionable demand signals`);
     expect(actionableInsights.length).toBeGreaterThan(0);
   }, 30000); // Increased timeout for real API calls
+});
+
+describe('Product Demand Analysis Integration', () => {
+  let scraper: DemandScraper;
+  let validator: DemandValidator;
+
+  beforeAll(async () => {
+    scraper = new DemandScraper();
+    await scraper.initialize();
+    validator = DemandValidator.getInstance();
+  });
+
+  afterAll(async () => {
+    await scraper.close();
+  });
+
+  it('should analyze demand for iPhone 15', async () => {
+    const productName = 'iPhone 15';
+    const subreddit = 'apple';
+    
+    // Test multiple search variations
+    const searchQueries = [
+      `${productName} review`,
+      `${productName} worth it`,
+      `${productName} vs`
+    ];
+
+    let allSignals: DemandSignal[] = [];
+    for (const query of searchQueries) {
+      const signals = await scraper.scrapeReddit(subreddit, query) as ScrapedDemandSignal[];
+      expect(signals).toBeDefined();
+      expect(Array.isArray(signals)).toBe(true);
+      
+      // Convert ScrapedDemandSignal to DemandSignal
+      const convertedSignals: DemandSignal[] = signals.map(signal => ({
+        id: signal.id,
+        source: signal.context.community.name,
+        content: signal.content,
+        title: signal.title,
+        url: signal.url,
+        timestamp: signal.timestamp,
+        keyPoints: signal.analysis.topics.map((t: { name: string }) => t.name),
+        confidence: {
+          overall: signal.confidence.overall,
+          factors: {
+            textQuality: signal.confidence.factors.textQuality,
+            communityEngagement: signal.confidence.factors.communityEngagement,
+            authorCredibility: signal.confidence.factors.authorCredibility,
+            contentRelevance: signal.confidence.factors.contentRelevance,
+            temporalRelevance: signal.confidence.factors.temporalRelevance
+          }
+        },
+        context: {
+          sentiment: signal.analysis.sentiment,
+          intent: 'unknown',
+          topics: signal.analysis.topics.map((t: { name: string }) => t.name),
+          entities: []
+        },
+        validation: {
+          confidence: 0,
+          strength: 0,
+          relevance: 0
+        }
+      }));
+      
+      allSignals.push(...convertedSignals);
+    }
+
+    // Validate signals
+    const validatedSignals = await Promise.all(
+      allSignals.map(async signal => {
+        const validation: DemandValidation = await validator.validateDemand(signal.content);
+        expect(validation).toHaveProperty('confidence');
+        expect(validation).toHaveProperty('strength');
+        return {
+          ...signal,
+          validation: {
+            confidence: validation.confidence,
+            strength: validation.confidence, // Use confidence as strength since it's not in the validation response
+            relevance: validation.confidence
+          },
+          relevance: validation.confidence
+        };
+      })
+    );
+
+    // Calculate demand score
+    const demandScore = validatedSignals.reduce((acc, signal) => {
+      return acc + ((signal.validation?.confidence || 0) * (signal.validation?.confidence || 0));
+    }, 0) / validatedSignals.length;
+
+    // Assertions
+    expect(demandScore).toBeDefined();
+    expect(demandScore).toBeGreaterThan(0);
+    expect(demandScore).toBeLessThanOrEqual(1);
+
+    console.log('Test Results:', {
+      productName,
+      subreddit,
+      signalsFound: allSignals.length,
+      demandScore,
+      topSignals: validatedSignals
+        .sort((a, b) => (b.relevance || 0) - (a.relevance || 0))
+        .slice(0, 3)
+        .map(s => ({
+          source: s.source,
+          relevance: s.relevance,
+          keyPoints: s.keyPoints || []
+        }))
+    });
+  }, 30000); // 30 second timeout
+
+  it('should analyze demand for gaming headset', async () => {
+    const productName = 'gaming headset';
+    const subreddit = 'gaming';
+    
+    const searchQueries = [
+      `best ${productName}`,
+      `${productName} recommendation`,
+      `${productName} under 100`
+    ];
+
+    let allSignals: DemandSignal[] = [];
+    for (const query of searchQueries) {
+      const signals = await scraper.scrapeReddit(subreddit, query) as ScrapedDemandSignal[];
+      expect(signals).toBeDefined();
+      expect(Array.isArray(signals)).toBe(true);
+      
+      // Convert ScrapedDemandSignal to DemandSignal
+      const convertedSignals: DemandSignal[] = signals.map(signal => ({
+        id: signal.id,
+        source: signal.context.community.name,
+        content: signal.content,
+        title: signal.title,
+        url: signal.url,
+        timestamp: signal.timestamp,
+        keyPoints: signal.analysis.topics.map((t: { name: string }) => t.name),
+        confidence: {
+          overall: signal.confidence.overall,
+          factors: {
+            textQuality: signal.confidence.factors.textQuality,
+            communityEngagement: signal.confidence.factors.communityEngagement,
+            authorCredibility: signal.confidence.factors.authorCredibility,
+            contentRelevance: signal.confidence.factors.contentRelevance,
+            temporalRelevance: signal.confidence.factors.temporalRelevance
+          }
+        },
+        context: {
+          sentiment: signal.analysis.sentiment,
+          intent: 'unknown',
+          topics: signal.analysis.topics.map((t: { name: string }) => t.name),
+          entities: []
+        },
+        validation: {
+          confidence: 0,
+          strength: 0,
+          relevance: 0
+        }
+      }));
+      
+      allSignals.push(...convertedSignals);
+    }
+
+    const validatedSignals = await Promise.all(
+      allSignals.map(async signal => {
+        const validation: DemandValidation = await validator.validateDemand(signal.content);
+        expect(validation).toHaveProperty('confidence');
+        expect(validation).toHaveProperty('strength');
+        return {
+          ...signal,
+          validation: {
+            confidence: validation.confidence,
+            strength: validation.confidence, // Use confidence as strength since it's not in the validation response
+            relevance: validation.confidence
+          },
+          relevance: validation.confidence
+        };
+      })
+    );
+
+    const demandScore = validatedSignals.reduce((acc, signal) => {
+      return acc + ((signal.validation?.confidence || 0) * (signal.validation?.confidence || 0));
+    }, 0) / validatedSignals.length;
+
+    expect(demandScore).toBeDefined();
+    expect(demandScore).toBeGreaterThan(0);
+    expect(demandScore).toBeLessThanOrEqual(1);
+
+    console.log('Test Results:', {
+      productName,
+      subreddit,
+      signalsFound: allSignals.length,
+      demandScore,
+      topSignals: validatedSignals
+        .sort((a, b) => (b.relevance || 0) - (a.relevance || 0))
+        .slice(0, 3)
+        .map(s => ({
+          source: s.source,
+          relevance: s.relevance,
+          keyPoints: s.keyPoints || []
+        }))
+    });
+  }, 30000); // 30 second timeout
 });
