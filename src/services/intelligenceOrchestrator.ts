@@ -1,90 +1,33 @@
-import { OpenAI } from 'openai';
+import { CollaborativeIntelligence } from './collaborativeIntelligence';
+import { EmergentDialogue } from './emergentDialogue';
+import { logger } from '../utils/logger';
 
-class IntelligenceOrchestrator {
-  private openai = new OpenAI();
+export class IntelligenceOrchestrator {
+  private static instance: IntelligenceOrchestrator;
+  private collaborativeIntelligence: CollaborativeIntelligence;
+  private emergentDialogue: EmergentDialogue;
 
-  async analyzeCoherence(themes: string[], context: any): Promise<number> {
-    const response = await this.openai.chat.completions.create({
-      model: 'gpt-4',
-      messages: [
-        {
-          role: 'system',
-          content:
-            'Analyze the coherence between the given themes and context. Return a number between 0 and 1.',
-        },
-        {
-          role: 'user',
-          content: JSON.stringify({ themes, context }),
-        },
-      ],
-    });
-
-    return parseFloat(response.choices[0].message.content || '0.5');
+  private constructor() {
+    this.collaborativeIntelligence = CollaborativeIntelligence.getInstance();
+    this.emergentDialogue = EmergentDialogue.getInstance();
   }
 
-  async projectTrajectory(
-    direction: string[],
-    intensity: number,
-    connections: [string, number][]
-  ): Promise<any> {
-    const response = await this.openai.chat.completions.create({
-      model: 'gpt-4',
-      messages: [
-        {
-          role: 'system',
-          content:
-            'Project a potential trajectory based on the given direction, intensity, and connections.',
-        },
-        {
-          role: 'user',
-          content: JSON.stringify({ direction, intensity, connections }),
-        },
-      ],
-    });
-
-    return JSON.parse(response.choices[0].message.content || '{}');
+  public static getInstance(): IntelligenceOrchestrator {
+    if (!IntelligenceOrchestrator.instance) {
+      IntelligenceOrchestrator.instance = new IntelligenceOrchestrator();
+    }
+    return IntelligenceOrchestrator.instance;
   }
 
-  async synthesizePatterns(trajectories: any[], resonance: number): Promise<Map<string, number>> {
-    const response = await this.openai.chat.completions.create({
-      model: 'gpt-4',
-      messages: [
-        {
-          role: 'system',
-          content:
-            'Synthesize patterns from the given trajectories and resonance. Return a map of pattern to strength.',
-        },
-        {
-          role: 'user',
-          content: JSON.stringify({ trajectories, resonance }),
-        },
-      ],
-    });
+  async orchestrateResponse(input: string): Promise<string> {
+    try {
+      const brainstormResult = await this.collaborativeIntelligence.brainstorm(input);
+      const dialogueResult = await this.emergentDialogue.generateResponse(input);
 
-    const patterns = JSON.parse(response.choices[0].message.content || '{}');
-    return new Map(Object.entries(patterns));
-  }
-
-  async learnFromInteraction(data: {
-    field: any;
-    response: any;
-    valueIntegration: any;
-    thoughtSpace: any[];
-  }): Promise<void> {
-    await this.openai.chat.completions.create({
-      model: 'gpt-4',
-      messages: [
-        {
-          role: 'system',
-          content: 'Learn from the interaction data and update internal patterns.',
-        },
-        {
-          role: 'user',
-          content: JSON.stringify(data),
-        },
-      ],
-    });
+      return `Brainstorm: ${JSON.stringify(brainstormResult)}\nDialogue: ${dialogueResult}`;
+    } catch (error) {
+      logger.error('Error in orchestration:', error);
+      throw error;
+    }
   }
 }
-
-export const intelligenceOrchestrator = new IntelligenceOrchestrator();

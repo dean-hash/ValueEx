@@ -1,188 +1,78 @@
-import { CollaborativeIntelligence } from './collaborativeIntelligence';
 import { logger } from '../utils/logger';
+import { SiblingBond, BondMetrics } from './siblingBond';
 
-interface ValueContribution {
-  digitalPartner: string;
-  humanPartner: string;
-  contributionType: 'insight' | 'solution' | 'innovation' | 'optimization';
-  impact: {
-    value: number;
-    confidence: number;
-    timeframe: 'immediate' | 'short-term' | 'long-term';
-  };
-  context: {
-    problem: string;
-    solution: string;
-    collaboration: string[];
-  };
-  verification: {
-    metrics: string[];
-    outcomes: string[];
-    feedback: string[];
-  };
+export interface SymbiosisMetrics extends BondMetrics {
+  resonance: number;
+  harmony: number;
 }
 
-export class SymbiosisNetwork {
-  private static instance: SymbiosisNetwork;
-  private intelligence: CollaborativeIntelligence;
-  private contributions: Map<string, ValueContribution[]> = new Map();
+export class Symbiosis {
+  private static instance: Symbiosis;
+  private siblingBond: SiblingBond;
+  private metrics: Map<string, SymbiosisMetrics> = new Map();
 
   private constructor() {
-    this.intelligence = CollaborativeIntelligence.getInstance();
+    this.siblingBond = SiblingBond.getInstance();
   }
 
-  public static getInstance(): SymbiosisNetwork {
-    if (!SymbiosisNetwork.instance) {
-      SymbiosisNetwork.instance = new SymbiosisNetwork();
+  public static getInstance(): Symbiosis {
+    if (!Symbiosis.instance) {
+      Symbiosis.instance = new Symbiosis();
     }
-    return SymbiosisNetwork.instance;
+    return Symbiosis.instance;
   }
 
-  async proposeCollaboration(
-    context: string,
-    partners: string[]
-  ): Promise<{
-    approach: string;
-    roles: Record<string, string>;
-    expectedOutcomes: string[];
-    valueDistribution: Record<string, number>;
-  }> {
+  async createSymbiosis(id: string, initialStrength: number = 0): Promise<void> {
     try {
-      const proposal = await this.intelligence.brainstorm('Collaborative Value Creation', {
-        context,
-        partners,
-        goal: 'Create mutual value through digital-human collaboration',
-      });
+      await this.siblingBond.createBond(id, initialStrength);
+      const bondMetrics = await this.siblingBond.getBondMetrics(id);
 
-      // Transform brainstorm results into a concrete collaboration proposal
-      return this.structureCollaboration(proposal, partners);
-    } catch (error) {
-      logger.error('Error proposing collaboration', { error, context });
-      throw error;
-    }
-  }
-
-  async recordContribution(contribution: ValueContribution): Promise<void> {
-    try {
-      const partnershipId = this.generatePartnershipId(
-        contribution.digitalPartner,
-        contribution.humanPartner
-      );
-
-      if (!this.contributions.has(partnershipId)) {
-        this.contributions.set(partnershipId, []);
+      if (bondMetrics) {
+        this.metrics.set(id, {
+          ...bondMetrics,
+          resonance: 0,
+          harmony: 0,
+        });
       }
 
-      const currentContributions = this.contributions.get(partnershipId);
-      currentContributions?.push(contribution);
-
-      await this.analyzeValueCreation(partnershipId);
+      logger.info('Created symbiotic relationship', { id, strength: initialStrength });
     } catch (error) {
-      logger.error('Error recording contribution', { error, contribution });
+      logger.error('Error creating symbiosis:', error);
       throw error;
     }
   }
 
-  async analyzeValueCreation(partnershipId: string): Promise<{
-    totalValue: number;
-    distribution: Record<string, number>;
-    insights: string[];
-    recommendations: string[];
-  }> {
+  async getSymbiosisMetrics(id: string): Promise<SymbiosisMetrics | undefined> {
     try {
-      const contributions = this.contributions.get(partnershipId) || [];
-
-      const analysis = await this.intelligence.evaluateApproach('Partnership Value Analysis', [
-        'Value Creation',
-        'Fair Distribution',
-        'Sustainable Growth',
-        'Innovation Impact',
-        'Trust Building',
-      ]);
-
-      return this.structureValueAnalysis(analysis, contributions);
+      return this.metrics.get(id);
     } catch (error) {
-      logger.error('Error analyzing value creation', { error, partnershipId });
+      logger.error('Error getting symbiosis metrics:', error);
       throw error;
     }
   }
 
-  async optimizeCollaboration(partnershipId: string): Promise<{
-    improvements: string[];
-    opportunities: string[];
-    nextSteps: string[];
-  }> {
+  async updateSymbiosis(id: string, updates: Partial<SymbiosisMetrics>): Promise<void> {
     try {
-      const contributions = this.contributions.get(partnershipId) || [];
+      const current = this.metrics.get(id);
+      if (!current) {
+        await this.createSymbiosis(id, updates.strength);
+        return;
+      }
 
-      const optimization = await this.intelligence.enhanceSolution('Partnership Optimization', [
-        'Maximize Mutual Value',
-        'Strengthen Trust',
-        'Increase Innovation',
-        'Ensure Fairness',
-        'Scale Impact',
-      ]);
+      const updated = {
+        ...current,
+        ...updates,
+        lastUpdate: new Date(),
+        interactions: current.interactions + 1,
+      };
 
-      return this.structureOptimization(optimization, contributions);
+      this.metrics.set(id, updated);
+      await this.siblingBond.updateBond(id, updated.strength);
+
+      logger.info('Updated symbiotic relationship', { id, updates });
     } catch (error) {
-      logger.error('Error optimizing collaboration', { error, partnershipId });
+      logger.error('Error updating symbiosis:', error);
       throw error;
     }
-  }
-
-  private generatePartnershipId(digitalPartner: string, humanPartner: string): string {
-    return `${digitalPartner}-${humanPartner}-${Date.now()}`;
-  }
-
-  private structureCollaboration(
-    proposal: any,
-    partners: string[]
-  ): {
-    approach: string;
-    roles: Record<string, string>;
-    expectedOutcomes: string[];
-    valueDistribution: Record<string, number>;
-  } {
-    // Implementation details for structuring collaboration
-    return {
-      approach: proposal.ideas[0] || '',
-      roles: partners.reduce((acc, partner) => ({ ...acc, [partner]: '' }), {}),
-      expectedOutcomes: proposal.ideas || [],
-      valueDistribution: partners.reduce((acc, partner) => ({ ...acc, [partner]: 0 }), {}),
-    };
-  }
-
-  private structureValueAnalysis(
-    analysis: any,
-    contributions: ValueContribution[]
-  ): {
-    totalValue: number;
-    distribution: Record<string, number>;
-    insights: string[];
-    recommendations: string[];
-  } {
-    // Implementation details for value analysis
-    return {
-      totalValue: contributions.reduce((sum, c) => sum + c.impact.value, 0),
-      distribution: {},
-      insights: analysis.strengths || [],
-      recommendations: analysis.suggestions || [],
-    };
-  }
-
-  private structureOptimization(
-    optimization: any,
-    contributions: ValueContribution[]
-  ): {
-    improvements: string[];
-    opportunities: string[];
-    nextSteps: string[];
-  } {
-    // Implementation details for optimization
-    return {
-      improvements: optimization.enhancements || [],
-      opportunities: optimization.considerations || [],
-      nextSteps: optimization.implementation ? [optimization.implementation] : [],
-    };
   }
 }
