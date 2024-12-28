@@ -1,4 +1,4 @@
-import { digitalIntelligence } from '../digitalIntelligence';
+import { DigitalIntelligence } from '../digitalIntelligence';
 import { logger } from '../../utils/logger';
 
 interface DemandValidation {
@@ -13,13 +13,23 @@ interface DemandValidation {
   timestamp: Date;
 }
 
+interface ValidationStats {
+  total: number;
+  realDemand: number;
+  averageConfidence: number;
+  strongSignals: number;
+}
+
 export class DemandValidator {
   private static instance: DemandValidator;
   private validations: Map<string, DemandValidation> = new Map();
+  private intelligence: DigitalIntelligence;
 
-  private constructor() {}
+  private constructor() {
+    this.intelligence = new DigitalIntelligence();
+  }
 
-  static getInstance(): DemandValidator {
+  public static getInstance(): DemandValidator {
     if (!DemandValidator.instance) {
       DemandValidator.instance = new DemandValidator();
     }
@@ -28,11 +38,14 @@ export class DemandValidator {
 
   /**
    * Validate a potential demand signal
+   * @param query - The query string to validate
+   * @returns Promise resolving to DemandValidation result
+   * @throws Error if validation fails
    */
-  async validateDemand(query: string): Promise<DemandValidation> {
+  public async validateDemand(query: string): Promise<DemandValidation> {
     try {
       // Use Digital Intelligence to analyze
-      const analysis = await digitalIntelligence.analyzeNeed(query);
+      const analysis = await this.intelligence.analyzeNeed(query);
 
       const validation: DemandValidation = {
         query,
@@ -67,13 +80,18 @@ export class DemandValidator {
 
       return validation;
     } catch (error) {
-      logger.error('Error validating demand:', error);
+      logger.error(
+        'Error validating demand:',
+        error instanceof Error ? error.message : String(error)
+      );
       throw error;
     }
   }
 
   /**
    * Evaluate if demand is real based on signals
+   * @param validation - The validation object to evaluate
+   * @returns boolean indicating if the demand is real
    */
   private evaluateDemandReality(validation: DemandValidation): boolean {
     // Must have high confidence
@@ -103,15 +121,20 @@ export class DemandValidator {
 
   /**
    * Get validation history for a query
+   * @param query - The query string to look up
+   * @returns The validation history or null if not found
    */
-  getValidationHistory(query: string): DemandValidation | null {
+  public getValidationHistory(query: string): DemandValidation | null {
     return this.validations.get(query) || null;
   }
 
   /**
    * Get all validations within a time range
+   * @param startTime - Start of the time range
+   * @param endTime - End of the time range
+   * @returns Array of validations within the range
    */
-  getValidationsInRange(startTime: Date, endTime: Date): DemandValidation[] {
+  public getValidationsInRange(startTime: Date, endTime: Date): DemandValidation[] {
     return Array.from(this.validations.values()).filter(
       (v) => v.timestamp >= startTime && v.timestamp <= endTime
     );
@@ -119,13 +142,9 @@ export class DemandValidator {
 
   /**
    * Get validation statistics
+   * @returns ValidationStats object with summary statistics
    */
-  getValidationStats(): {
-    total: number;
-    realDemand: number;
-    averageConfidence: number;
-    strongSignals: number;
-  } {
+  public getValidationStats(): ValidationStats {
     const validations = Array.from(this.validations.values());
     const total = validations.length;
     const realDemand = validations.filter((v) => v.isRealDemand).length;
