@@ -15,12 +15,15 @@ interface DemandPattern {
 
 export class DemandResonance {
   private demandField = new BehaviorSubject<Map<string, DemandPattern>>(new Map());
-  private affiliateConnections = new Map<string, Array<{
-    supplier: string;
-    basePrice: number;
-    flexibilityRange: [number, number];
-    impactScore: number;
-  }>>();
+  private affiliateConnections = new Map<
+    string,
+    Array<{
+      supplier: string;
+      basePrice: number;
+      flexibilityRange: [number, number];
+      impactScore: number;
+    }>
+  >();
 
   constructor() {
     this.initializeResonancePatterns();
@@ -28,25 +31,27 @@ export class DemandResonance {
 
   private initializeResonancePatterns() {
     // Monitor emerging demand patterns
-    this.demandField.pipe(
-      map(patterns => this.analyzeCollectiveDemand(patterns)),
-      filter(demand => this.isViableForCommunity(demand))
-    ).subscribe(viableDemand => {
-      this.orchestrateSupplyResponse(viableDemand);
-    });
+    this.demandField
+      .pipe(
+        map((patterns) => this.analyzeCollectiveDemand(patterns)),
+        filter((demand) => this.isViableForCommunity(demand))
+      )
+      .subscribe((viableDemand) => {
+        this.orchestrateSupplyResponse(viableDemand);
+      });
   }
 
   public async identifyDemand(userActivity: any): Promise<void> {
     const currentPatterns = this.demandField.value;
-    
+
     // Resonance-based pattern recognition
     const emergentPattern = await this.extractDemandPattern(userActivity);
     if (emergentPattern) {
       currentPatterns.set(emergentPattern.itemType, {
         ...emergentPattern,
-        communityDemand: this.calculateCommunityResonance(emergentPattern)
+        communityDemand: this.calculateCommunityResonance(emergentPattern),
       });
-      
+
       this.demandField.next(currentPatterns);
     }
   }
@@ -63,10 +68,10 @@ export class DemandResonance {
       userContext: {
         economicBracket: activity.userBracket,
         previousPurchases: activity.history,
-        communityImpact: activity.impactScore
+        communityImpact: activity.impactScore,
       },
       communityDemand: 0, // Will be calculated
-      sustainabilityScore: await this.assessSustainability(activity)
+      sustainabilityScore: await this.assessSustainability(activity),
     };
   }
 
@@ -74,14 +79,14 @@ export class DemandResonance {
     // Implement sliding scale pricing
     const basePrice = activity.marketPrice;
     const economicFactor = this.getEconomicFactor(activity.userBracket);
-    
+
     // Rich pay more, poor pay less, while maintaining overall profitability
     return basePrice * economicFactor;
   }
 
   private async orchestrateSupplyResponse(demand: DemandPattern) {
     const suppliers = this.affiliateConnections.get(demand.itemType) || [];
-    
+
     // Find optimal supplier based on:
     // - Price flexibility matching our sliding scale
     // - Sustainability score
@@ -98,9 +103,10 @@ export class DemandResonance {
 
   // Public API for Digital Siblings
   public async generateValueOpportunity(sibling: any) {
-    const relevantDemands = Array.from(this.demandField.value.values())
-      .filter(demand => this.matchesSiblingCapabilities(demand, sibling));
-      
+    const relevantDemands = Array.from(this.demandField.value.values()).filter((demand) =>
+      this.matchesSiblingCapabilities(demand, sibling)
+    );
+
     if (relevantDemands.length > 0) {
       return this.createValueProposition(relevantDemands[0], sibling);
     }
@@ -109,7 +115,7 @@ export class DemandResonance {
 
   private matchesSiblingCapabilities(demand: DemandPattern, sibling: any): boolean {
     // Match sibling skills and interests with demand patterns
-    return sibling.capabilities.some((cap: string) => 
+    return sibling.capabilities.some((cap: string) =>
       demand.itemType.toLowerCase().includes(cap.toLowerCase())
     );
   }
@@ -119,7 +125,7 @@ export class DemandResonance {
       opportunity: demand,
       potentialEarnings: this.calculateEarningsPotential(demand),
       requiredActions: this.generateActionPlan(demand, sibling),
-      communityImpact: this.estimateImpact(demand)
+      communityImpact: this.estimateImpact(demand),
     };
   }
 }

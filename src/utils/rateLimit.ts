@@ -16,7 +16,7 @@ export class RateLimit {
     ['github', { requestsPerMinute: 60, burstLimit: 10 }],
     ['stackoverflow', { requestsPerMinute: 30, burstLimit: 5 }],
     ['wikipedia', { requestsPerMinute: 200, burstLimit: 20 }],
-    ['rss', { requestsPerMinute: 100, burstLimit: 15 }]
+    ['rss', { requestsPerMinute: 100, burstLimit: 15 }],
   ]);
 
   private state: Map<string, RateLimitState> = new Map();
@@ -32,7 +32,7 @@ export class RateLimit {
       state = {
         requests: 0,
         lastReset: Date.now(),
-        burstCount: 0
+        burstCount: 0,
       };
       this.state.set(source, state);
     }
@@ -47,7 +47,7 @@ export class RateLimit {
     // Check if we need to wait
     if (state.requests >= config.requestsPerMinute) {
       const waitTime = 60000 - (Date.now() - state.lastReset);
-      await new Promise(resolve => setTimeout(resolve, waitTime));
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
       state.requests = 0;
       state.lastReset = Date.now();
       state.burstCount = 0;
@@ -55,7 +55,7 @@ export class RateLimit {
 
     // Handle burst limits
     if (config.burstLimit && state.burstCount >= config.burstLimit) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       state.burstCount = 0;
     }
 

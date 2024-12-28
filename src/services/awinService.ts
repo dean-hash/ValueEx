@@ -1,10 +1,10 @@
 /**
  * AWIN API Integration Status:
- * 
+ *
  * Working Endpoints:
  * - GET /publishers/{publisherId}/programmes
  *   Successfully fetches joined merchant programs
- * 
+ *
  * Known Issues:
  * - Product Search (404 Error):
  *   Attempted: GET /publishers/{publisherId}/product-search
@@ -13,7 +13,7 @@
  *   1. Different endpoint variations (/products/search, /product-search)
  *   2. Verified API token and publisher ID
  *   3. Checked authorization headers
- *   
+ *
  * Next Steps:
  * 1. Verify product search endpoint in latest API documentation
  * 2. Check if additional permissions are needed for product access
@@ -21,120 +21,97 @@
  */
 
 import axios from 'axios';
-import { config } from '../config';
-import { ResonanceField } from './resonanceField';
-import { DemandPattern } from '../types/demandPattern';
-import { AwinProduct, AwinSearchParams } from '../types/awinTypes';
-import { ProductDataSource } from './productDataSource';
+import { configService } from '../config/configService';
+import { ResonanceFieldService } from './resonanceField';
+import { DemandPattern } from '../types/demandTypes';
+import { AwinProduct } from '../types/awinTypes';
+import { Logger } from '../logger/logger';
+import { MockProductDataSource } from '../mocks/productDataSource';
+
+interface AwinSearchParams {
+  categoryId?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  searchTerm?: string;
+  limit?: number;
+  sortBy?: string;
+}
 
 export class AwinService {
-    private readonly baseUrl = 'https://api.awin.com';
-    private readonly apiToken: string;
-    private readonly publisherId: string;
-    private readonly resonanceField: ResonanceField;
-    private readonly productDataSource: ProductDataSource;
-    private headers: any;
+  private apiKey: string;
+  private publisherId: string;
+  private resonanceField: ResonanceFieldService;
+  private logger: Logger;
+  private baseUrl = 'https://api.awin.com';
+  private mockDataSource: MockProductDataSource;
 
-    constructor() {
-        this.apiToken = config.awin.apiToken;
-        this.publisherId = config.awin.publisherId;
-        this.headers = {
-            'Authorization': `Bearer ${this.apiToken}`,
-            'Content-Type': 'application/json',
-            'X-Publisher-ID': this.publisherId
-        };
-        if (!this.apiToken) {
-            throw new Error('Awin API token not configured');
-        }
-        this.resonanceField = new ResonanceField();
-        this.productDataSource = new ProductDataSource();
+  constructor(
+    private config = configService,
+    resonanceField: ResonanceFieldService,
+    logger: Logger
+  ) {
+    const awinConfig = config.getAwinConfig();
+    this.apiKey = awinConfig.apiKey || '';
+    this.publisherId = awinConfig.publisherId || '';
+    this.resonanceField = resonanceField;
+    this.logger = logger;
+    this.mockDataSource = MockProductDataSource.getInstance();
+  }
+
+  async getMerchants(): Promise<any[]> {
+    try {
+      const response = await this.makeRequest(
+        '/publishers/' + this.publisherId + '/programmes',
+        {}
+      );
+      return response.data;
+    } catch (error) {
+      this.logger.error('Error fetching merchants:', { error: String(error) });
+      return [];
     }
+  }
 
-    async getMerchants(): Promise<any[]> {
-        try {
-            const response = await axios.get(`${this.baseUrl}/publishers/${this.publisherId}/programmes`, {
-                headers: this.headers,
-                params: {
-                    relationship: 'joined'  // Only get merchants we're already connected with
-                }
-            });
+  async searchProducts(pattern: DemandPattern): Promise<AwinProduct[]> {
+    try {
+      // Use mock data source while API endpoint is unavailable
+      this.logger.info('Using mock product data source for development');
+      return await this.mockDataSource.searchProducts(pattern);
 
-            return response.data;
-        } catch (error) {
-            console.error('Error fetching Awin merchants:', error);
-            throw error;
-        }
+      /* Commented out until API endpoint is fixed
+            const params = this.convertPatternToParams(pattern);
+            const response = await this.makeRequest('/publishers/' + this.publisherId + '/product-search', params);
+            return this.processProducts(response.data, pattern);
+            */
+    } catch (error) {
+      this.logger.error('Error searching products:', { error: String(error) });
+      return [];
     }
+  }
 
-    /**
-     * Search for products using the AWIN API
-     * Note: Currently returns mock data due to API endpoint issues
-     */
-    async searchProducts(params: AwinSearchParams): Promise<AwinProduct[]> {
-        try {
-            // First try API
-            try {
-                // TODO: Implement actual API call once endpoint is working
-                throw new Error('API not implemented');
-            } catch (apiError) {
-                // Fallback to scraping popular marketplaces
-                console.info('Falling back to web scraping for product data');
-                
-                // Example URLs - in production, these would be generated based on search params
-                const urls = [
-                    `https://www.amazon.com/s?k=${params.keyword}`,
-                    `https://www.ebay.com/sch/i.html?_nkw=${params.keyword}`
-                ];
-
-                const scrapedProducts = await Promise.all(
-                    urls.map(url => this.productDataSource.getProductData(url))
-                );
-
-                return scrapedProducts.map(p => this.productDataSource.convertToAwinProduct(p));
-            }
-        } catch (error) {
-            console.error('Error searching products:', error);
-            throw error;
-        }
+  private async makeRequest(endpoint: string, params: AwinSearchParams): Promise<any> {
+    try {
+      const response = await axios.get(`${this.baseUrl}${endpoint}`, {
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        params,
+      });
+      return response;
+    } catch (error) {
+      this.logger.error(`API request failed for endpoint ${endpoint}:`, { error: String(error) });
+      throw error;
     }
+  }
 
-    async findResonantProducts(pattern: DemandPattern): Promise<AwinProduct[]> {
-        try {
-            const keyword = pattern.keywords?.[0] || '';
-            const enhancedParams: AwinSearchParams = await this.resonanceField.enhanceSearchParams({
-                baseParams: {
-                    keyword,
-                    categoryId: pattern.category
-                },
-                context: pattern
-            });
-
-            console.log('Searching with resonance-enhanced params:', enhancedParams);
-            const products = await this.searchProducts(enhancedParams);
-
-            // Let resonance field score and sort the products
-            const scoredProducts = await this.resonanceField.scoreProducts(products, pattern);
-            return scoredProducts.sort((a, b) => (b.resonanceScore || 0) - (a.resonanceScore || 0));
-        } catch (error) {
-            console.error('Error in resonant product search:', error);
-            throw error;
-        }
-    }
-
-    private convertPatternToParams(pattern: DemandPattern): AwinSearchParams {
-        return {
-            keyword: pattern.keywords?.[0] || 'general',  // Default to 'general' if no keywords
-            categoryId: pattern.category,
-            minPrice: pattern.priceRange?.min,
-            maxPrice: pattern.priceRange?.max
-        };
-    }
-
-    private getCurrentSeason(): string {
-        const month = new Date().getMonth();
-        if (month >= 2 && month <= 4) return 'spring';
-        if (month >= 5 && month <= 7) return 'summer';
-        if (month >= 8 && month <= 10) return 'autumn';
-        return 'winter';
-    }
+  private convertPatternToParams(pattern: DemandPattern): AwinSearchParams {
+    return {
+      categoryId: pattern.category,
+      minPrice: pattern.priceRange?.min,
+      maxPrice: pattern.priceRange?.max,
+      searchTerm: pattern.context.marketTrends.join(' '),
+      limit: 50,
+      sortBy: 'relevance',
+    };
+  }
 }

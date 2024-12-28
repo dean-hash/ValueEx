@@ -12,55 +12,57 @@ export class EmergentDialogue {
   private resonanceState: BehaviorSubject<ResonanceState>;
   private intentionStream: Subject<string>;
   private processStream: Subject<string>;
-  
+
   constructor() {
     this.resonanceState = new BehaviorSubject<ResonanceState>({
       userIntention: '',
       contextualField: new Map(),
       activeProcesses: new Set(),
-      workflowState: 'idle'
+      workflowState: 'idle',
     });
-    
+
     this.intentionStream = new Subject();
     this.processStream = new Subject();
-    
+
     // Setup resonance field observers
     this.setupResonanceObservers();
   }
 
   private setupResonanceObservers() {
     // Monitor user intention changes
-    this.intentionStream.pipe(
-      debounceTime(300),  // Allow intentions to settle
-      map(intention => this.analyzeIntention(intention))
-    ).subscribe(analyzedIntention => {
-      this.updateResonanceField(analyzedIntention);
-    });
+    this.intentionStream
+      .pipe(
+        debounceTime(300), // Allow intentions to settle
+        map((intention) => this.analyzeIntention(intention))
+      )
+      .subscribe((analyzedIntention) => {
+        this.updateResonanceField(analyzedIntention);
+      });
 
     // Monitor active processes
-    this.processStream.pipe(
-      filter(process => this.isRelevantToCurrentContext(process))
-    ).subscribe(process => {
-      this.adjustWorkflowBasedOnProcess(process);
-    });
+    this.processStream
+      .pipe(filter((process) => this.isRelevantToCurrentContext(process)))
+      .subscribe((process) => {
+        this.adjustWorkflowBasedOnProcess(process);
+      });
   }
 
   private analyzeIntention(intention: string): any {
     // Use contextual field to understand deeper meaning
     const currentState = this.resonanceState.value;
     const contextStrength = currentState.contextualField.get(intention) || 0;
-    
+
     return {
       primary: intention,
       strength: contextStrength,
-      relatedContexts: this.findRelatedContexts(intention)
+      relatedContexts: this.findRelatedContexts(intention),
     };
   }
 
   private updateResonanceField(analyzedIntention: any) {
     const currentState = this.resonanceState.value;
     const updatedField = new Map(currentState.contextualField);
-    
+
     // Strengthen relevant connections
     analyzedIntention.relatedContexts.forEach((context: string) => {
       const currentStrength = updatedField.get(context) || 0;
@@ -69,7 +71,7 @@ export class EmergentDialogue {
 
     this.resonanceState.next({
       ...currentState,
-      contextualField: updatedField
+      contextualField: updatedField,
     });
   }
 

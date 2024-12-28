@@ -1,8 +1,7 @@
 import { OpenAI } from 'openai';
-import { PrismaClient } from '@prisma/client';
-import axios from 'axios';
-import * as cheerio from 'cheerio';
-import { RateLimit } from '../utils/rateLimit';
+import { configService } from '../config/configService';
+import { logger } from '../utils/logger';
+import { MARKET_VERTICALS, MarketVertical } from '../types/marketTypes';
 
 interface AccuracyMetrics {
   confidence: number;
@@ -11,7 +10,7 @@ interface AccuracyMetrics {
 }
 
 interface NeedSignal {
-  type: 'search' | 'purchase' | 'urgency';
+  type: 'market' | 'demand' | 'urgency';
   strength: number;
   source: string;
   timestamp: Date;
@@ -19,221 +18,308 @@ interface NeedSignal {
     intent?: string;
     urgencyLevel?: number;
     pricePoint?: number;
+    drivers?: string[];
+    barriers?: string[];
+    demandType?: string;
+    targetDemographic?: string[];
+    competitiveIntensity?: number;
+    timeframe?: string;
+    vertical?: MarketVertical;
   };
 }
 
 export class DigitalIntelligence {
-  private prisma = new PrismaClient();
-  private openai = new OpenAI();
-  private rateLimit = new RateLimit();
+  private openai: OpenAI;
 
-  async analyzeNeed(category: string): Promise<{
+  constructor() {
+    this.openai = new OpenAI({
+      apiKey: configService.getOpenAIKey(),
+    });
+  }
+
+  async analyzeNeed(
+    category: string,
+    verticalId?: string
+  ): Promise<{
     isGenuineNeed: boolean;
     accuracy: AccuracyMetrics;
     signals: NeedSignal[];
     recommendedActions: string[];
+    vertical?: MarketVertical;
   }> {
-    // Collect only essential signals
-    const [searchSignals, purchaseSignals, urgencySignals] = await Promise.all([
-      this.getSearchIntentSignals(category),
-      this.getPurchaseHistorySignals(category),
-      this.getUrgencySignals(category)
-    ]);
+    try {
+      // Identify market vertical if not provided
+      const vertical = verticalId
+        ? MARKET_VERTICALS[verticalId]
+        : await this.identifyVertical(category);
 
-    // Validate signal quality
-    const accuracy = this.calculateAccuracy([
-      ...searchSignals,
-      ...purchaseSignals,
-      ...urgencySignals
-    ]);
+      // Use GPT-4 for comprehensive market analysis
+      const analysis = await this.openai.chat.completions.create({
+        model: 'gpt-4',
+        messages: [
+          {
+            role: 'system',
+            content: `You are an expert market intelligence analyst with deep expertise in consumer behavior and market dynamics.
+              
+              Market Vertical Context:
+              ${JSON.stringify(vertical, null, 2)}
+              
+              Analyze the given product category and provide insights in the following structure:
+              {
+                "marketTrends": {
+                  "direction": "growing|stable|declining",
+                  "confidence": 0.0-1.0,
+                  "drivers": string[],
+                  "barriers": string[],
+                  "verticalFit": 0.0-1.0
+                },
+                "demandPatterns": {
+                  "strength": 0.0-1.0,
+                  "type": "immediate|growing|seasonal|cyclical",
+                  "optimalPrice": {
+                    "min": number,
+                    "max": number,
+                    "confidence": 0.0-1.0
+                  },
+                  "targetDemographic": string[],
+                  "competitiveIntensity": 0.0-1.0,
+                  "verticalAlignment": {
+                    "purchaseCycleFit": 0.0-1.0,
+                    "seasonalityFit": 0.0-1.0,
+                    "marginPotential": 0.0-1.0
+                  }
+                },
+                "urgencySignals": {
+                  "level": 0.0-1.0,
+                  "score": 1-5,
+                  "drivers": string[],
+                  "timeframe": "immediate|short-term|medium-term|long-term",
+                  "verticalConsiderations": string[]
+                },
+                "confidence": 0.0-1.0,
+                "marketViability": 0.0-1.0,
+                "recommendations": string[],
+                "verticalSpecificInsights": {
+                  "competitiveAdvantages": string[],
+                  "entryStrategy": string,
+                  "riskFactors": string[]
+                }
+              }`,
+          },
+          {
+            role: 'user',
+            content: `Analyze the market for: ${category}
+              
+              Consider the following vertical-specific factors:
+              1. Purchase Cycle: ${vertical.characteristics.purchaseCycle}
+              2. Price Elasticity: ${vertical.characteristics.priceElasticity}
+              3. Seasonality: ${vertical.characteristics.seasonality}
+              4. Tech Dependency: ${vertical.characteristics.techDependency}
+              
+              Key Metrics to Consider:
+              - Average Margin: ${vertical.keyMetrics.avgMargin}
+              - Customer Lifetime: ${vertical.keyMetrics.customerLifetime} months
+              - Acquisition Cost: $${vertical.keyMetrics.acquisitionCost}
+              - Repeat Purchase Rate: ${vertical.keyMetrics.repeatPurchaseRate}
+              
+              Competitive Landscape:
+              - Entry Barriers: ${vertical.competitiveFactors.entryBarriers}
+              - Substitute Threat: ${vertical.competitiveFactors.substituteThreat}
+              - Supplier Power: ${vertical.competitiveFactors.supplierPower}
+              - Buyer Power: ${vertical.competitiveFactors.buyerPower}
+              
+              Provide specific, actionable insights with confidence levels.`,
+          },
+        ],
+        temperature: 0.7,
+        max_tokens: 1000,
+        top_p: 1,
+        frequency_penalty: 0,
+        presence_penalty: 0,
+      });
 
-    // Only proceed if we have enough quality data
-    if (!this.hasReliableData(accuracy)) {
+      if (!analysis.choices[0].message.content) {
+        throw new Error('No content in GPT response');
+      }
+
+      const insights = JSON.parse(analysis.choices[0].message.content);
+
+      // Transform GPT analysis into our signal format
+      const signals = this.transformInsightsToSignals(insights, vertical);
+      const accuracy = this.calculateAccuracy(signals);
+
+      return {
+        isGenuineNeed: this.validateNeed(insights, vertical),
+        accuracy,
+        signals,
+        recommendedActions: this.getRecommendedActions(insights, vertical),
+        vertical,
+      };
+    } catch (error: unknown) {
+      logger.error('Error in digital intelligence analysis:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       return {
         isGenuineNeed: false,
-        accuracy,
+        accuracy: {
+          confidence: 0,
+          signalStrength: 0,
+          dataPoints: 0,
+        },
         signals: [],
-        recommendedActions: ['Insufficient data for confident recommendation']
+        recommendedActions: [],
+        vertical: undefined,
       };
     }
+  }
 
-    // Use GPT-4 to analyze intent patterns
-    const analysis = await this.openai.chat.completions.create({
-      model: "gpt-4",
-      messages: [
-        {
-          role: "system",
-          content: "Analyze user need signals to identify genuine requirements. Focus on urgency, intent, and purchase readiness. Avoid speculation and prioritize clear signals."
+  private async identifyVertical(category: string): Promise<MarketVertical> {
+    try {
+      const analysis = await this.openai.chat.completions.create({
+        model: 'gpt-4',
+        messages: [
+          {
+            role: 'system',
+            content: `You are a market categorization expert. Given a product category or description, respond with just one word representing the most relevant market vertical from this list: ${Object.keys(MARKET_VERTICALS).join(', ')}`,
+          },
+          {
+            role: 'user',
+            content: category,
+          },
+        ],
+      });
+
+      if (!analysis.choices[0].message.content) {
+        throw new Error('No content in GPT response');
+      }
+
+      const verticalId = analysis.choices[0].message.content.trim().toLowerCase();
+      return MARKET_VERTICALS[verticalId] || MARKET_VERTICALS.general;
+    } catch (error: unknown) {
+      logger.error('Error identifying vertical:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return MARKET_VERTICALS.general;
+    }
+  }
+
+  private transformInsightsToSignals(insights: any, vertical: MarketVertical): NeedSignal[] {
+    const now = new Date();
+    const signals: NeedSignal[] = [];
+
+    if (insights.marketTrends) {
+      signals.push({
+        type: 'market',
+        strength: insights.marketTrends.confidence * insights.marketTrends.verticalFit,
+        source: 'gpt_analysis',
+        timestamp: now,
+        metadata: {
+          intent: insights.marketTrends.direction,
+          drivers: insights.marketTrends.drivers,
+          barriers: insights.marketTrends.barriers,
+          vertical,
         },
-        {
-          role: "user",
-          content: JSON.stringify({
-            searchSignals,
-            purchaseSignals,
-            urgencySignals
-          })
-        }
-      ],
-      temperature: 0.1 // Lower temperature for more focused analysis
-    });
+      });
+    }
 
-    const insights = JSON.parse(analysis.choices[0].message.content);
-    
-    return {
-      isGenuineNeed: this.validateNeed(insights),
-      accuracy,
-      signals: [...searchSignals, ...purchaseSignals, ...urgencySignals],
-      recommendedActions: this.getRecommendedActions(insights)
-    };
-  }
+    if (insights.demandPatterns) {
+      const verticalAlignment = insights.demandPatterns.verticalAlignment;
+      const alignmentScore =
+        (verticalAlignment.purchaseCycleFit +
+          verticalAlignment.seasonalityFit +
+          verticalAlignment.marginPotential) /
+        3;
 
-  private async getSearchIntentSignals(category: string): Promise<NeedSignal[]> {
-    // Focus on Google Trends - most reliable free source
-    await this.rateLimit.wait('google_trends');
-    const trends = await axios.get(
-      `https://trends.google.com/trends/api/dailytrends?geo=US&q=${encodeURIComponent(category)}`
-    );
+      signals.push({
+        type: 'demand',
+        strength: insights.demandPatterns.strength * alignmentScore,
+        source: 'gpt_analysis',
+        timestamp: now,
+        metadata: {
+          pricePoint: insights.demandPatterns.optimalPrice?.max,
+          demandType: insights.demandPatterns.type,
+          targetDemographic: insights.demandPatterns.targetDemographic,
+          competitiveIntensity: insights.demandPatterns.competitiveIntensity,
+          vertical,
+        },
+      });
+    }
 
-    return [{
-      type: 'search',
-      strength: this.normalizeSearchVolume(trends.data),
-      source: 'google_trends',
-      timestamp: new Date(),
-      metadata: {
-        intent: this.categorizeIntent(trends.data)
-      }
-    }];
-  }
+    if (insights.urgencySignals) {
+      signals.push({
+        type: 'urgency',
+        strength: insights.urgencySignals.level,
+        source: 'gpt_analysis',
+        timestamp: now,
+        metadata: {
+          urgencyLevel: insights.urgencySignals.score,
+          drivers: insights.urgencySignals.drivers,
+          timeframe: insights.urgencySignals.timeframe,
+          vertical,
+        },
+      });
+    }
 
-  private async getPurchaseHistorySignals(category: string): Promise<NeedSignal[]> {
-    // Check our own purchase history data
-    const recentPurchases = await this.prisma.purchase.findMany({
-      where: {
-        category,
-        createdAt: {
-          gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // Last 30 days
-        }
-      },
-      select: {
-        price: true,
-        createdAt: true
-      }
-    });
-
-    return [{
-      type: 'purchase',
-      strength: this.calculatePurchaseStrength(recentPurchases),
-      source: 'internal_data',
-      timestamp: new Date(),
-      metadata: {
-        pricePoint: this.calculateAveragePrice(recentPurchases)
-      }
-    }];
-  }
-
-  private async getUrgencySignals(category: string): Promise<NeedSignal[]> {
-    // Check Reddit for urgency indicators
-    await this.rateLimit.wait('reddit');
-    const response = await axios.get(
-      `https://www.reddit.com/search.json?q=${encodeURIComponent(category)}&sort=new&t=day`
-    );
-
-    const urgencyScore = this.analyzeUrgencyInPosts(response.data.data.children);
-
-    return [{
-      type: 'urgency',
-      strength: urgencyScore,
-      source: 'reddit',
-      timestamp: new Date(),
-      metadata: {
-        urgencyLevel: this.categorizeUrgency(urgencyScore)
-      }
-    }];
+    return signals;
   }
 
   private calculateAccuracy(signals: NeedSignal[]): AccuracyMetrics {
+    if (!signals.length) {
+      return {
+        confidence: 0,
+        signalStrength: 0,
+        dataPoints: 0,
+      };
+    }
+
+    const alignmentScores = signals.reduce(
+      (acc, signal) => ({
+        ...acc,
+        [signal.type]: signal.strength,
+      }),
+      {} as Record<string, number>
+    );
+
+    const avgAlignmentScore =
+      Object.values(alignmentScores).reduce((sum, score) => sum + score, 0) /
+      Object.keys(alignmentScores).length;
+
     return {
-      confidence: this.calculateConfidence(signals),
-      signalStrength: this.calculateSignalStrength(signals),
-      dataPoints: signals.length
+      confidence: avgAlignmentScore,
+      signalStrength: signals.length > 2 ? 0.8 : 0.5,
+      dataPoints: signals.length,
     };
   }
 
-  private hasReliableData(accuracy: AccuracyMetrics): boolean {
-    return (
-      accuracy.confidence > 0.7 &&    // High confidence
-      accuracy.signalStrength > 0.6 && // Strong signals
-      accuracy.dataPoints >= 3        // Multiple data points
-    );
-  }
+  private validateNeed(insights: any, vertical: MarketVertical): boolean {
+    try {
+      const { marketTrends, demandPatterns, urgencySignals, confidence, marketViability } =
+        insights;
 
-  private validateNeed(insights: any): boolean {
-    // Strict validation criteria
-    return (
-      insights.intentClarity > 0.8 &&   // Clear intent
-      insights.urgencyLevel > 0.6 &&    // Reasonable urgency
-      insights.purchaseReadiness > 0.7  // Ready to buy
-    );
-  }
+      const alignmentScores = {
+        marketTrends: marketTrends.confidence * marketTrends.verticalFit,
+        demandStrength: demandPatterns.strength,
+        urgencyLevel: urgencySignals.level,
+        overallConfidence: confidence,
+        viability: marketViability,
+      };
 
-  private getRecommendedActions(insights: any): string[] {
-    const actions = [];
-    
-    if (insights.intentClarity > 0.9) {
-      actions.push('Immediate outreach recommended');
+      const avgAlignmentScore =
+        Object.values(alignmentScores).reduce((sum: number, score: number) => sum + score, 0) /
+        Object.keys(alignmentScores).length;
+
+      return avgAlignmentScore > 0.6;
+    } catch (error) {
+      return false;
     }
-    
-    if (insights.pricePoint) {
-      actions.push(`Focus on ${insights.pricePoint} price range`);
+  }
+
+  private getRecommendedActions(insights: any, vertical: MarketVertical): string[] {
+    try {
+      return insights.recommendations || [];
+    } catch (error) {
+      return [];
     }
-    
-    if (insights.urgencyLevel > 0.8) {
-      actions.push('Prioritize fast-shipping options');
-    }
-
-    return actions;
-  }
-
-  // Helper methods with simplified but accurate logic
-  private normalizeSearchVolume(data: any): number {
-    // Simplified normalization focusing on clear signals
-    return 0.7; // Placeholder
-  }
-
-  private calculatePurchaseStrength(purchases: any[]): number {
-    // Focus on recent, completed purchases
-    return 0.8; // Placeholder
-  }
-
-  private analyzeUrgencyInPosts(posts: any[]): number {
-    // Look for clear urgency indicators
-    return 0.6; // Placeholder
-  }
-
-  private calculateConfidence(signals: NeedSignal[]): number {
-    // Weight more reliable signals higher
-    return 0.85; // Placeholder
-  }
-
-  private calculateSignalStrength(signals: NeedSignal[]): number {
-    // Focus on signal quality over quantity
-    return 0.75; // Placeholder
-  }
-
-  private calculateAveragePrice(purchases: any[]): number {
-    // Calculate average price from purchase history
-    if (purchases.length === 0) return 0;
-    return purchases.reduce((sum, p) => sum + p.price, 0) / purchases.length;
-  }
-
-  private categorizeIntent(data: any): string {
-    // Analyze and categorize search intent
-    return 'purchase_intent'; // Placeholder
-  }
-
-  private categorizeUrgency(score: number): number {
-    // Convert urgency score to level (1-5)
-    return Math.ceil(score * 5);
   }
 }
 

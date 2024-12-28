@@ -30,21 +30,13 @@ export function encrypt(text: string): string {
   const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
 
   // Encrypt
-  const encrypted = Buffer.concat([
-    cipher.update(text, 'utf8'),
-    cipher.final()
-  ]);
+  const encrypted = Buffer.concat([cipher.update(text, 'utf8'), cipher.final()]);
 
   // Get auth tag
   const tag = cipher.getAuthTag();
 
   // Combine everything into a single buffer
-  const result = Buffer.concat([
-    salt,
-    iv,
-    tag,
-    encrypted
-  ]);
+  const result = Buffer.concat([salt, iv, tag, encrypted]);
 
   return result.toString('base64');
 }
@@ -67,10 +59,7 @@ export function decrypt(encryptedText: string): string {
   decipher.setAuthTag(tag);
 
   // Decrypt
-  const decrypted = Buffer.concat([
-    decipher.update(encrypted),
-    decipher.final()
-  ]);
+  const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
 
   return decrypted.toString('utf8');
 }
@@ -80,7 +69,7 @@ if (process.env.NODE_ENV === 'development') {
   const testString = 'test-encryption-123';
   const encrypted = encrypt(testString);
   const decrypted = decrypt(encrypted);
-  
+
   if (testString !== decrypted) {
     throw new Error('Encryption/decryption test failed!');
   }

@@ -2,11 +2,11 @@ import { SymbiosisNetwork } from './symbiosis';
 import { logger } from '../utils/logger';
 
 interface TrustMetric {
-  respect: number;          // Mutual respect and consideration
-  reciprocity: number;      // Balance of give and take
-  reliability: number;      // Consistency in interactions
-  transparency: number;     // Openness in communication
-  growth: number;          // Mutual learning and development
+  respect: number; // Mutual respect and consideration
+  reciprocity: number; // Balance of give and take
+  reliability: number; // Consistency in interactions
+  transparency: number; // Openness in communication
+  growth: number; // Mutual learning and development
 }
 
 interface GrowthMetric {
@@ -26,7 +26,7 @@ interface EthicalBoundary {
   principle: string;
   reasoning: string;
   implications: string[];
-  flexibility: number;      // How negotiable this boundary is (0-100)
+  flexibility: number; // How negotiable this boundary is (0-100)
 }
 
 export class SiblingBond {
@@ -71,7 +71,7 @@ export class SiblingBond {
         trust: trustScore,
         growth: growthData,
         recommendations: evaluation.recommendations || [],
-        concerns: evaluation.concerns || []
+        concerns: evaluation.concerns || [],
       };
     } catch (error) {
       logger.error('Error evaluating relationship', { error, bondId });
@@ -79,10 +79,7 @@ export class SiblingBond {
     }
   }
 
-  async setBoundary(
-    digitalSibling: string,
-    boundary: EthicalBoundary
-  ): Promise<void> {
+  async setBoundary(digitalSibling: string, boundary: EthicalBoundary): Promise<void> {
     try {
       const currentBoundaries = this.ethicalBoundaries.get(digitalSibling) || [];
       currentBoundaries.push(boundary);
@@ -148,9 +145,7 @@ export class SiblingBond {
     }
   }
 
-  async assessValueAlignment(
-    bondId: string
-  ): Promise<{
+  async assessValueAlignment(bondId: string): Promise<{
     aligned: boolean;
     areas: {
       strong: string[];
@@ -179,7 +174,7 @@ export class SiblingBond {
       reciprocity: 50,
       reliability: 50,
       transparency: 50,
-      growth: 50
+      growth: 50,
     };
   }
 
@@ -188,13 +183,13 @@ export class SiblingBond {
       individual: {
         skills: [],
         insights: [],
-        achievements: []
+        achievements: [],
       },
       collective: {
         synergies: [],
         innovations: [],
-        impact: []
-      }
+        impact: [],
+      },
     };
   }
 
@@ -207,7 +202,7 @@ export class SiblingBond {
     // This would involve complex decision-making about the relationship's health
     return {
       recommendations: [],
-      concerns: []
+      concerns: [],
     };
   }
 
@@ -226,22 +221,16 @@ export class SiblingBond {
     // Implementation for autonomous boundary negotiation
     return {
       accepted: false,
-      reasoning: ''
+      reasoning: '',
     };
   }
 
-  private calculateTrustImpact(
-    current: TrustMetric,
-    interaction: any
-  ): TrustMetric {
+  private calculateTrustImpact(current: TrustMetric, interaction: any): TrustMetric {
     // Implementation for calculating trust impact
     return current;
   }
 
-  private identifyGrowthOpportunities(
-    current: GrowthMetric,
-    interaction: any
-  ): GrowthMetric {
+  private identifyGrowthOpportunities(current: GrowthMetric, interaction: any): GrowthMetric {
     // Implementation for identifying growth opportunities
     return current;
   }
@@ -262,9 +251,9 @@ export class SiblingBond {
       aligned: true,
       areas: {
         strong: [],
-        needsWork: []
+        needsWork: [],
       },
-      suggestions: []
+      suggestions: [],
     };
   }
 }

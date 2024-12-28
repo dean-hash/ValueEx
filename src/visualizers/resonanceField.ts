@@ -10,9 +10,14 @@ export class ResonanceField {
   constructor(container: HTMLDivElement) {
     // Initialize Three.js scene
     this.scene = new THREE.Scene();
-    this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    this.camera = new THREE.PerspectiveCamera(
+      75,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000
+    );
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    
+
     // Setup renderer
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setClearColor(0x000000, 0);
@@ -41,7 +46,7 @@ export class ResonanceField {
       size: 0.05,
       vertexColors: true,
       blending: THREE.AdditiveBlending,
-      transparent: true
+      transparent: true,
     });
 
     this.particles = new THREE.Points(particleGeometry, particleMaterial);
@@ -65,14 +70,16 @@ export class ResonanceField {
     this.particles.rotation.y += 0.002;
 
     // Update particles based on resonance
-    const positions = (this.particles.geometry as THREE.BufferGeometry).attributes.position.array as Float32Array;
-    const colors = (this.particles.geometry as THREE.BufferGeometry).attributes.color.array as Float32Array;
+    const positions = (this.particles.geometry as THREE.BufferGeometry).attributes.position
+      .array as Float32Array;
+    const colors = (this.particles.geometry as THREE.BufferGeometry).attributes.color
+      .array as Float32Array;
 
     for (let i = 0; i < positions.length; i += 3) {
       // Add subtle movement
       positions[i] += Math.sin(Date.now() * 0.001 + i) * 0.001;
       positions[i + 1] += Math.cos(Date.now() * 0.001 + i) * 0.001;
-      
+
       // Pulse colors
       const time = Date.now() * 0.001;
       colors[i] = Math.sin(time + i) * 0.5 + 0.5;
@@ -96,9 +103,9 @@ export class ResonanceField {
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId);
     }
-    
+
     window.removeEventListener('resize', this.onWindowResize.bind(this));
-    
+
     // Dispose of Three.js resources
     this.particles.geometry.dispose();
     (this.particles.material as THREE.Material).dispose();

@@ -23,7 +23,10 @@ export class CollaborativeIntelligence {
     return CollaborativeIntelligence.instance;
   }
 
-  async brainstorm(topic: string, context?: any): Promise<{
+  async brainstorm(
+    topic: string,
+    context?: any
+  ): Promise<{
     ideas: string[];
     rationale: string;
     questions: string[];

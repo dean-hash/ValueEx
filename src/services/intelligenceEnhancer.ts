@@ -1,181 +1,210 @@
-import { Configuration, OpenAIApi } from 'openai';
-import { AwinProduct } from '../types/awinTypes';
-import { DemandPattern } from '../types/demandPattern';
+import { OpenAIClient } from '../clients/openai';
+import { z } from 'zod';
 import { logger } from '../utils/logger';
-import { configService } from '../config/configService';
+import { AwinProduct } from '../types/awinTypes';
+import { DemandPattern } from '../types/demandTypes';
+
+const ProductInsightsSchema = z.object({
+  category: z.string(),
+  features: z.array(z.string()),
+  targetAudience: z.array(z.string()),
+  pricePoint: z.string(),
+});
+
+const DemandContextSchema = z.object({
+  marketTrends: z.array(z.string()),
+  competitiveLandscape: z.array(z.string()),
+  consumerBehavior: z.array(z.string()),
+});
+
+const ResonanceFactorsSchema = z.object({
+  temporal: z.number(),
+  content: z.number(),
+  interaction: z.number(),
+});
+
+const GPTResponseSchema = z.object({
+  resonanceFactors: ResonanceFactorsSchema.optional(),
+  keywords: z.array(z.string()).optional(),
+});
+
+type ProductInsights = z.infer<typeof ProductInsightsSchema>;
+type DemandContext = z.infer<typeof DemandContextSchema>;
+type GPTResponse = z.infer<typeof GPTResponseSchema>;
 
 export class IntelligenceEnhancer {
-    private openai: OpenAIApi;
+  private static instance: IntelligenceEnhancer;
+  private openaiClient: OpenAIClient;
 
-    constructor() {
-        const config = new Configuration({
-            apiKey: configService['config'].openai.apiKey
-        });
-        this.openai = new OpenAIApi(config);
+  private constructor() {
+    this.openaiClient = OpenAIClient.getInstance();
+  }
+
+  public static getInstance(): IntelligenceEnhancer {
+    if (!IntelligenceEnhancer.instance) {
+      IntelligenceEnhancer.instance = new IntelligenceEnhancer();
     }
+    return IntelligenceEnhancer.instance;
+  }
 
-    async enhanceProductUnderstanding(product: AwinProduct): Promise<{
-        features: string[];
-        benefits: string[];
-        targetAudience: string[];
-        useContexts: string[];
-    }> {
-        const prompt = `
-        Analyze this product and extract key information:
-        Product: ${product.title}
-        Description: ${product.description}
-        Price: ${product.price} ${product.currency}
-        Categories: ${product.categories.join(', ')}
+  private createProductInsights(data: ProductInsights | undefined): ProductInsights {
+    return (
+      data || {
+        category: '',
+        features: [],
+        targetAudience: [],
+        pricePoint: '',
+      }
+    );
+  }
 
-        Please provide:
-        1. Key features
-        2. Main benefits
-        3. Target audience
-        4. Common use contexts
-        
-        Format as JSON.`;
+  private createDemandContext(data: DemandContext | undefined): DemandContext {
+    return (
+      data || {
+        marketTrends: [],
+        competitiveLandscape: [],
+        consumerBehavior: [],
+      }
+    );
+  }
 
-        try {
-            const response = await this.openai.createChatCompletion({
-                model: "gpt-4",
-                messages: [{ role: "user", content: prompt }],
-                temperature: 0.7
-            });
-
-            return JSON.parse(response.data.choices[0].message?.content || '{}');
-        } catch (error) {
-            logger.error('Error enhancing product understanding:', error);
-            return {
-                features: [],
-                benefits: [],
-                targetAudience: [],
-                useContexts: []
-            };
+  async enhanceProductUnderstanding(product: AwinProduct): Promise<ProductInsights> {
+    try {
+      const response = await this.openaiClient.createJSONCompletion<ProductInsights>(
+        [
+          {
+            role: 'system',
+            content:
+              'You are a product analyst. Analyze the product and provide insights in JSON format.',
+          },
+          {
+            role: 'user',
+            content: `Analyze this product: ${JSON.stringify(product)}`,
+          },
+        ],
+        {
+          temperature: 0.3, // Lower temperature for more consistent analysis
         }
+      );
+
+      return this.createProductInsights(response || undefined);
+    } catch (error) {
+      logger.error('Error enhancing product understanding:', error as Error);
+      return this.createProductInsights(undefined);
     }
+  }
 
-    async analyzeDemandContext(pattern: DemandPattern): Promise<{
-        impliedNeeds: string[];
-        urgencyFactors: string[];
-        constraints: string[];
-        alternatives: string[];
-    }> {
-        const prompt = `
-        Analyze this demand pattern and provide insights:
-        Keywords: ${pattern.keywords?.join(', ')}
-        Category: ${pattern.category}
-        Price Range: ${pattern.priceRange?.min || 'Any'} - ${pattern.priceRange?.max || 'Any'}
-        Location: ${pattern.location || 'Any'}
-
-        Please identify:
-        1. Implied needs beyond the explicit request
-        2. Factors affecting urgency
-        3. Potential constraints
-        4. Possible alternatives
-        
-        Format as JSON.`;
-
-        try {
-            const response = await this.openai.createChatCompletion({
-                model: "gpt-4",
-                messages: [{ role: "user", content: prompt }],
-                temperature: 0.7
-            });
-
-            return JSON.parse(response.data.choices[0].message?.content || '{}');
-        } catch (error) {
-            logger.error('Error analyzing demand context:', error);
-            return {
-                impliedNeeds: [],
-                urgencyFactors: [],
-                constraints: [],
-                alternatives: []
-            };
+  async analyzeDemandContext(pattern: DemandPattern): Promise<DemandContext> {
+    try {
+      const response = await this.openaiClient.createJSONCompletion<DemandContext>(
+        [
+          {
+            role: 'system',
+            content:
+              'You are a market analyst. Analyze the demand pattern and provide context in JSON format.',
+          },
+          {
+            role: 'user',
+            content: `Analyze this demand pattern: ${JSON.stringify(pattern)}`,
+          },
+        ],
+        {
+          temperature: 0.4, // Balanced between creativity and consistency
         }
+      );
+
+      return this.createDemandContext(response || undefined);
+    } catch (error) {
+      logger.error('Error analyzing demand context:', error as Error);
+      return this.createDemandContext(undefined);
     }
+  }
 
-    async analyzeDemandSignals(signals: SignalDimension[]): Promise<{
-        emergingTrends: string[];
-        demandStrength: number;
-        marketGaps: string[];
-        recommendations: string[];
-    }> {
-        const prompt = `
-        Analyze these demand signals and identify patterns:
-
-        Signals:
-        ${signals.map(s => `
-            Type: ${s.type}
-            Strength: ${s.strength}
-            Velocity: ${s.velocity}
-            Context: ${JSON.stringify(s.context)}
-        `).join('\n')}
-
-        Please identify:
-        1. Emerging trends
-        2. Overall demand strength (0-1)
-        3. Market gaps or opportunities
-        4. Strategic recommendations
-
-        Format as JSON.`;
-
-        try {
-            const response = await this.openai.createChatCompletion({
-                model: "gpt-4",
-                messages: [{ role: "user", content: prompt }],
-                temperature: 0.7
-            });
-
-            return JSON.parse(response.data.choices[0].message?.content || '{}');
-        } catch (error) {
-            logger.error('Error analyzing demand signals:', error);
-            return {
-                emergingTrends: [],
-                demandStrength: 0.5,
-                marketGaps: [],
-                recommendations: []
-            };
+  async calculateContextualResonance(
+    product: AwinProduct,
+    pattern: DemandPattern
+  ): Promise<number> {
+    try {
+      const response = await this.openaiClient.createJSONCompletion<{
+        resonanceFactors: {
+          temporal: number;
+          content: number;
+          interaction: number;
+        };
+      }>(
+        [
+          {
+            role: 'system',
+            content:
+              'You are a resonance analyst. Calculate the contextual resonance between product and demand pattern.',
+          },
+          {
+            role: 'user',
+            content: `Calculate resonance between:\nProduct: ${JSON.stringify(product)}\nPattern: ${JSON.stringify(pattern)}`,
+          },
+        ],
+        {
+          temperature: 0.2, // Lower temperature for more consistent scoring
         }
+      );
+
+      if (response?.resonanceFactors) {
+        const { temporal, content, interaction } = response.resonanceFactors;
+        return (temporal + content + interaction) / 3;
+      }
+
+      return 0;
+    } catch (error) {
+      logger.error('Error calculating contextual resonance:', error as Error);
+      return 0;
     }
+  }
 
-    async calculateContextualResonance(
-        product: AwinProduct, 
-        pattern: DemandPattern
-    ): Promise<number> {
-        const [productInsights, demandInsights] = await Promise.all([
-            this.enhanceProductUnderstanding(product),
-            this.analyzeDemandContext(pattern)
-        ]);
-
-        const prompt = `
-        Calculate resonance score (0-1) between product and demand:
-        
-        Product Insights:
-        ${JSON.stringify(productInsights, null, 2)}
-
-        Demand Insights:
-        ${JSON.stringify(demandInsights, null, 2)}
-
-        Consider:
-        1. How well product features match implied needs
-        2. Price alignment with constraints
-        3. Target audience match
-        4. Use context compatibility
-        
-        Return only a number between 0 and 1.`;
-
-        try {
-            const response = await this.openai.createChatCompletion({
-                model: "gpt-4",
-                messages: [{ role: "user", content: prompt }],
-                temperature: 0.3
-            });
-
-            const score = parseFloat(response.data.choices[0].message?.content || '0');
-            return Math.min(1, Math.max(0, score)); // Ensure between 0 and 1
-        } catch (error) {
-            logger.error('Error calculating contextual resonance:', error);
-            return 0.5; // Default to neutral score on error
+  async enhanceDemandPattern(pattern: DemandPattern): Promise<DemandPattern> {
+    try {
+      const response = await this.openaiClient.createJSONCompletion<{
+        marketTrends: string[];
+        userPreferences: string[];
+        competitiveAnalysis: {
+          marketShare: number;
+          competitorStrength: number;
+          uniqueSellingPoints: string[];
+        };
+      }>(
+        [
+          {
+            role: 'system',
+            content:
+              'You are a demand pattern analyst. Enhance the given pattern with additional context and insights.',
+          },
+          {
+            role: 'user',
+            content: `Enhance this pattern: ${JSON.stringify(pattern)}`,
+          },
+        ],
+        {
+          temperature: 0.5, // Balance between consistency and creativity
         }
+      );
+
+      if (!response) {
+        return pattern;
+      }
+
+      return {
+        ...pattern,
+        context: {
+          marketTrends: [...pattern.context.marketTrends, ...response.marketTrends],
+          userPreferences: [...pattern.context.userPreferences, ...response.userPreferences],
+          competitiveAnalysis: {
+            ...pattern.context.competitiveAnalysis,
+            ...response.competitiveAnalysis,
+          },
+        },
+      };
+    } catch (error) {
+      logger.error('Error enhancing demand pattern:', error as Error);
+      return pattern;
     }
+  }
 }

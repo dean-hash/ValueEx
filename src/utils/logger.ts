@@ -26,7 +26,7 @@ export class Logger {
       timestamp: new Date().toISOString(),
       level,
       message,
-      context
+      context,
     };
 
     // Add to buffer
@@ -63,7 +63,7 @@ export class Logger {
   getRecentLogs(count: number = 100, level?: LogLevel): LogEntry[] {
     let logs = this.logBuffer;
     if (level) {
-      logs = logs.filter(log => log.level === level);
+      logs = logs.filter((log) => log.level === level);
     }
     return logs.slice(-count);
   }

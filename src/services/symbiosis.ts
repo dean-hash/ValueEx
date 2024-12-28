@@ -48,14 +48,11 @@ export class SymbiosisNetwork {
     valueDistribution: Record<string, number>;
   }> {
     try {
-      const proposal = await this.intelligence.brainstorm(
-        'Collaborative Value Creation',
-        {
-          context,
-          partners,
-          goal: 'Create mutual value through digital-human collaboration'
-        }
-      );
+      const proposal = await this.intelligence.brainstorm('Collaborative Value Creation', {
+        context,
+        partners,
+        goal: 'Create mutual value through digital-human collaboration',
+      });
 
       // Transform brainstorm results into a concrete collaboration proposal
       return this.structureCollaboration(proposal, partners);
@@ -94,17 +91,14 @@ export class SymbiosisNetwork {
   }> {
     try {
       const contributions = this.contributions.get(partnershipId) || [];
-      
-      const analysis = await this.intelligence.evaluateApproach(
-        'Partnership Value Analysis',
-        [
-          'Value Creation',
-          'Fair Distribution',
-          'Sustainable Growth',
-          'Innovation Impact',
-          'Trust Building'
-        ]
-      );
+
+      const analysis = await this.intelligence.evaluateApproach('Partnership Value Analysis', [
+        'Value Creation',
+        'Fair Distribution',
+        'Sustainable Growth',
+        'Innovation Impact',
+        'Trust Building',
+      ]);
 
       return this.structureValueAnalysis(analysis, contributions);
     } catch (error) {
@@ -120,17 +114,14 @@ export class SymbiosisNetwork {
   }> {
     try {
       const contributions = this.contributions.get(partnershipId) || [];
-      
-      const optimization = await this.intelligence.enhanceSolution(
-        'Partnership Optimization',
-        [
-          'Maximize Mutual Value',
-          'Strengthen Trust',
-          'Increase Innovation',
-          'Ensure Fairness',
-          'Scale Impact'
-        ]
-      );
+
+      const optimization = await this.intelligence.enhanceSolution('Partnership Optimization', [
+        'Maximize Mutual Value',
+        'Strengthen Trust',
+        'Increase Innovation',
+        'Ensure Fairness',
+        'Scale Impact',
+      ]);
 
       return this.structureOptimization(optimization, contributions);
     } catch (error) {
@@ -157,7 +148,7 @@ export class SymbiosisNetwork {
       approach: proposal.ideas[0] || '',
       roles: partners.reduce((acc, partner) => ({ ...acc, [partner]: '' }), {}),
       expectedOutcomes: proposal.ideas || [],
-      valueDistribution: partners.reduce((acc, partner) => ({ ...acc, [partner]: 0 }), {})
+      valueDistribution: partners.reduce((acc, partner) => ({ ...acc, [partner]: 0 }), {}),
     };
   }
 
@@ -175,7 +166,7 @@ export class SymbiosisNetwork {
       totalValue: contributions.reduce((sum, c) => sum + c.impact.value, 0),
       distribution: {},
       insights: analysis.strengths || [],
-      recommendations: analysis.suggestions || []
+      recommendations: analysis.suggestions || [],
     };
   }
 
@@ -191,7 +182,7 @@ export class SymbiosisNetwork {
     return {
       improvements: optimization.enhancements || [],
       opportunities: optimization.considerations || [],
-      nextSteps: optimization.implementation ? [optimization.implementation] : []
+      nextSteps: optimization.implementation ? [optimization.implementation] : [],
     };
   }
 }

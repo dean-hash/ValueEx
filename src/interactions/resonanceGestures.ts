@@ -15,7 +15,7 @@ export class ResonanceGestures {
   private gestureFields: Map<string, GestureField> = new Map();
   private intentionField: Set<string> = new Set();
   private resonanceStrength = 0;
-  
+
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
     this.initializeGestureField();
