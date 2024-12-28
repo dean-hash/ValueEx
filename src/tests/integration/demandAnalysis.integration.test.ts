@@ -1,18 +1,37 @@
 import { RedditScraper } from '../../services/demandSources/redditScraper';
-import { digitalIntelligence } from '../../services/digitalIntelligence';
+import { DigitalIntelligence } from '../../services/digitalIntelligence';
 import { DemandSourceManager } from '../../services/demandSources/demandSourceManager';
 import { logger } from '../../utils/logger';
+import { ScrapedDemandSignal } from '../../types/demandTypes';
+import { DemandAnalysis } from '../../types/demand';
+
+interface AnalysisResult {
+  signal: ScrapedDemandSignal;
+  analysis: DemandAnalysis;
+  isGenuine: boolean;
+  confidence: number;
+  recommendedActions: string[];
+}
+
+interface ActionableInsight {
+  content: string;
+  confidence: number;
+  actions: string[];
+  vertical: string;
+}
 
 describe('Demand Analysis Integration', () => {
   let redditScraper: RedditScraper;
   let demandManager: DemandSourceManager;
+  let intelligence: DigitalIntelligence;
 
-  beforeAll(() => {
+  beforeAll((): void => {
     redditScraper = new RedditScraper();
     demandManager = new DemandSourceManager();
+    intelligence = new DigitalIntelligence();
   });
 
-  it('should analyze demand from real Reddit posts', async () => {
+  it('should analyze demand from real Reddit posts', async (): Promise<void> => {
     // 1. Get real posts from Reddit
     const subreddits = ['homeoffice', 'productivity', 'gaming'];
     const signals = await redditScraper.scrape('desk chair recommendations', {
@@ -34,9 +53,9 @@ describe('Demand Analysis Integration', () => {
     logger.info(`Aggregated to ${aggregatedSignals.length} unique signals`);
 
     // 3. Analyze each signal with Digital Intelligence
-    const analysisResults = await Promise.all(
-      aggregatedSignals.map(async (signal) => {
-        const analysis = await digitalIntelligence.analyzeNeed(signal.content);
+    const analysisResults: AnalysisResult[] = await Promise.all(
+      aggregatedSignals.map(async (signal): Promise<AnalysisResult> => {
+        const analysis = await intelligence.analyzeNeed(signal.content);
         return {
           signal,
           analysis,
@@ -48,7 +67,7 @@ describe('Demand Analysis Integration', () => {
     );
 
     // 4. Log detailed results
-    analysisResults.forEach((result) => {
+    analysisResults.forEach((result: AnalysisResult): void => {
       logger.info('Demand Analysis Result:', {
         content: result.signal.content.substring(0, 100) + '...',
         isGenuine: result.isGenuine,
@@ -65,7 +84,7 @@ describe('Demand Analysis Integration', () => {
     expect(highConfidenceDemands.length).toBeGreaterThan(0);
 
     // 6. Return actionable insights
-    const actionableInsights = analysisResults
+    const actionableInsights: ActionableInsight[] = analysisResults
       .filter((r) => r.isGenuine && r.confidence > 0.7)
       .map((r) => ({
         content: r.signal.content,
