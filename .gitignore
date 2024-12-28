@@ -42,3 +42,7 @@ yarn-error.log*
 # Temp files
 *.log
 *.tmp
+
+# Next.js
+.next/
+out/
