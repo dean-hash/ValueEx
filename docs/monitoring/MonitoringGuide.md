@@ -61,6 +61,74 @@ Tracks application-specific metrics and patterns.
 - Set up alerts for anomalous patterns
 - Regular metric cleanup for efficiency
 
+## Data Connectors
+
+### Extended Marketplace Connector
+The `ExtendedMarketplaceConnector` provides a unified interface for fetching and analyzing data from multiple marketplaces:
+
+- **Walmart**: Real-time product data including reviews, ratings, and stock status
+- **Etsy**: Listing data with views, favorites, and quantity metrics
+- **AliExpress**: Product data with orders, ratings, and price information
+- **Shopify**: Product variants, inventory levels, and image data
+
+#### Type Definitions
+```typescript
+interface ExtendedMarketplaceConfig {
+  marketplace: 'walmart' | 'etsy' | 'aliexpress' | 'shopify';
+  endpoint: string;
+  apiKey?: string;
+  region: string;
+}
+
+interface WalmartItem {
+  itemId: string;
+  name: string;
+  salePrice: number;
+  stockStatus: string;
+  numReviews: number;
+  averageRating: number;
+}
+
+interface EtsyItem {
+  listing_id: string;
+  title: string;
+  price: number;
+  quantity: number;
+  views: number;
+  num_favorers: number;
+}
+
+interface AliExpressItem {
+  productId: string;
+  title: string;
+  price: number;
+  orders: number;
+  rating: number;
+}
+
+interface ShopifyProduct {
+  id: string;
+  title: string;
+  variants: ShopifyVariant[];
+  images: { id: string }[];
+}
+```
+
+#### Demand Calculation
+Each marketplace has its own demand calculation algorithm that considers various factors:
+
+- **Walmart**: Reviews, ratings, and stock status
+- **Etsy**: Views, favorites, and quantity
+- **AliExpress**: Orders, ratings, and price
+- **Shopify**: Variants, inventory, and images
+
+#### Confidence Scoring
+Confidence scores are calculated based on:
+- Data freshness
+- Sample size
+- Source reliability
+- Market presence
+
 ## Dashboard Usage
 
 ### 1. Real-Time Monitoring
