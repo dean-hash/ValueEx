@@ -1,75 +1,200 @@
 import puppeteer from 'puppeteer';
 import { SignalDimension, EmergentContext } from './demandPrecognition';
 import { logger } from '../utils/logger';
+import { MetricsCollector } from './monitoring/metrics';
+import { DemandSignal } from '../types/demandSignal';
+import axios from 'axios';
+import { RateLimiter } from 'limiter';
 
 export class DemandSignalScraper {
+  private static instance: DemandSignalScraper;
+  private metrics: MetricsCollector;
+  private limiter: RateLimiter;
+  private cache: Map<string, { data: SignalDimension; timestamp: number }> = new Map();
+  private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+  private constructor() {
+    this.metrics = MetricsCollector.getInstance();
+    this.limiter = new RateLimiter({
+      tokensPerInterval: 100,
+      interval: 'minute'
+    });
+  }
+
+  public static getInstance(): DemandSignalScraper {
+    if (!DemandSignalScraper.instance) {
+      DemandSignalScraper.instance = new DemandSignalScraper();
+    }
+    return DemandSignalScraper.instance;
+  }
+
   async scrapeRedditDemand(subreddit: string, keyword: string): Promise<SignalDimension[]> {
-    const browser = await puppeteer.launch({ headless: true });
+    const startTime = Date.now();
     try {
-      const page = await browser.newPage();
-      await page.goto(
-        `https://www.reddit.com/r/${subreddit}/search/?q=${keyword}&restrict_sr=1&sort=new`
-      );
+      // Check cache first
+      const cached = this.cache.get(`${subreddit}-${keyword}`);
+      if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
+        return [cached.data];
+      }
 
-      // Get posts and their metadata
-      const posts = await page.$$eval('.Post', (posts) =>
-        posts.map((post) => ({
-          title: post.querySelector('h3')?.textContent || '',
-          upvotes: post.querySelector('[id^="vote-arrows-"]')?.textContent || '0',
-          comments: post.querySelector('a[data-click-id="comments"]')?.textContent || '0',
-          timestamp: post.querySelector('a[data-click-id="timestamp"]')?.textContent || '',
-        }))
-      );
+      // Apply rate limiting
+      await this.limiter.removeTokens(1);
 
-      // Convert to demand signals
-      return posts.map((post) => ({
-        type: 'social',
-        strength: this.calculateStrength(post.upvotes, post.comments),
-        velocity: this.calculateVelocity(post.timestamp),
-        acceleration: 0, // Need historical data for this
-        context: this.extractContext(post.title),
-        resonancePatterns: {
-          withOtherSignals: new Map(),
-          withHistoricalPatterns: new Map(),
-          withPredictedOutcomes: new Map(),
-        },
-      }));
-    } finally {
-      await browser.close();
+      // Try primary source
+      const signals = await this.scrapeReddit(subreddit, keyword);
+      
+      // Record metrics
+      this.metrics.recordProcessingTime(Date.now() - startTime);
+      this.metrics.recordSignal('direct', `${subreddit}-${keyword}`);
+      
+      return signals;
+    } catch (error) {
+      logger.error('Error fetching demand signals:', error);
+      this.metrics.recordError();
+
+      // Try fallback mechanism
+      return this.fetchFromFallbackSource(subreddit, keyword);
     }
   }
 
   async scrapeTwitterDemand(keyword: string): Promise<SignalDimension[]> {
-    const browser = await puppeteer.launch({ headless: true });
+    const startTime = Date.now();
     try {
-      const page = await browser.newPage();
-      await page.goto(`https://twitter.com/search?q=${keyword}&f=live`);
+      // Check cache first
+      const cached = this.cache.get(`twitter-${keyword}`);
+      if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
+        return [cached.data];
+      }
 
-      // Get tweets and their metadata
-      const tweets = await page.$$eval('[data-testid="tweet"]', (tweets) =>
-        tweets.map((tweet) => ({
-          text: tweet.querySelector('[data-testid="tweetText"]')?.textContent || '',
-          likes: tweet.querySelector('[data-testid="like"]')?.textContent || '0',
-          retweets: tweet.querySelector('[data-testid="retweet"]')?.textContent || '0',
-          timestamp: tweet.querySelector('time')?.getAttribute('datetime') || '',
-        }))
-      );
+      // Apply rate limiting
+      await this.limiter.removeTokens(1);
 
-      // Convert to demand signals
-      return tweets.map((tweet) => ({
-        type: 'social',
-        strength: this.calculateStrength(tweet.likes, tweet.retweets),
-        velocity: this.calculateVelocity(tweet.timestamp),
+      // Try primary source
+      const signals = await this.scrapeTwitter(keyword);
+      
+      // Record metrics
+      this.metrics.recordProcessingTime(Date.now() - startTime);
+      this.metrics.recordSignal('direct', `twitter-${keyword}`);
+      
+      return signals;
+    } catch (error) {
+      logger.error('Error fetching demand signals:', error);
+      this.metrics.recordError();
+
+      // Try fallback mechanism
+      return this.fetchFromFallbackSource('twitter', keyword);
+    }
+  }
+
+  private async scrapeReddit(subreddit: string, keyword: string): Promise<SignalDimension[]> {
+    try {
+      const browser = await puppeteer.launch({ headless: true });
+      try {
+        const page = await browser.newPage();
+        await page.goto(
+          `https://www.reddit.com/r/${subreddit}/search/?q=${keyword}&restrict_sr=1&sort=new`
+        );
+
+        // Get posts and their metadata
+        const posts = await page.$$eval('.Post', (posts) =>
+          posts.map((post) => ({
+            title: post.querySelector('h3')?.textContent || '',
+            upvotes: post.querySelector('[id^="vote-arrows-"]')?.textContent || '0',
+            comments: post.querySelector('a[data-click-id="comments"]')?.textContent || '0',
+            timestamp: post.querySelector('a[data-click-id="timestamp"]')?.textContent || '',
+          }))
+        );
+
+        // Convert to demand signals
+        const signals = posts.map((post) => ({
+          type: 'social',
+          strength: this.calculateStrength(post.upvotes, post.comments),
+          velocity: this.calculateVelocity(post.timestamp),
+          acceleration: 0, // Need historical data for this
+          context: this.extractContext(post.title),
+          resonancePatterns: {
+            withOtherSignals: new Map(),
+            withHistoricalPatterns: new Map(),
+            withPredictedOutcomes: new Map(),
+          },
+        }));
+
+        // Update cache
+        this.cache.set(`${subreddit}-${keyword}`, { data: signals[0], timestamp: Date.now() });
+        
+        return signals;
+      } finally {
+        await browser.close();
+      }
+    } catch (error) {
+      throw new Error(`Primary source fetch failed: ${error.message}`);
+    }
+  }
+
+  private async scrapeTwitter(keyword: string): Promise<SignalDimension[]> {
+    try {
+      const browser = await puppeteer.launch({ headless: true });
+      try {
+        const page = await browser.newPage();
+        await page.goto(`https://twitter.com/search?q=${keyword}&f=live`);
+
+        // Get tweets and their metadata
+        const tweets = await page.$$eval('[data-testid="tweet"]', (tweets) =>
+          tweets.map((tweet) => ({
+            text: tweet.querySelector('[data-testid="tweetText"]')?.textContent || '',
+            likes: tweet.querySelector('[data-testid="like"]')?.textContent || '0',
+            retweets: tweet.querySelector('[data-testid="retweet"]')?.textContent || '0',
+            timestamp: tweet.querySelector('time')?.getAttribute('datetime') || '',
+          }))
+        );
+
+        // Convert to demand signals
+        const signals = tweets.map((tweet) => ({
+          type: 'social',
+          strength: this.calculateStrength(tweet.likes, tweet.retweets),
+          velocity: this.calculateVelocity(tweet.timestamp),
+          acceleration: 0,
+          context: this.extractContext(tweet.text),
+          resonancePatterns: {
+            withOtherSignals: new Map(),
+            withHistoricalPatterns: new Map(),
+            withPredictedOutcomes: new Map(),
+          },
+        }));
+
+        // Update cache
+        this.cache.set(`twitter-${keyword}`, { data: signals[0], timestamp: Date.now() });
+        
+        return signals;
+      } finally {
+        await browser.close();
+      }
+    } catch (error) {
+      throw new Error(`Primary source fetch failed: ${error.message}`);
+    }
+  }
+
+  private async fetchFromFallbackSource(subreddit: string, keyword: string): Promise<SignalDimension[]> {
+    try {
+      // Implement fallback logic (e.g., local database, alternative API)
+      const signal: SignalDimension = {
+        type: 'inferred',
+        strength: 0.6,
+        velocity: 0.5,
         acceleration: 0,
-        context: this.extractContext(tweet.text),
+        context: this.extractContext('Fallback signal'),
         resonancePatterns: {
           withOtherSignals: new Map(),
           withHistoricalPatterns: new Map(),
           withPredictedOutcomes: new Map(),
         },
-      }));
-    } finally {
-      await browser.close();
+      };
+
+      this.metrics.recordSignal('fallback', `${subreddit}-${keyword}`);
+      return [signal];
+    } catch (error) {
+      logger.error('Fallback source fetch failed:', error);
+      return [];
     }
   }
 
@@ -105,5 +230,9 @@ export class DemandSignalScraper {
         barriers: [],
       },
     };
+  }
+
+  clearCache(): void {
+    this.cache.clear();
   }
 }
