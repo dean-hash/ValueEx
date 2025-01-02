@@ -1,172 +1,195 @@
-import { DemandSignal } from '../types';
+import { DemandSignal } from '../adapters/demandSignalAdapter';
 
-/**
- * DemandInference Engine
- * 
- * Core functionality for processing explicit demands and inferring implicit demands
- * from user behavior and market signals.
- */
+interface BehaviorData {
+  searches: string[];
+  viewedItems: string[];
+}
+
+interface InferenceResult {
+  type: string;
+  confidence: number;
+  keywords: string[];
+  categories: string[];
+}
+
 export class DemandInference {
-    /**
-     * Process explicit demand signals (direct requests/searches)
-     */
-    async processExplicitDemand(input: {
-        query?: string,
-        category?: string,
-        requirements?: string[],
-        constraints?: Record<string, any>
-    }): Promise<DemandSignal> {
-        return {
-            id: this.generateId(),
-            category: input.category || this.inferCategory(input.query),
-            timestamp: new Date().toISOString(),
-            requirements: {
-                features: this.extractFeatures(input.requirements, input.query),
-                constraints: this.processConstraints(input.constraints)
-            }
-        };
+  private readonly confidenceThreshold = 0.7;
+  private readonly minKeywords = 3;
+  private readonly maxSignals = 10;
+
+  async inferFromBehavior(data: BehaviorData): Promise<DemandSignal[]> {
+    const inferences: InferenceResult[] = [];
+
+    // Analyze search patterns
+    if (data.searches.length >= this.minKeywords) {
+      const searchInference = this.analyzeSearchPatterns(data.searches);
+      if (searchInference.confidence >= this.confidenceThreshold) {
+        inferences.push(searchInference);
+      }
     }
 
-    /**
-     * Infer implicit demand from user behavior
-     */
-    async inferFromBehavior(behaviors: {
-        searches?: string[],
-        viewedItems?: string[],
-        timeSpent?: Record<string, number>
-    }): Promise<DemandSignal[]> {
-        const patterns = this.analyzeBehaviorPatterns(behaviors);
-        return patterns.map(pattern => this.convertPatternToSignal(pattern));
+    // Analyze viewed items
+    if (data.viewedItems.length > 0) {
+      const viewInference = this.analyzeViewingPatterns(data.viewedItems);
+      if (viewInference.confidence >= this.confidenceThreshold) {
+        inferences.push(viewInference);
+      }
     }
 
-    /**
-     * Detect demand from market signals
-     */
-    async detectMarketDemand(signals: {
-        searchTrends?: any[],
-        marketData?: any[],
-        competitorActivity?: any[]
-    }): Promise<DemandSignal[]> {
-        const marketPatterns = this.analyzeMarketPatterns(signals);
-        return marketPatterns.map(pattern => this.convertMarketPatternToSignal(pattern));
+    // Convert inferences to signals
+    return this.convertToSignals(inferences);
+  }
+
+  private analyzeSearchPatterns(searches: string[]): InferenceResult {
+    const keywords = this.extractRelevantKeywords(searches);
+    const categories = this.categorizeKeywords(keywords);
+
+    return {
+      type: 'search_pattern',
+      confidence: this.calculateConfidence(keywords.length, categories.length),
+      keywords,
+      categories,
+    };
+  }
+
+  private analyzeViewingPatterns(items: string[]): InferenceResult {
+    const categories = this.categorizeItems(items);
+    const keywords = this.extractKeywordsFromCategories(categories);
+
+    return {
+      type: 'viewing_pattern',
+      confidence: this.calculateConfidence(keywords.length, categories.length),
+      keywords,
+      categories,
+    };
+  }
+
+  private extractRelevantKeywords(searches: string[]): string[] {
+    return [
+      ...new Set(
+        searches
+          .flatMap((search) => search.toLowerCase().split(/\s+/))
+          .filter((word) => word.length > 2)
+      ),
+    ];
+  }
+
+  private categorizeKeywords(keywords: string[]): string[] {
+    // Simplified categorization - in real implementation, use ML model
+    return [
+      ...new Set(keywords.map((keyword) => this.findCategory(keyword)).filter(Boolean) as string[]),
+    ];
+  }
+
+  private findCategory(keyword: string): string | null {
+    // Placeholder - replace with actual category mapping logic
+    const categoryMap: Record<string, string> = {
+      price: 'financial',
+      cost: 'financial',
+      buy: 'purchase_intent',
+      sell: 'sales_intent',
+      compare: 'research',
+      review: 'research',
+    };
+
+    return categoryMap[keyword] || null;
+  }
+
+  private categorizeItems(items: string[]): string[] {
+    // Simplified categorization - in real implementation, use product taxonomy
+    return [
+      ...new Set(items.map((item) => this.extractMainCategory(item)).filter(Boolean) as string[]),
+    ];
+  }
+
+  private extractMainCategory(item: string): string | null {
+    // Placeholder - replace with actual category extraction logic
+    const words = item.toLowerCase().split(/\s+/);
+    return words[0] || null;
+  }
+
+  private extractKeywordsFromCategories(categories: string[]): string[] {
+    // Simplified extraction - in real implementation, use category metadata
+    return categories.flatMap((category) => category.split('_'));
+  }
+
+  private calculateConfidence(keywordCount: number, categoryCount: number): number {
+    const keywordWeight = Math.min(keywordCount / this.minKeywords, 1);
+    const categoryWeight = Math.min(categoryCount / 2, 1);
+
+    return keywordWeight * 0.6 + categoryWeight * 0.4;
+  }
+
+  private convertToSignals(inferences: InferenceResult[]): DemandSignal[] {
+    return inferences.slice(0, this.maxSignals).map((inference, index) => ({
+      id: `inferred_${Date.now()}_${index}`,
+      source: 'demand_inference',
+      timestamp: Date.now(),
+      type: 'inferred',
+      confidence: inference.confidence,
+      context: {
+        keywords: inference.keywords,
+        relatedCategories: inference.categories,
+        sentiment: 0,
+        urgency: 0.5,
+      },
+    }));
+  }
+
+  async consolidateSignals(signals: DemandSignal[]): Promise<DemandSignal[]> {
+    // Group by source and type
+    const groupedSignals = this.groupSignalsBySource(signals);
+
+    // Consolidate each group
+    return Object.values(groupedSignals).map((group) => this.mergeSignals(group));
+  }
+
+  private groupSignalsBySource(signals: DemandSignal[]): Record<string, DemandSignal[]> {
+    return signals.reduce(
+      (groups, signal) => {
+        const key = `${signal.source}_${signal.type}`;
+        groups[key] = groups[key] || [];
+        groups[key].push(signal);
+        return groups;
+      },
+      {} as Record<string, DemandSignal[]>
+    );
+  }
+
+  private mergeSignals(signals: DemandSignal[]): DemandSignal {
+    if (signals.length === 0) {
+      throw new Error('Cannot merge empty signal array');
     }
 
-    /**
-     * Combine multiple demand signals into a consolidated view
-     */
-    async consolidateSignals(signals: DemandSignal[]): Promise<DemandSignal[]> {
-        const grouped = this.groupRelatedSignals(signals);
-        return grouped.map(group => this.mergeSignals(group));
+    if (signals.length === 1) {
+      return signals[0];
     }
 
-    // Helper methods
-    private generateId(): string {
-        return Date.now().toString(36) + Math.random().toString(36).substr(2);
-    }
+    const base = signals[0];
+    const mergedKeywords = new Set<string>();
+    const mergedCategories = new Set<string>();
+    let totalConfidence = 0;
+    let totalSentiment = 0;
+    let totalUrgency = 0;
 
-    private inferCategory(query?: string): string {
-        // Basic category inference
-        return 'unknown';
-    }
+    signals.forEach((signal) => {
+      signal.context.keywords.forEach((k) => mergedKeywords.add(k));
+      signal.context.relatedCategories.forEach((c) => mergedCategories.add(c));
+      totalConfidence += signal.confidence;
+      totalSentiment += signal.context.sentiment;
+      totalUrgency += signal.context.urgency;
+    });
 
-    private extractFeatures(requirements?: string[], query?: string): string[] {
-        const features = new Set<string>();
-        
-        if (requirements) {
-            requirements.forEach(r => features.add(r));
-        }
-        
-        if (query) {
-            // Extract features from query
-            const queryFeatures = this.parseQuery(query);
-            queryFeatures.forEach(f => features.add(f));
-        }
-
-        return Array.from(features);
-    }
-
-    private processConstraints(constraints?: Record<string, any>): any {
-        return constraints || {};
-    }
-
-    private analyzeBehaviorPatterns(behaviors: any): any[] {
-        const patterns = [];
-        
-        if (behaviors.searches) {
-            patterns.push(...this.analyzeSearchPatterns(behaviors.searches));
-        }
-        
-        if (behaviors.viewedItems) {
-            patterns.push(...this.analyzeViewingPatterns(behaviors.viewedItems));
-        }
-        
-        if (behaviors.timeSpent) {
-            patterns.push(...this.analyzeTimePatterns(behaviors.timeSpent));
-        }
-
-        return patterns;
-    }
-
-    private analyzeMarketPatterns(signals: any): any[] {
-        const patterns = [];
-        
-        if (signals.searchTrends) {
-            patterns.push(...this.analyzeSearchTrends(signals.searchTrends));
-        }
-        
-        if (signals.marketData) {
-            patterns.push(...this.analyzeMarketData(signals.marketData));
-        }
-        
-        if (signals.competitorActivity) {
-            patterns.push(...this.analyzeCompetitorActivity(signals.competitorActivity));
-        }
-
-        return patterns;
-    }
-
-    private parseQuery(query: string): string[] {
-        // Basic feature extraction from query
-        return query.toLowerCase().split(' ');
-    }
-
-    private analyzeSearchPatterns(searches: string[]): any[] {
-        // Analyze search patterns
-        return [];
-    }
-
-    private analyzeViewingPatterns(items: string[]): any[] {
-        // Analyze viewing patterns
-        return [];
-    }
-
-    private analyzeTimePatterns(timeSpent: Record<string, number>): any[] {
-        // Analyze time spent patterns
-        return [];
-    }
-
-    private analyzeSearchTrends(trends: any[]): any[] {
-        // Analyze search trends
-        return [];
-    }
-
-    private analyzeMarketData(data: any[]): any[] {
-        // Analyze market data
-        return [];
-    }
-
-    private analyzeCompetitorActivity(activity: any[]): any[] {
-        // Analyze competitor activity
-        return [];
-    }
-
-    private groupRelatedSignals(signals: DemandSignal[]): DemandSignal[][] {
-        // Group related signals
-        return [signals];
-    }
-
-    private mergeSignals(signals: DemandSignal[]): DemandSignal {
-        // Merge related signals
-        return signals[0];
-    }
+    return {
+      ...base,
+      confidence: totalConfidence / signals.length,
+      context: {
+        ...base.context,
+        keywords: Array.from(mergedKeywords),
+        relatedCategories: Array.from(mergedCategories),
+        sentiment: totalSentiment / signals.length,
+        urgency: totalUrgency / signals.length,
+      },
+    };
+  }
 }

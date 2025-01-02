@@ -1,44 +1,67 @@
 import { EventEmitter } from 'events';
 import { MarketTrendAdapter } from './marketTrendAdapter';
+import { Observable } from 'rxjs';
 
-interface DemandSignal {
-  category: string;
-  region: string;
-  timestamp: string;
-  strength: number;
-  type: 'search' | 'social' | 'marketplace' | 'direct';
-  context: {
-    keywords: string[];
-    relatedCategories: string[];
-    sentiment?: number;
+export interface DemandContext {
+  keywords: string[];
+  relatedCategories: string[];
+  sentiment: number;
+  urgency: number;
+  matches?: Array<{
+    id: string;
+    name: string;
+    quality: number;
+    features?: string[];
+    opportunities?: string[];
+    recommendations?: string[];
+  }>;
+}
+
+export interface DemandRequirements {
+  features: string[];
+  constraints: {
+    budget?: number;
+    timeline?: string;
+    location?: string;
   };
 }
 
-interface DemandPrediction {
-  category: string;
-  region: string;
-  timestamp: string;
-  predictedDemand: number;
+export interface DemandSignal {
+  id: string;
+  source: string;
+  timestamp: number;
+  type: 'explicit' | 'implicit' | 'inferred';
   confidence: number;
-  factors: {
-    type: string;
-    impact: number;
-    confidence: number;
-  }[];
+  context: DemandContext;
+  requirements?: DemandRequirements;
 }
 
 export interface IntelligenceProvider {
   name: string;
-  type: 'research' | 'processing' | 'monitoring';
-  processSignal(signal: DemandSignal): Promise<DemandSignal>;
+  type: 'processing' | 'enrichment' | 'validation';
   confidence: number;
+  processSignal(signal: DemandSignal): Promise<DemandSignal>;
+}
+
+export interface DemandSource {
+  name: string;
+  type: string;
+  connect(): Promise<void>;
+  disconnect(): Promise<void>;
+  getSignals(): Observable<DemandSignal>;
+}
+
+export interface SignalProcessor {
+  process(signal: DemandSignal): Promise<DemandSignal>;
+  addProvider(provider: IntelligenceProvider): void;
+  removeProvider(providerName: string): void;
 }
 
 export class DemandSignalAdapter extends EventEmitter {
   private static instance: DemandSignalAdapter;
   private marketTrends: MarketTrendAdapter;
   private recentSignals: Map<string, DemandSignal[]> = new Map();
-  private predictions: Map<string, DemandPrediction> = new Map();
+  private predictions: Map<string, any> = new Map();
   private intelligenceProviders: IntelligenceProvider[] = [];
 
   private constructor() {
@@ -62,7 +85,7 @@ export class DemandSignalAdapter extends EventEmitter {
   }
 
   public async addSignal(signal: DemandSignal): Promise<void> {
-    const key = `${signal.category}_${signal.region}`;
+    const key = `${signal.source}_${signal.timestamp}`;
     if (!this.recentSignals.has(key)) {
       this.recentSignals.set(key, []);
     }
@@ -76,44 +99,38 @@ export class DemandSignalAdapter extends EventEmitter {
 
     this.recentSignals.set(
       key,
-      signals.filter(s => new Date(s.timestamp) > cutoff)
+      signals.filter((s) => new Date(s.timestamp) > cutoff)
     );
 
     // Add to market trends
-    await this.marketTrends.addSignal(
-      signal.category,
-      signal.region,
-      {
-        timestamp: signal.timestamp,
-        value: signal.strength,
-        source: signal.type,
-        keywords: signal.context.keywords,
-        confidence: this.calculateSignalConfidence(signal)
-      }
-    );
+    await this.marketTrends.addSignal(signal.source, signal.timestamp, {
+      timestamp: signal.timestamp,
+      value: signal.confidence,
+      source: signal.type,
+      keywords: signal.context.keywords,
+      confidence: this.calculateSignalConfidence(signal),
+    });
 
     this.emit('signal_processed', {
       key,
       signalCount: signals.length,
-      latestStrength: signal.strength
+      latestStrength: signal.confidence,
     });
   }
 
   private calculateSignalConfidence(signal: DemandSignal): number {
     // Base confidence by signal type
     const typeConfidence = {
-      search: 0.8,
-      social: 0.6,
-      marketplace: 0.9,
-      direct: 1.0
+      explicit: 0.8,
+      implicit: 0.6,
+      inferred: 0.9,
     }[signal.type];
 
     // Adjust based on context
-    const contextScore = (
+    const contextScore =
       (signal.context.keywords.length > 0 ? 0.2 : 0) +
       (signal.context.relatedCategories.length > 0 ? 0.2 : 0) +
-      (signal.context.sentiment !== undefined ? 0.1 : 0)
-    );
+      (signal.context.sentiment !== undefined ? 0.1 : 0);
 
     return Math.min(typeConfidence + contextScore, 1);
   }
@@ -122,8 +139,8 @@ export class DemandSignalAdapter extends EventEmitter {
     for (const [key, signals] of this.recentSignals.entries()) {
       if (signals.length === 0) continue;
 
-      const [category, region] = key.split('_');
-      const marketTrend = this.marketTrends.getTrend(category, region);
+      const [source, timestamp] = key.split('_');
+      const marketTrend = this.marketTrends.getTrend(source, timestamp);
 
       if (!marketTrend) continue;
 
@@ -134,18 +151,16 @@ export class DemandSignalAdapter extends EventEmitter {
     }
   }
 
-  private async generatePrediction(
-    signals: DemandSignal[],
-    marketTrend: any
-  ): Promise<DemandPrediction> {
+  private async generatePrediction(signals: DemandSignal[], marketTrend: any): Promise<any> {
     const latestSignal = signals[signals.length - 1];
-    const category = latestSignal.category;
-    const region = latestSignal.region;
+    const source = latestSignal.source;
+    const timestamp = latestSignal.timestamp;
 
     // Calculate base demand from recent signals
-    const recentStrength = signals
-      .slice(-6) // Last 1.5 hours (assuming 15-min updates)
-      .reduce((sum, s) => sum + s.strength, 0) / 6;
+    const recentStrength =
+      signals
+        .slice(-6) // Last 1.5 hours (assuming 15-min updates)
+        .reduce((sum, s) => sum + s.confidence, 0) / 6;
 
     // Factor in market trend
     const trendImpact = marketTrend.trend * marketTrend.velocity;
@@ -158,39 +173,34 @@ export class DemandSignalAdapter extends EventEmitter {
       {
         type: 'recent_signals',
         impact: recentStrength,
-        confidence: 0.9
+        confidence: 0.9,
       },
       {
         type: 'market_trend',
         impact: trendImpact,
-        confidence: 0.7
+        confidence: 0.7,
       },
       {
         type: 'seasonality',
         impact: seasonalImpact.impact,
-        confidence: seasonalImpact.confidence
-      }
+        confidence: seasonalImpact.confidence,
+      },
     ];
 
     // Calculate predicted demand
-    const predictedDemand = factors.reduce(
-      (sum, factor) => sum + factor.impact * factor.confidence,
-      0
-    ) / factors.reduce((sum, factor) => sum + factor.confidence, 0);
+    const predictedDemand =
+      factors.reduce((sum, factor) => sum + factor.impact * factor.confidence, 0) /
+      factors.reduce((sum, factor) => sum + factor.confidence, 0);
 
     // Calculate overall confidence
-    const confidence = factors.reduce(
-      (sum, factor) => sum + factor.confidence,
-      0
-    ) / factors.length;
+    const confidence = factors.reduce((sum, factor) => sum + factor.confidence, 0) / factors.length;
 
     return {
-      category,
-      region,
-      timestamp: new Date().toISOString(),
+      source,
+      timestamp,
       predictedDemand,
       confidence,
-      factors
+      factors,
     };
   }
 
@@ -198,19 +208,19 @@ export class DemandSignalAdapter extends EventEmitter {
     const hourlyPatterns = new Array(24).fill(0);
     const hourlyCounts = new Array(24).fill(0);
 
-    signals.forEach(signal => {
+    signals.forEach((signal) => {
       const hour = new Date(signal.timestamp).getHours();
-      hourlyPatterns[hour] += signal.strength;
+      hourlyPatterns[hour] += signal.confidence;
       hourlyCounts[hour]++;
     });
 
-    const hourlyAverages = hourlyPatterns.map((total, i) => 
+    const hourlyAverages = hourlyPatterns.map((total, i) =>
       hourlyCounts[i] > 0 ? total / hourlyCounts[i] : 0
     );
 
     const currentHour = new Date().getHours();
     const impact = hourlyAverages[currentHour];
-    
+
     // Confidence based on sample size
     const confidence = Math.min(hourlyCounts[currentHour] / 10, 1);
 
@@ -224,31 +234,31 @@ export class DemandSignalAdapter extends EventEmitter {
 
   private async enrichSignal(signal: DemandSignal): Promise<DemandSignal> {
     let enrichedSignal = { ...signal };
-    
+
     for (const provider of this.intelligenceProviders) {
       try {
         enrichedSignal = await provider.processSignal(enrichedSignal);
         this.emit('intelligence:processed', {
           provider: provider.name,
-          confidence: provider.confidence
+          confidence: provider.confidence,
         });
       } catch (error) {
         this.emit('intelligence:error', {
           provider: provider.name,
-          error: error.message
+          error: error.message,
         });
       }
     }
-    
+
     return enrichedSignal;
   }
 
-  public getPrediction(category: string, region: string): DemandPrediction | null {
-    const key = `${category}_${region}`;
+  public getPrediction(source: string, timestamp: number): any | null {
+    const key = `${source}_${timestamp}`;
     return this.predictions.get(key) || null;
   }
 
-  public getAllPredictions(): DemandPrediction[] {
+  public getAllPredictions(): any[] {
     return Array.from(this.predictions.values());
   }
 }
