@@ -7,6 +7,7 @@ interface MerchantProfile {
     base: number;
     tiered?: { [volume: string]: number };
     special?: string;
+    notes?: string;
   };
   requirements?: string[];
   status: 'active' | 'pending' | 'target';

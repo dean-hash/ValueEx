@@ -27,11 +27,19 @@ interface DemandPrediction {
   }[];
 }
 
+export interface IntelligenceProvider {
+  name: string;
+  type: 'research' | 'processing' | 'monitoring';
+  processSignal(signal: DemandSignal): Promise<DemandSignal>;
+  confidence: number;
+}
+
 export class DemandSignalAdapter extends EventEmitter {
   private static instance: DemandSignalAdapter;
   private marketTrends: MarketTrendAdapter;
   private recentSignals: Map<string, DemandSignal[]> = new Map();
   private predictions: Map<string, DemandPrediction> = new Map();
+  private intelligenceProviders: IntelligenceProvider[] = [];
 
   private constructor() {
     super();
@@ -207,6 +215,32 @@ export class DemandSignalAdapter extends EventEmitter {
     const confidence = Math.min(hourlyCounts[currentHour] / 10, 1);
 
     return { impact, confidence };
+  }
+
+  public registerIntelligenceProvider(provider: IntelligenceProvider): void {
+    this.intelligenceProviders.push(provider);
+    this.emit('intelligence:registered', provider.name);
+  }
+
+  private async enrichSignal(signal: DemandSignal): Promise<DemandSignal> {
+    let enrichedSignal = { ...signal };
+    
+    for (const provider of this.intelligenceProviders) {
+      try {
+        enrichedSignal = await provider.processSignal(enrichedSignal);
+        this.emit('intelligence:processed', {
+          provider: provider.name,
+          confidence: provider.confidence
+        });
+      } catch (error) {
+        this.emit('intelligence:error', {
+          provider: provider.name,
+          error: error.message
+        });
+      }
+    }
+    
+    return enrichedSignal;
   }
 
   public getPrediction(category: string, region: string): DemandPrediction | null {

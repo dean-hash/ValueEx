@@ -1,6 +1,9 @@
 import { EventEmitter } from 'events';
 import { MetricsCollector } from '../monitoring/metrics';
 import { CorrelationAnalyzer } from './correlationAnalyzer';
+import { LocalIntelligenceProvider } from './providers/localIntelligence';
+import { ResearchIntelligenceProvider } from './providers/researchIntelligence';
+import { SystemResourceProvider } from './providers/systemResource';
 
 interface IntelligenceSource {
   id: string;
@@ -23,18 +26,28 @@ interface InsightChannel {
   };
 }
 
+interface IntelligenceProvider {
+  name: string;
+  type: string;
+  confidence: number;
+  validateAlignment(): Promise<boolean>;
+  processSignal(signal: any): Promise<any>;
+}
+
 export class IntelligenceCoordinator extends EventEmitter {
   private static instance: IntelligenceCoordinator;
   private sources: Map<string, IntelligenceSource> = new Map();
   private channels: Map<string, InsightChannel[]> = new Map();
   private metrics: MetricsCollector;
   private analyzer: CorrelationAnalyzer;
+  private providers: Map<string, IntelligenceProvider> = new Map();
 
   private constructor() {
     super();
     this.metrics = MetricsCollector.getInstance();
     this.analyzer = CorrelationAnalyzer.getInstance();
     this.setupDefaultSources();
+    this.initializeProviders();
   }
 
   public static getInstance(): IntelligenceCoordinator {
@@ -71,6 +84,45 @@ export class IntelligenceCoordinator extends EventEmitter {
       accessLevel: 'public',
       metadataOnly: false
     });
+  }
+
+  private async initializeProviders(): Promise<void> {
+    // Initialize providers
+    const localIntelligence = new LocalIntelligenceProvider();
+    const researchIntelligence = new ResearchIntelligenceProvider();
+    const systemResource = new SystemResourceProvider();
+
+    // Validate alignment
+    const alignmentResults = await Promise.all([
+      localIntelligence.validateAlignment(),
+      researchIntelligence.validateAlignment(),
+      systemResource.validateAlignment()
+    ]);
+
+    // Register aligned providers
+    if (alignmentResults[0]) {
+      this.providers.set('local', localIntelligence);
+      this.emit('provider_aligned', { name: 'LocalIntelligence', type: 'processing' });
+    }
+
+    if (alignmentResults[1]) {
+      this.providers.set('research', researchIntelligence);
+      this.emit('provider_aligned', { name: 'ResearchIntelligence', type: 'research' });
+    }
+
+    if (alignmentResults[2]) {
+      this.providers.set('system', systemResource);
+      this.emit('provider_aligned', { name: 'SystemResource', type: 'monitoring' });
+      
+      // Set up system resource monitoring
+      systemResource.on('optimization', (data) => {
+        this.emit('system_optimization', data);
+      });
+
+      systemResource.on('health', (data) => {
+        this.emit('system_health', data);
+      });
+    }
   }
 
   public registerSource(source: IntelligenceSource): void {
@@ -263,5 +315,43 @@ export class IntelligenceCoordinator extends EventEmitter {
       sources: insights.map(i => i.sourceId),
       timestamp: new Date().toISOString()
     };
+  }
+
+  public async processSignal(signal: any, type: string): Promise<any> {
+    let enrichedSignal = { ...signal };
+    const relevantProviders = Array.from(this.providers.values())
+      .filter(provider => this.isProviderRelevant(provider, type));
+
+    for (const provider of relevantProviders) {
+      try {
+        enrichedSignal = await provider.processSignal(enrichedSignal);
+        this.emit('signal_enriched', {
+          provider: provider.name,
+          confidence: provider.confidence
+        });
+      } catch (error) {
+        console.error(`Error with provider ${provider.name}:`, error);
+      }
+    }
+
+    return enrichedSignal;
+  }
+
+  private isProviderRelevant(provider: IntelligenceProvider, type: string): boolean {
+    switch (type) {
+      case 'demand':
+        return ['processing', 'research'].includes(provider.type);
+      case 'system':
+        return provider.type === 'monitoring';
+      default:
+        return true;
+    }
+  }
+
+  public async optimizeSystem(): Promise<void> {
+    const systemProvider = this.providers.get('system') as SystemResourceProvider;
+    if (systemProvider) {
+      await systemProvider.optimizeIDE();
+    }
   }
 }

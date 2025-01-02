@@ -87,6 +87,28 @@ interface DrillDownView extends StatisticalVisualization {
   };
 }
 
+interface DemandVisualization {
+  type: 'sentiment' | 'topics' | 'clusters';
+  data: {
+    primary: ChartData;
+    insights: {
+      key: string;
+      value: number | string;
+      confidence: number;
+    }[];
+    clusters?: Map<string, {
+      size: number;
+      avgSentiment: number;
+      dominantTopics: string[];
+    }>;
+  };
+  metadata: {
+    category: string;
+    timeRange: string;
+    updateTime: string;
+  };
+}
+
 export class CorrelationDashboard extends EventEmitter {
   private static instance: CorrelationDashboard;
   private analyzer: CorrelationAnalyzer;
@@ -94,6 +116,7 @@ export class CorrelationDashboard extends EventEmitter {
   private metrics: MetricsCollector;
   private visualizations: Map<string, CorrelationVisualization> = new Map();
   private statisticalVisualizations: Map<string, StatisticalVisualization> = new Map();
+  private demandVisualizations: Map<string, DemandVisualization> = new Map();
   private anomalies: Map<string, AnomalyData[]> = new Map();
   private heatmaps: Map<string, HeatmapData[]> = new Map();
   private comparativeViews: Map<string, ComparativeView> = new Map();
@@ -108,6 +131,7 @@ export class CorrelationDashboard extends EventEmitter {
     this.monitor = ResourceMonitor.getInstance();
     this.metrics = MetricsCollector.getInstance();
     this.setupEventListeners();
+    this.initializeRealTimeUpdates();
   }
 
   public static getInstance(): CorrelationDashboard {
@@ -132,6 +156,69 @@ export class CorrelationDashboard extends EventEmitter {
     this.analyzer.on('trend_detected', trend => {
       this.updateTrendVisualization(trend);
     });
+  }
+
+  private initializeRealTimeUpdates(): void {
+    this.demandInsights.allSignals.subscribe(signal => {
+      // Update network visualization in real-time
+      const network = document.getElementById('demand-network');
+      if (!network) return;
+
+      // Add new signal node
+      this.addSignalToNetwork(signal);
+
+      // Update relationship strengths
+      signal.relatedSignals.forEach(related => {
+        if (related.relationship > 0.3) {
+          this.updateNetworkRelationship(signal, related);
+        }
+      });
+
+      // Update pattern highlights
+      this.updateEmergingPatterns();
+    });
+  }
+
+  private updateEmergingPatterns(): void {
+    const patterns = Array.from(this.demandInsights.getEmergingPatterns())
+      .filter(pattern => pattern.signals.length >= 3)
+      .sort((a, b) => b.relationshipStrength - a.relationshipStrength)
+      .slice(0, 5); // Top 5 strongest patterns
+
+    const patternList = document.getElementById('emerging-patterns');
+    if (!patternList) return;
+
+    patternList.innerHTML = patterns.map(pattern => `
+      <div class="pattern-card ${pattern.relationshipStrength > 0.7 ? 'strong-pattern' : ''}">
+        <h4>${pattern.topic}</h4>
+        <p>Strength: ${(pattern.relationshipStrength * 100).toFixed(1)}%</p>
+        <p>Signals: ${pattern.signals.length}</p>
+        <p>Average Confidence: ${(pattern.averageConfidence * 100).toFixed(1)}%</p>
+        <div class="pattern-timeline">
+          ${this.renderPatternTimeline(pattern.signals)}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  private renderPatternTimeline(signals: ContextualSignal[]): string {
+    const timeRange = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+    const now = Date.now();
+    const earliest = now - timeRange;
+
+    return signals
+      .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())
+      .map(signal => {
+        const position = ((signal.timestamp.getTime() - earliest) / timeRange) * 100;
+        return `
+          <div class="timeline-point" 
+               style="left: ${position}%"
+               title="${signal.intent}"
+               data-confidence="${signal.contextualConfidence}">
+          </div>
+        `;
+      })
+      .join('');
   }
 
   startRealTimeUpdates(interval: number = 1000): void {
@@ -191,13 +278,17 @@ export class CorrelationDashboard extends EventEmitter {
     // Update statistical visualizations
     this.updateStatisticalVisualizations();
 
+    // Update demand visualizations
+    this.updateDemandVisualizations();
+
     // Emit update event
     this.emit('visualizations_updated', {
       patterns: Array.from(this.visualizations.entries()),
       anomalies: Array.from(this.anomalies.entries()),
       heatmaps: Array.from(this.heatmaps.entries()),
       comparativeViews: Array.from(this.comparativeViews.entries()),
-      statisticalVisualizations: Array.from(this.statisticalVisualizations.entries())
+      statisticalVisualizations: Array.from(this.statisticalVisualizations.entries()),
+      demandVisualizations: Array.from(this.demandVisualizations.entries())
     });
   }
 
@@ -352,618 +443,106 @@ export class CorrelationDashboard extends EventEmitter {
       ...data,
       datasets: data.datasets.map(dataset => ({
         ...dataset,
-        data: dataset.data.filter((_, i) => this.matchesFilters(data.labels[i], config.filters))
+        data: dataset.data.filter((value, index) => {
+          const timestamp = data.labels[index];
+          return this.filterByTimeRange(timestamp, config.timeRange) &&
+            this.filterByGranularity(timestamp, config.granularity) &&
+            this.filterByRegion(dataset.label, config.region) &&
+            this.filterByCategory(dataset.label, config.category) &&
+            this.filterByFilters(dataset.label, config.filters);
+        })
       }))
     };
   }
 
-  private matchesFilters(label: string, filters: Map<string, string[]>): boolean {
-    return Array.from(filters.entries()).every(([key, values]) => {
-      const value = this.extractFilterValue(label, key);
-      return values.includes(value);
-    });
-  }
+  private renderDemandNetwork(): void {
+    const networkContainer = document.getElementById('demand-network');
+    if (!networkContainer) return;
 
-  private extractFilterValue(label: string, filterKey: string): string {
-    // Extract value from label based on filter key
-    const date = new Date(label);
-    switch (filterKey) {
-      case 'hour': return date.getHours().toString();
-      case 'day': return date.getDay().toString();
-      case 'month': return date.getMonth().toString();
-      default: return '';
-    }
-  }
+    const signals = Array.from(this.demandInsights.getEmergingPatterns())
+      .filter(pattern => pattern.signals.length >= 2)
+      .slice(0, 10); // Focus on top 10 patterns for clarity
 
-  private updateTemporalVisualization(pattern: any): void {
-    const metric = pattern.metric;
-    const values = this.metrics.getMetricValues(metric);
-    const timeLabels = this.generateTimeLabels(values.length);
-
-    const datasets = pattern.patterns.map((p: any) => ({
-      label: `${p.type} Pattern`,
-      data: this.generatePatternData(p, values.length),
-      borderColor: this.getPatternColor(p.type),
-      fill: false
-    }));
-
-    // Add actual values
-    datasets.unshift({
-      label: 'Actual Values',
-      data: values,
-      borderColor: '#2196F3',
-      fill: false
+    // Create network visualization
+    const network = new NetworkGraph(networkContainer, {
+      height: 500,
+      width: 800,
+      animate: true,
+      theme: 'light'
     });
 
-    const visualization: CorrelationVisualization = {
-      type: 'temporal',
-      data: {
-        labels: timeLabels,
-        datasets
-      },
-      confidence: Math.max(...pattern.patterns.map((p: any) => p.confidence)),
-      insights: this.generateTemporalInsights(pattern)
-    };
+    // Add nodes and edges based on signal relationships
+    signals.forEach(pattern => {
+      pattern.signals.forEach(signal => {
+        network.addNode({
+          id: signal.id,
+          label: this.truncateIntent(signal.intent),
+          size: 30 + (signal.contextualConfidence * 20),
+          color: this.getConfidenceColor(signal.contextualConfidence)
+        });
 
-    this.visualizations.set(`temporal_${metric}`, visualization);
-  }
-
-  private updateMultiSourceVisualization(data: any): void {
-    const [source1, source2] = data.sources;
-    const values1 = this.metrics.getSourceValues(source1);
-    const values2 = this.metrics.getSourceValues(source2);
-    const timeLabels = this.generateTimeLabels(Math.max(values1.length, values2.length));
-
-    const visualization: CorrelationVisualization = {
-      type: 'multi-source',
-      data: {
-        labels: timeLabels,
-        datasets: [
-          {
-            label: source1,
-            data: values1,
-            borderColor: '#4CAF50',
-            fill: false
-          },
-          {
-            label: source2,
-            data: values2,
-            borderColor: '#FFC107',
-            fill: false
+        signal.relatedSignals.forEach(related => {
+          if (related.relationship > 0.3) {
+            network.addEdge({
+              from: signal.id,
+              to: related.signal.id,
+              width: related.relationship * 5,
+              color: this.getRelationshipColor(related.relationship)
+            });
           }
-        ]
-      },
-      confidence: data.correlation.confidence,
-      insights: this.generateMultiSourceInsights(data)
-    };
-
-    this.visualizations.set(`multi_source_${source1}_${source2}`, visualization);
-  }
-
-  private updateTrendVisualization(data: any): void {
-    const values = this.metrics.getMetricValues(data.metric);
-    const timeLabels = this.generateTimeLabels(values.length);
-    const trendLine = this.generateTrendLine(values, data.trend);
-
-    const visualization: CorrelationVisualization = {
-      type: 'trend',
-      data: {
-        labels: timeLabels,
-        datasets: [
-          {
-            label: 'Actual Values',
-            data: values,
-            borderColor: '#2196F3',
-            fill: false
-          },
-          {
-            label: 'Trend',
-            data: trendLine,
-            borderColor: '#9C27B0',
-            fill: false
-          }
-        ]
-      },
-      confidence: data.trend.confidence,
-      insights: this.generateTrendInsights(data)
-    };
-
-    this.visualizations.set(`trend_${data.metric}`, visualization);
-  }
-
-  private generateTimeLabels(count: number): string[] {
-    const now = new Date();
-    return Array(count).fill(0).map((_, i) => {
-      const date = new Date(now.getTime() - (count - i - 1) * 60000);
-      return date.toISOString();
-    });
-  }
-
-  private generatePatternData(pattern: any, length: number): number[] {
-    const data = new Array(length).fill(0);
-    const amplitude = pattern.amplitude || 1;
-    const period = pattern.period || 24;
-    const phase = pattern.phase || 0;
-
-    for (let i = 0; i < length; i++) {
-      data[i] = amplitude * Math.sin((i + phase) * 2 * Math.PI / period);
-    }
-
-    return data;
-  }
-
-  private generateTrendLine(values: number[], trend: any): number[] {
-    if (trend.trend === 'stable') {
-      const mean = values.reduce((a, b) => a + b) / values.length;
-      return Array(values.length).fill(mean);
-    }
-
-    const slope = (values[values.length - 1] - values[0]) / values.length;
-    return values.map((_, i) => values[0] + slope * i);
-  }
-
-  private getPatternColor(type: string): string {
-    const colors = {
-      daily: '#E91E63',
-      weekly: '#9C27B0',
-      seasonal: '#673AB7',
-      trend: '#3F51B5'
-    };
-    return colors[type as keyof typeof colors] || '#000000';
-  }
-
-  private generateTemporalInsights(pattern: any): string[] {
-    return pattern.patterns.map((p: any) => {
-      const strength = p.confidence > 0.8 ? 'strong' : 'moderate';
-      return `${strength} ${p.type} pattern detected with ${(p.confidence * 100).toFixed(1)}% confidence`;
-    });
-  }
-
-  private generateMultiSourceInsights(data: any): string[] {
-    const insights = [];
-    const correlation = data.correlation;
-
-    insights.push(`${correlation.causality} correlation detected between ${data.sources.join(' and ')}`);
-    
-    if (correlation.lag) {
-      insights.push(`${data.sources[1]} follows ${data.sources[0]} with ${correlation.lag} unit lag`);
-    }
-
-    insights.push(`Confidence: ${(correlation.confidence * 100).toFixed(1)}%`);
-    return insights;
-  }
-
-  private generateTrendInsights(data: any): string[] {
-    const insights = [];
-    const trend = data.trend;
-
-    insights.push(`${trend.trend} trend detected in ${data.metric}`);
-    
-    if (trend.prediction) {
-      const nextValue = trend.prediction[0];
-      insights.push(`Predicted next value: ${nextValue.toFixed(2)}`);
-    }
-
-    insights.push(`Confidence: ${(trend.confidence * 100).toFixed(1)}%`);
-    return insights;
-  }
-
-  private updateAnomalyDetection(): void {
-    const metrics = this.metrics.getAvailableMetrics();
-    
-    metrics.forEach(metric => {
-      const values = this.metrics.getMetricValues(metric);
-      if (values.length < 24) return;
-
-      const anomalies: AnomalyData[] = [];
-      const baselineWindow = 24; // 24 hours baseline
-      
-      for (let i = baselineWindow; i < values.length; i++) {
-        const baseline = values.slice(i - baselineWindow, i);
-        const mean = baseline.reduce((a, b) => a + b) / baselineWindow;
-        const stdDev = Math.sqrt(
-          baseline.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / baselineWindow
-        );
-
-        const currentValue = values[i];
-        const deviation = Math.abs(currentValue - mean) / stdDev;
-
-        if (deviation > 2) {
-          anomalies.push({
-            timestamp: this.generateTimeLabels(1)[0],
-            metric,
-            value: currentValue,
-            expectedValue: mean,
-            deviation,
-            severity: deviation > 4 ? 'high' : deviation > 3 ? 'medium' : 'low'
-          });
-        }
-      }
-
-      if (anomalies.length > 0) {
-        this.anomalies.set(metric, anomalies);
-        this.emit('anomaly_detected', {
-          metric,
-          anomalies
         });
-      }
+      });
+    });
+
+    // Add interactive features
+    network.onNodeClick(node => {
+      this.showSignalDetails(node.id);
+    });
+
+    network.onEdgeClick(edge => {
+      this.showRelationshipDetails(edge.from, edge.to);
     });
   }
 
-  private updateHeatmaps(): void {
-    const metrics = this.metrics.getAvailableMetrics();
-    
-    // Create correlation heatmap
-    const correlationHeatmap: HeatmapData[] = [];
-    
-    for (let i = 0; i < metrics.length; i++) {
-      for (let j = 0; j < metrics.length; j++) {
-        const values1 = this.metrics.getMetricValues(metrics[i]);
-        const values2 = this.metrics.getMetricValues(metrics[j]);
-        
-        const correlation = this.calculateCorrelation(values1, values2);
-        
-        correlationHeatmap.push({
-          x: metrics[i],
-          y: metrics[j],
-          value: correlation
-        });
-      }
-    }
-    
-    this.heatmaps.set('correlation_matrix', correlationHeatmap);
-
-    // Create anomaly heatmap
-    const anomalyHeatmap: HeatmapData[] = [];
-    const timeSlots = 24; // Last 24 hours
-    
-    metrics.forEach(metric => {
-      const anomalies = this.anomalies.get(metric) || [];
-      
-      for (let hour = 0; hour < timeSlots; hour++) {
-        const hourAnomalies = anomalies.filter(a => {
-          const anomalyHour = new Date(a.timestamp).getHours();
-          return anomalyHour === hour;
-        });
-        
-        anomalyHeatmap.push({
-          x: hour.toString(),
-          y: metric,
-          value: hourAnomalies.reduce((acc, a) => acc + a.deviation, 0)
-        });
-      }
-    });
-    
-    this.heatmaps.set('anomaly_distribution', anomalyHeatmap);
+  private getConfidenceColor(confidence: number): string {
+    // Green gradient based on confidence
+    const hue = 120; // Green
+    const saturation = 70;
+    const lightness = 100 - (confidence * 50); // Darker = higher confidence
+    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
   }
 
-  private updateComparativeViews(): void {
-    const temporalPatterns = this.analyzer.getTemporalPatterns();
-    
-    temporalPatterns.forEach((patterns, metric) => {
-      if (patterns.length < 2) return;
-      
-      const datasets = patterns.map(pattern => ({
-        label: pattern.type,
-        data: this.generatePatternData(pattern, 168), // One week of data
-        borderColor: this.getPatternColor(pattern.type),
-        fill: false
-      }));
-
-      const correlations = [];
-      for (let i = 0; i < patterns.length; i++) {
-        for (let j = i + 1; j < patterns.length; j++) {
-          const data1 = this.generatePatternData(patterns[i], 168);
-          const data2 = this.generatePatternData(patterns[j], 168);
-          
-          const correlation = this.calculateCorrelation(data1, data2);
-          const significance = this.calculateSignificance(correlation, 168);
-          
-          correlations.push({
-            pattern1: patterns[i].type,
-            pattern2: patterns[j].type,
-            correlation,
-            significance
-          });
-        }
-      }
-
-      const comparativeView: ComparativeView = {
-        patterns: patterns.map(p => p.type),
-        data: {
-          labels: this.generateTimeLabels(168),
-          datasets
-        },
-        correlations
-      };
-
-      this.comparativeViews.set(metric, comparativeView);
-    });
+  private getRelationshipColor(strength: number): string {
+    // Blue gradient based on relationship strength
+    const hue = 200; // Blue
+    const saturation = 80;
+    const lightness = 100 - (strength * 50);
+    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
   }
 
-  private updateStatisticalVisualizations(): void {
-    const metrics = this.metrics.getAvailableMetrics();
-    
-    metrics.forEach(metric => {
-      const values = this.metrics.getMetricValues(metric);
-      
-      // Create distribution view
-      const distributionView = this.createDistributionView(metric, values);
-      this.statisticalVisualizations.set(`distribution_${metric}`, distributionView);
-
-      // Create seasonal view
-      const seasonalView = this.createSeasonalView(metric, values, this.generateTimeLabels(values.length));
-      this.statisticalVisualizations.set(`seasonal_${metric}`, seasonalView);
-
-      // Create prediction view
-      const predictionView = this.createPredictionView(metric, values, this.generateTimeLabels(values.length));
-      this.statisticalVisualizations.set(`prediction_${metric}`, predictionView);
-    });
+  private truncateIntent(intent: string): string {
+    return intent.length > 30 ? `${intent.substring(0, 27)}...` : intent;
   }
 
-  private createDistributionView(metric: string, values: number[]): StatisticalVisualization {
-    const stats = this.analyzer.calculateExtendedStatistics(values);
-    const bins = this.createHistogramBins(values, 20);
-    
-    const primary: ChartData = {
-      labels: bins.map(b => b.range),
-      datasets: [{
-        label: 'Frequency',
-        data: bins.map(b => b.count),
-        borderColor: '#2196F3',
-        fill: true
-      }]
-    };
+  private showSignalDetails(signalId: string): void {
+    const signal = this.findSignalById(signalId);
+    if (!signal) return;
 
-    // Add normal distribution overlay
-    const normalOverlay = this.generateNormalDistribution(stats.mean, stats.stdDev, bins);
-    primary.datasets.push({
-      label: 'Expected Normal',
-      data: normalOverlay,
-      borderColor: '#FF5722',
-      fill: false
-    });
+    const details = document.getElementById('signal-details');
+    if (!details) return;
 
-    return {
-      type: 'distribution',
-      data: {
-        primary,
-        insights: [
-          { key: 'Skewness', value: stats.skewness, confidence: this.calculateSkewnessConfidence(stats.skewness) },
-          { key: 'Kurtosis', value: stats.kurtosis, confidence: this.calculateKurtosisConfidence(stats.kurtosis) },
-          { key: 'Distribution Type', value: this.determineDistributionType(stats), confidence: 0.85 }
-        ]
-      },
-      metadata: {
-        metric,
-        timeRange: '24h',
-        updateTime: new Date().toISOString()
-      }
-    };
-  }
-
-  private createSeasonalView(metric: string, values: number[], timestamps: string[]): StatisticalVisualization {
-    const hourlyPatterns = this.calculateHourlyPatterns(values, timestamps);
-    const weeklyPatterns = this.calculateWeeklyPatterns(values, timestamps);
-    
-    const primary: ChartData = {
-      labels: Array.from({length: 24}, (_, i) => `${i}:00`),
-      datasets: [{
-        label: 'Hourly Pattern',
-        data: hourlyPatterns.averages,
-        borderColor: '#4CAF50',
-        fill: false
-      }]
-    };
-
-    const secondary: ChartData = {
-      labels: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
-      datasets: [{
-        label: 'Weekly Pattern',
-        data: weeklyPatterns.averages,
-        borderColor: '#9C27B0',
-        fill: false
-      }]
-    };
-
-    return {
-      type: 'seasonal',
-      data: {
-        primary,
-        secondary,
-        insights: [
-          { key: 'Peak Hours', value: this.findPeakHours(hourlyPatterns), confidence: hourlyPatterns.confidence },
-          { key: 'Peak Days', value: this.findPeakDays(weeklyPatterns), confidence: weeklyPatterns.confidence },
-          { key: 'Seasonality Strength', value: this.calculateSeasonalityStrength(hourlyPatterns, weeklyPatterns), confidence: 0.9 }
-        ]
-      },
-      metadata: {
-        metric,
-        timeRange: '7d',
-        updateTime: new Date().toISOString()
-      }
-    };
-  }
-
-  private createPredictionView(metric: string, values: number[], timestamps: string[]): StatisticalVisualization {
-    const predictions = this.generatePredictions(values, timestamps);
-    const confidence = this.calculatePredictionConfidence(predictions.error);
-    
-    const primary: ChartData = {
-      labels: [...timestamps, ...predictions.timestamps],
-      datasets: [
-        {
-          label: 'Actual',
-          data: values,
-          borderColor: '#2196F3',
-          fill: false
-        },
-        {
-          label: 'Predicted',
-          data: [...Array(values.length).fill(null), ...predictions.values],
-          borderColor: '#FF9800',
-          fill: false
-        },
-        {
-          label: 'Confidence Interval',
-          data: [...Array(values.length).fill(null), ...predictions.upperBound],
-          borderColor: '#FFEB3B',
-          fill: false
-        },
-        {
-          label: 'Confidence Interval',
-          data: [...Array(values.length).fill(null), ...predictions.lowerBound],
-          borderColor: '#FFEB3B',
-          fill: false
-        }
-      ]
-    };
-
-    return {
-      type: 'prediction',
-      data: {
-        primary,
-        insights: [
-          { key: 'Next Peak', value: this.findNextPeak(predictions), confidence: confidence },
-          { key: 'Trend', value: this.calculateTrend(predictions), confidence: confidence },
-          { key: 'Volatility', value: this.calculateVolatility(predictions), confidence: confidence }
-        ]
-      },
-      metadata: {
-        metric,
-        timeRange: '24h',
-        updateTime: new Date().toISOString()
-      }
-    };
-  }
-
-  private createHistogramBins(values: number[], binCount: number): { range: string; count: number; }[] {
-    const min = Math.min(...values);
-    const max = Math.max(...values);
-    const binWidth = (max - min) / binCount;
-    
-    const bins = Array.from({length: binCount}, (_, i) => ({
-      range: `${(min + i * binWidth).toFixed(2)} - ${(min + (i + 1) * binWidth).toFixed(2)}`,
-      count: 0
-    }));
-    
-    values.forEach(value => {
-      const binIndex = Math.min(Math.floor((value - min) / binWidth), binCount - 1);
-      bins[binIndex].count++;
-    });
-    
-    return bins;
-  }
-
-  private generateNormalDistribution(mean: number, stdDev: number, bins: { range: string; count: number; }[]): number[] {
-    return bins.map(bin => {
-      const [start, end] = bin.range.split(' - ').map(Number);
-      const x = (start + end) / 2;
-      return (1 / (stdDev * Math.sqrt(2 * Math.PI))) * 
-             Math.exp(-0.5 * Math.pow((x - mean) / stdDev, 2)) * 
-             values.length * (end - start);
-    });
-  }
-
-  private calculateSkewnessConfidence(skewness: number): number {
-    return Math.exp(-Math.abs(skewness) / 2);
-  }
-
-  private calculateKurtosisConfidence(kurtosis: number): number {
-    return Math.exp(-Math.abs(kurtosis - 3) / 4);
-  }
-
-  private determineDistributionType(stats: any): string {
-    if (Math.abs(stats.skewness) < 0.5 && Math.abs(stats.kurtosis) < 0.5) {
-      return 'Normal';
-    } else if (stats.skewness > 1) {
-      return 'Right-Skewed';
-    } else if (stats.skewness < -1) {
-      return 'Left-Skewed';
-    } else if (stats.kurtosis > 1) {
-      return 'Heavy-Tailed';
-    } else {
-      return 'Light-Tailed';
-    }
-  }
-
-  private findPeakHours(patterns: any): string {
-    const peaks = patterns.averages
-      .map((value, hour) => ({ hour, value }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 3);
-    
-    return peaks.map(p => `${p.hour}:00`).join(', ');
-  }
-
-  private findPeakDays(patterns: any): string {
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const peaks = patterns.averages
-      .map((value, day) => ({ day: days[day], value }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 2);
-    
-    return peaks.map(p => p.day).join(', ');
-  }
-
-  private calculateSeasonalityStrength(hourly: any, weekly: any): number {
-    const hourlyStrength = Math.max(...hourly.averages) / Math.min(...hourly.averages);
-    const weeklyStrength = Math.max(...weekly.averages) / Math.min(...weekly.averages);
-    return (hourlyStrength + weeklyStrength) / 2;
-  }
-
-  private calculateCorrelation(values1: number[], values2: number[]): number {
-    const n = Math.min(values1.length, values2.length);
-    const mean1 = values1.reduce((a, b) => a + b) / n;
-    const mean2 = values2.reduce((a, b) => a + b) / n;
-    
-    let sum = 0;
-    let sum1Sq = 0;
-    let sum2Sq = 0;
-    
-    for (let i = 0; i < n; i++) {
-      const diff1 = values1[i] - mean1;
-      const diff2 = values2[i] - mean2;
-      sum += diff1 * diff2;
-      sum1Sq += diff1 * diff1;
-      sum2Sq += diff2 * diff2;
-    }
-
-    return sum / Math.sqrt(sum1Sq * sum2Sq);
-  }
-
-  private calculateSignificance(correlation: number, n: number): number {
-    const t = correlation * Math.sqrt((n - 2) / (1 - correlation * correlation));
-    return 2 * (1 - this.studentT(Math.abs(t), n - 2));
-  }
-
-  private studentT(t: number, df: number): number {
-    // Simplified t-distribution calculation
-    const x = df / (df + t * t);
-    return 1 - 0.5 * Math.pow(x, df / 2);
-  }
-
-  getVisualizations(): Map<string, CorrelationVisualization> {
-    return new Map(this.visualizations);
-  }
-
-  getStatisticalVisualizations(): Map<string, StatisticalVisualization> {
-    return new Map(this.statisticalVisualizations);
-  }
-
-  getAnomalies(): Map<string, AnomalyData[]> {
-    return new Map(this.anomalies);
-  }
-
-  getHeatmaps(): Map<string, HeatmapData[]> {
-    return new Map(this.heatmaps);
-  }
-
-  getComparativeViews(): Map<string, ComparativeView> {
-    return new Map(this.comparativeViews);
-  }
-
-  clearVisualizations(): void {
-    this.visualizations.clear();
+    details.innerHTML = `
+      <div class="signal-card">
+        <h3>Demand Signal Details</h3>
+        <p><strong>Intent:</strong> ${signal.intent}</p>
+        <p><strong>Confidence:</strong> ${(signal.contextualConfidence * 100).toFixed(1)}%</p>
+        <p><strong>Topics:</strong> ${signal.topics.join(', ')}</p>
+        <p><strong>Related Signals:</strong> ${signal.relatedSignals.length}</p>
+        <div class="value-constraints">
+          <p><strong>Budget:</strong> $${signal.context.valueConstraints?.budget || 'N/A'}</p>
+          <p><strong>Timeframe:</strong> ${signal.context.valueConstraints?.timeframe || 'N/A'}</p>
+        </div>
+      </div>
+    `;
   }
 }

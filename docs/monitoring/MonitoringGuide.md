@@ -458,6 +458,80 @@ console.log('Strong correlations:',
 3. Interactive drill-down
 4. Export capabilities
 
+## Demand Signal Processing
+
+The ValueEx platform now includes sophisticated demand signal processing capabilities that help identify, analyze, and visualize market demands in real-time.
+
+### Core Components
+
+1. **DemandSignalEnhancer**
+   - Sentiment Analysis: Evaluates the emotional context of demand signals
+   - Topic Modeling: Identifies key themes using TF-IDF
+   - Clustering: Groups similar demands for pattern recognition
+   - Confidence Scoring: Dynamic scoring based on multiple factors
+
+2. **Real-time Processing Pipeline**
+   ```typescript
+   // Example: Processing a new demand signal
+   const signal = await demandInsights.processEmailInsight(
+     "Urgent need for sustainable packaging solutions",
+     { urgency: 0.9, specificity: 0.8 }
+   );
+   ```
+
+3. **Visualization Dashboard**
+   - Sentiment Trends: Track emotional context over time
+   - Topic Distribution: Monitor emerging themes
+   - Cluster Analysis: Visualize demand patterns
+   - Confidence Metrics: Track signal reliability
+
+### Confidence Scoring
+
+Signals are scored based on multiple factors:
+- Base confidence from source type
+- Sentiment strength (+0.2 max boost)
+- Topic relevance (+0.1 per relevant topic)
+- Cluster coherence
+- Historical pattern matching
+
+### Usage Guidelines
+
+1. **Monitoring Demand Patterns**
+   ```typescript
+   // Access demand visualizations
+   const dashboard = CorrelationDashboard.getInstance();
+   const demandVisuals = dashboard.getDemandVisualizations();
+   ```
+
+2. **Analyzing Clusters**
+   - Monitor cluster sizes for emerging trends
+   - Track sentiment distribution within clusters
+   - Identify dominant topics per cluster
+
+3. **Real-time Alerts**
+   - High confidence signals (>0.8)
+   - Rapid cluster growth
+   - Emerging topics
+   - Significant sentiment shifts
+
+### Best Practices
+
+1. **Signal Quality**
+   - Validate source reliability
+   - Check for duplicate signals
+   - Monitor confidence thresholds
+   - Review cluster coherence
+
+2. **Performance Optimization**
+   - Regular cluster cleanup
+   - Topic model updates
+   - Sentiment analyzer calibration
+
+3. **Data Privacy**
+   - PII removal from signals
+   - Secure storage of raw data
+   - Aggregated reporting only
+
 ## Performance Optimization
 
 ### 1. Resource Management

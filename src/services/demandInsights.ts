@@ -1,5 +1,7 @@
 import { Observable, Subject, merge } from 'rxjs';
-import { filter, map, groupBy } from 'rxjs/operators';
+import { filter, map, groupBy, mergeMap } from 'rxjs/operators';
+import { DemandSignalEnhancer } from './analysis/demandSignalEnhancer';
+import { MetricsCollector } from './monitoring/metrics';
 
 interface DemandSignal {
   source: 'email' | 'search' | 'social' | 'direct';
@@ -14,6 +16,19 @@ interface DemandSignal {
   };
   timestamp: Date;
   confidence: number;
+  sentiment?: {
+    score: number;
+  };
+  topics?: string[];
+  cluster?: string;
+}
+
+interface ContextualSignal extends DemandSignal {
+  contextualConfidence: number;
+  relatedSignals: Array<{
+    signal: DemandSignal;
+    relationship: number;
+  }>;
 }
 
 interface SupplyMatch {
@@ -31,56 +46,94 @@ export class DemandInsights {
   private publicSignals = new Subject<DemandSignal>();
   private directSignals = new Subject<DemandSignal>();
 
-  private allSignals: Observable<DemandSignal>;
-  private patterns = new Map<string, Array<DemandSignal>>();
+  private allSignals: Observable<ContextualSignal>;
+  private patterns = new Map<string, Array<ContextualSignal>>();
+  private enhancer: DemandSignalEnhancer;
+  private metrics: MetricsCollector;
 
   constructor() {
-    // Merge all signal sources
+    this.enhancer = DemandSignalEnhancer.getInstance();
+    this.metrics = MetricsCollector.getInstance();
+
+    // Merge and enhance all signal sources with context awareness
     this.allSignals = merge(
-      this.emailSignals.pipe(
-        map((signal) => ({
-          ...signal,
-          confidence: signal.context.specificity * 1.5, // Email intentions tend to be more explicit
-        }))
-      ),
+      this.emailSignals,
       this.publicSignals,
       this.directSignals
+    ).pipe(
+      mergeMap(signal => this.enhancer.enhanceSignal(signal)),
+      map(signal => this.updatePatterns(signal))
     );
 
-    // Setup pattern recognition
-    this.initializePatternRecognition();
-  }
-
-  private initializePatternRecognition() {
-    this.allSignals
-      .pipe(groupBy((signal) => this.categorizeIntent(signal.intent)))
-      .subscribe((group) => {
-        group.subscribe((signal) => {
-          this.updatePatterns(group.key, signal);
-        });
+    // Subscribe to process signals and update metrics
+    this.allSignals.subscribe(signal => {
+      this.metrics.trackSignal({
+        type: signal.source,
+        confidence: signal.contextualConfidence,
+        hasRelatedSignals: signal.relatedSignals.length > 0,
+        topRelationshipStrength: signal.relatedSignals[0]?.relationship || 0
       });
+    });
   }
 
-  private categorizeIntent(intent: string): string {
-    // Group similar intents together
-    // Example: "need laptop for work" and "looking for business computer" -> "business_computing"
-    return intent
-      .toLowerCase()
-      .replace(/\b(need|looking|want|require)\b/g, '')
-      .trim()
-      .replace(/\s+/g, '_');
+  private updatePatterns(signal: ContextualSignal): ContextualSignal {
+    // Group related signals by their primary topics
+    signal.topics.forEach(topic => {
+      if (!this.patterns.has(topic)) {
+        this.patterns.set(topic, []);
+      }
+      const topicPatterns = this.patterns.get(topic)!;
+      topicPatterns.push(signal);
+      
+      // Keep only recent patterns
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      this.patterns.set(
+        topic,
+        topicPatterns.filter(s => s.timestamp > oneDayAgo)
+      );
+    });
+    
+    return signal;
   }
 
-  private updatePatterns(category: string, signal: DemandSignal) {
-    const existing = this.patterns.get(category) || [];
-    existing.push(signal);
+  public getEmergingPatterns(): Observable<Array<{
+    topic: string;
+    signals: ContextualSignal[];
+    averageConfidence: number;
+    relationshipStrength: number;
+  }>> {
+    return new Observable(subscriber => {
+      const patterns = Array.from(this.patterns.entries())
+        .map(([topic, signals]) => ({
+          topic,
+          signals,
+          averageConfidence: signals.reduce((acc, sig) => acc + sig.contextualConfidence, 0) / signals.length,
+          relationshipStrength: this.calculatePatternStrength(signals)
+        }))
+        .filter(pattern => pattern.signals.length >= 3) // Only patterns with sufficient support
+        .sort((a, b) => b.averageConfidence - a.averageConfidence);
+      
+      subscriber.next(patterns);
+    });
+  }
 
-    // Keep only recent signals (last 30 days)
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    const filtered = existing.filter((s) => s.timestamp > thirtyDaysAgo);
-    this.patterns.set(category, filtered);
+  private calculatePatternStrength(signals: ContextualSignal[]): number {
+    if (signals.length < 2) return 0;
+    
+    // Calculate average relationship strength between all signals in the pattern
+    let totalStrength = 0;
+    let relationships = 0;
+    
+    for (let i = 0; i < signals.length; i++) {
+      for (let j = i + 1; j < signals.length; j++) {
+        const relationship = signals[i].relatedSignals
+          .find(rel => rel.signal === signals[j])?.relationship || 0;
+        totalStrength += relationship;
+        relationships++;
+      }
+    }
+    
+    return totalStrength / relationships;
   }
 
   public async processEmailInsight(intent: string, context: any, preservePrivacy: boolean = true) {
@@ -126,61 +179,6 @@ export class DemandInsights {
         this.recursiveSanitize(obj[key]);
       }
     }
-  }
-
-  public getEmergingPatterns(): Map<
-    string,
-    {
-      frequency: number;
-      avgUrgency: number;
-      avgSpecificity: number;
-      commonConstraints: any;
-    }
-  > {
-    const patterns = new Map();
-
-    for (let [category, signals] of this.patterns) {
-      patterns.set(category, {
-        frequency: signals.length,
-        avgUrgency: this.average(signals.map((s) => s.context.urgency)),
-        avgSpecificity: this.average(signals.map((s) => s.context.specificity)),
-        commonConstraints: this.aggregateConstraints(signals),
-      });
-    }
-
-    return patterns;
-  }
-
-  private average(numbers: number[]): number {
-    return numbers.reduce((a, b) => a + b, 0) / numbers.length;
-  }
-
-  private aggregateConstraints(signals: DemandSignal[]): any {
-    const constraints = signals.map((s) => s.context.valueConstraints).filter((c) => c);
-
-    if (constraints.length === 0) return {};
-
-    return {
-      budget: {
-        min: Math.min(
-          ...constraints.map((c) => c?.budget || Infinity).filter((b) => b !== Infinity)
-        ),
-        max: Math.max(...constraints.map((c) => c?.budget || 0)),
-        avg: this.average(constraints.map((c) => c?.budget || 0).filter((b) => b > 0)),
-      },
-      timeframe: this.findMostCommon(constraints.map((c) => c?.timeframe).filter((t) => t)),
-    };
-  }
-
-  private findMostCommon(arr: any[]): any {
-    if (arr.length === 0) return null;
-
-    const frequency = arr.reduce((acc, val) => {
-      acc[val] = (acc[val] || 0) + 1;
-      return acc;
-    }, {});
-
-    return Object.entries(frequency).reduce((a, b) => (a[1] > b[1] ? a : b))[0];
   }
 
   private calculateUrgency(context: any): number {

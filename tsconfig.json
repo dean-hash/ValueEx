@@ -23,12 +23,16 @@
     "incremental": true,
     "moduleResolution": "node",
     "isolatedModules": true,
-    "jsx": "preserve"
+    "jsx": "preserve",
+    "disableSourceOfProjectReferenceRedirect": true,
+    "disableSolutionSearching": true
   },
   "include": [
     "src/**/*"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "**/*.spec.ts",
+    "dist"
   ]
 }

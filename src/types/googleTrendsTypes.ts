@@ -1,6 +1,7 @@
 export interface GoogleTrendsTimelineData {
   time: string;
   value: number[];
+  formattedTime: string;
 }
 
 export interface GoogleTrendsResult {
@@ -11,26 +12,25 @@ export interface GoogleTrendsResult {
   };
 }
 
-export interface GoogleTrendsError {
-  message: string;
-  status: string;
+export interface TrendData {
+  time: string;
+  value: number;
+  formattedTime: string;
 }
 
-export interface TrendData {
-  keyword: string;
-  timeline: Array<{
-    timestamp: string;
-    value: number;
-  }>;
-  average: number;
+export interface TrendMetrics {
   momentum: number;
+  volume: number;
+  velocity: number;
+  acceleration: number;
   seasonality: number;
+  geographicSpread: Record<string, number>;
 }
 
 export interface RegionalInterestData {
   geoCode: string;
-  value: number;
-  formattedValue: string;
+  geoName: string;
+  value: number[];
 }
 
 export interface RelatedQueryData {
@@ -40,19 +40,7 @@ export interface RelatedQueryData {
   link: string;
 }
 
-export interface TrendMetrics {
-  currentValue: number;
-  historicalAverage: number;
-  momentum: number;
-  seasonalityScore: number;
-  volatility: number;
-  regionalSpread: {
-    global: number;
-    local: number;
-    ratio: number;
-  };
-  relatedQueries: Array<{
-    query: string;
-    correlation: number;
-  }>;
+export interface GoogleTrendsError {
+  message: string;
+  status: string;
 }

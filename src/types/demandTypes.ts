@@ -67,12 +67,23 @@ export interface RedditComment {
   data?: any;
 }
 
+export interface TrendMetrics {
+  momentum: number;
+  volume: number;
+  velocity: number;
+  acceleration: number;
+  seasonality: number;
+  geographicSpread: Record<string, number>;
+}
+
 export interface ScrapedDemandSignal {
   id: string;
+  query: string;
   title: string;
   content: string;
   url: string;
   timestamp: string;
+  trendMetrics: TrendMetrics;
   confidence: {
     overall: number;
     factors: {

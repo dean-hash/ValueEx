@@ -1,276 +1,314 @@
-import { DemandSource } from './demandSourceManager';
+import { DemandSource } from './demandSource';
 import { ScrapedDemandSignal } from '../../types/demandTypes';
 import { logger } from '../../utils/logger';
 import {
-  GoogleTrendsResult,
-  GoogleTrendsTimelineData,
   TrendData,
+  RelatedQueryData,
+  RegionalInterestData,
   TrendMetrics,
 } from '../../types/googleTrendsTypes';
 import googleTrends from 'google-trends-api';
+import IntelligenceCoordinator, { IntelligenceEvent } from '../../utils/intelligenceCoordinator';
+import { LocalIntelligence } from '../analysis/localIntelligence';
 
 export class GoogleTrendsScraper implements DemandSource {
   name = 'googleTrends';
-  weight = 0.25;
+  private coordinator: IntelligenceCoordinator;
+  private localIntelligence: LocalIntelligence;
+
+  constructor() {
+    this.coordinator = IntelligenceCoordinator.getInstance();
+    this.localIntelligence = LocalIntelligence.getInstance();
+  }
 
   async scrape(query: string, options?: any): Promise<ScrapedDemandSignal[]> {
     try {
+      logger.info('Starting Google Trends scrape', { query });
+
       const [interestOverTime, relatedQueries, regionalInterest] = await Promise.all([
         this.getInterestOverTime(query),
         this.getRelatedQueries(query),
         this.getRegionalInterest(query),
       ]);
 
+      logger.info('Got Google Trends data', { 
+        timelinePoints: interestOverTime.length,
+        relatedQueries: relatedQueries.length,
+        regions: Object.keys(regionalInterest).length 
+      });
+
       const trendMetrics = this.analyzeTrends(interestOverTime, regionalInterest);
-      const signal = this.createSignal(query, trendMetrics, relatedQueries);
+      let signal = this.createSignal(query, trendMetrics, relatedQueries);
+
+      // Enrich signal with local intelligence
+      signal = await this.localIntelligence.enrichSignal(signal);
+
+      this.coordinator.emit('source:enriched', {
+        sourceId: 'google_trends',
+        type: 'external',
+        operation: 'enrichSignal',
+        status: 'success',
+        data: signal
+      } as IntelligenceEvent);
 
       return [signal];
-    } catch (error) {
-      logger.error('Error scraping Google Trends', { error, query });
-      return [];
+    } catch (error: any) {
+      logger.error('Error scraping Google Trends', { error: error.message, query });
+      throw error;
     }
   }
 
-  private async getInterestOverTime(keyword: string): Promise<TrendData> {
-    const oneYearAgo = new Date();
-    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+  private async getInterestOverTime(query: string): Promise<TrendData[]> {
+    try {
+      this.coordinator.emit('source:request', {
+        sourceId: 'google_trends',
+        type: 'external',
+        operation: 'interestOverTime',
+        params: { query }
+      } as IntelligenceEvent);
 
-    const result = await googleTrends.interestOverTime({
-      keyword,
-      startTime: oneYearAgo,
-      granularTimeResolution: true,
-    });
+      const result = await googleTrends.interestOverTime({
+        keyword: query,
+        startTime: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
+      });
+      
+      const data = JSON.parse(result);
+      let timelineData: TrendData[] = [];
 
-    const data: GoogleTrendsResult = JSON.parse(result);
-    const timeline = data.default.timelineData.map((point) => ({
-      timestamp: point.time,
-      value: point.value[0],
-    }));
+      if (data?.default?.timelineData) {
+        timelineData = data.default.timelineData.map((point: any) => ({
+          time: point.time || '',
+          value: point.value?.[0] || 0,
+          formattedTime: point.formattedTime || '',
+        }));
+      }
 
-    const values = timeline.map((t) => t.value);
-    const average = values.reduce((a, b) => a + b, 0) / values.length;
+      this.coordinator.emit('source:response', {
+        sourceId: 'google_trends',
+        type: 'external',
+        operation: 'interestOverTime',
+        status: 'success',
+        data: timelineData
+      } as IntelligenceEvent);
+
+      return timelineData;
+    } catch (error: any) {
+      this.coordinator.emit('source:error', {
+        sourceId: 'google_trends',
+        type: 'external',
+        operation: 'interestOverTime',
+        error: error.message
+      } as IntelligenceEvent);
+      throw error;
+    }
+  }
+
+  private async getRegionalInterest(query: string): Promise<Record<string, number>> {
+    try {
+      this.coordinator.emit('source:request', {
+        sourceId: 'google_trends',
+        type: 'external',
+        operation: 'regionalInterest',
+        params: { query }
+      } as IntelligenceEvent);
+
+      const result = await googleTrends.interestByRegion({
+        keyword: query,
+        resolution: 'COUNTRY',
+      });
+      
+      const data = JSON.parse(result);
+      const regionalData: Record<string, number> = {};
+
+      if (data?.default?.geoMapData) {
+        data.default.geoMapData.forEach((region: any) => {
+          if (region.geoName && region.value?.[0] !== undefined) {
+            regionalData[region.geoName] = region.value[0];
+          }
+        });
+      }
+
+      this.coordinator.emit('source:response', {
+        sourceId: 'google_trends',
+        type: 'external',
+        operation: 'regionalInterest',
+        status: 'success',
+        data: regionalData
+      } as IntelligenceEvent);
+
+      return regionalData;
+    } catch (error: any) {
+      this.coordinator.emit('source:error', {
+        sourceId: 'google_trends',
+        type: 'external',
+        operation: 'regionalInterest',
+        error: error.message
+      } as IntelligenceEvent);
+      throw error;
+    }
+  }
+
+  private async getRelatedQueries(query: string): Promise<string[]> {
+    try {
+      this.coordinator.emit('source:request', {
+        sourceId: 'google_trends',
+        type: 'external',
+        operation: 'relatedQueries',
+        params: { query }
+      } as IntelligenceEvent);
+
+      const result = await googleTrends.relatedQueries({
+        keyword: query
+      });
+
+      const data = JSON.parse(result);
+      let queries: string[] = [];
+      
+      if (data?.default?.rankedList?.[0]?.rankedKeyword) {
+        queries = data.default.rankedList[0].rankedKeyword
+          .map((item: any) => item.query)
+          .slice(0, 5);
+      }
+
+      this.coordinator.emit('source:response', {
+        sourceId: 'google_trends',
+        type: 'external',
+        operation: 'relatedQueries',
+        status: 'success',
+        data: queries
+      } as IntelligenceEvent);
+
+      return queries;
+    } catch (error: any) {
+      this.coordinator.emit('source:error', {
+        sourceId: 'google_trends',
+        type: 'external',
+        operation: 'relatedQueries',
+        error: error.message
+      } as IntelligenceEvent);
+      throw error;
+    }
+  }
+
+  private analyzeTrends(timelineData: TrendData[], regionalData: Record<string, number>): TrendMetrics {
+    const values = timelineData.map(d => d.value);
+    const volume = Math.max(...values);
     const momentum = this.calculateMomentum(values);
+    const velocity = this.calculateVelocity(values);
+    const acceleration = this.calculateAcceleration(values);
     const seasonality = this.calculateSeasonality(values);
+    const geographicSpread = regionalData;
 
     return {
-      keyword,
-      timeline,
-      average,
+      volume,
       momentum,
+      velocity,
+      acceleration,
       seasonality,
-    };
-  }
-
-  private async getRelatedQueries(
-    keyword: string
-  ): Promise<Array<{ query: string; correlation: number }>> {
-    const result = await googleTrends.relatedQueries({ keyword });
-    const data = JSON.parse(result);
-
-    return data.default.rankedList[0].rankedKeyword.map((item: any) => ({
-      query: item.query,
-      correlation: item.value / 100,
-    }));
-  }
-
-  private async getRegionalInterest(keyword: string): Promise<{ global: number; local: number }> {
-    const result = await googleTrends.interestByRegion({
-      keyword,
-      resolution: 'COUNTRY',
-    });
-
-    const data = JSON.parse(result);
-    const values = data.default.geoMapData.map((item: any) => item.value);
-
-    return {
-      global: Math.max(...values) / 100,
-      local: values.reduce((a: number, b: number) => a + b, 0) / values.length / 100,
+      geographicSpread,
     };
   }
 
   private calculateMomentum(values: number[]): number {
-    if (values.length < 2) return 0;
+    const recentValues = values.slice(-7); // Last week
+    return recentValues.reduce((a, b) => a + b, 0) / recentValues.length;
+  }
 
-    const recentValues = values.slice(-12); // Last 12 data points
-    const olderValues = values.slice(-24, -12); // Previous 12 data points
+  private calculateVelocity(values: number[]): number {
+    const changes = values.slice(1).map((v, i) => v - values[i]);
+    return changes.reduce((a, b) => a + b, 0) / changes.length;
+  }
 
-    const recentAvg = recentValues.reduce((a, b) => a + b, 0) / recentValues.length;
-    const olderAvg = olderValues.reduce((a, b) => a + b, 0) / olderValues.length;
-
-    return (recentAvg - olderAvg) / olderAvg;
+  private calculateAcceleration(values: number[]): number {
+    const velocities = values.slice(1).map((v, i) => v - values[i]);
+    const accelerations = velocities.slice(1).map((v, i) => v - velocities[i]);
+    return accelerations.reduce((a, b) => a + b, 0) / accelerations.length;
   }
 
   private calculateSeasonality(values: number[]): number {
-    if (values.length < 52) return 0; // Need at least a year of data
-
-    const weeklyAverages = new Array(52).fill(0);
-    values.forEach((value, index) => {
-      const week = index % 52;
-      weeklyAverages[week] += value;
-    });
-
-    const yearsOfData = Math.floor(values.length / 52);
-    weeklyAverages.forEach((sum, index) => {
-      weeklyAverages[index] = sum / yearsOfData;
-    });
-
-    const totalAverage = weeklyAverages.reduce((a, b) => a + b, 0) / 52;
-    const seasonalityScore =
-      weeklyAverages.reduce((acc, val) => {
-        const deviation = Math.abs(val - totalAverage);
-        return acc + deviation / totalAverage;
-      }, 0) / 52;
-
-    return seasonalityScore;
-  }
-
-  private calculateVolatility(values: number[]): number {
+    // Simple seasonality score based on variance
     const mean = values.reduce((a, b) => a + b, 0) / values.length;
-    const squaredDiffs = values.map((v) => Math.pow(v - mean, 2));
-    const variance = squaredDiffs.reduce((a, b) => a + b, 0) / values.length;
-    return Math.sqrt(variance) / mean; // Coefficient of variation
-  }
-
-  private analyzeTrends(
-    interestData: TrendData,
-    regionalData: { global: number; local: number }
-  ): TrendMetrics {
-    const values = interestData.timeline.map((t) => t.value);
-
-    return {
-      currentValue: values[values.length - 1] / 100,
-      historicalAverage: interestData.average / 100,
-      momentum: interestData.momentum,
-      seasonalityScore: interestData.seasonality,
-      volatility: this.calculateVolatility(values),
-      regionalSpread: {
-        global: regionalData.global,
-        local: regionalData.local,
-        ratio: regionalData.local / regionalData.global,
-      },
-      relatedQueries: [], // Will be filled later
-    };
+    const variance = values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / values.length;
+    return Math.sqrt(variance) / mean;
   }
 
   private createSignal(
     query: string,
     metrics: TrendMetrics,
-    relatedQueries: Array<{ query: string; correlation: number }>
+    relatedQueries: string[]
   ): ScrapedDemandSignal {
-    const timestamp = new Date().toISOString();
-
-    // Calculate confidence based on data quality
-    const confidenceFactors = {
-      textQuality: 1.0, // Google Trends data is structured
-      communityEngagement: metrics.currentValue,
-      authorCredibility: 1.0, // Google is authoritative
-      contentRelevance: this.calculateRelevance(metrics),
-      temporalRelevance: this.calculateTemporalRelevance(metrics),
-    };
-
-    const overallConfidence =
-      Object.values(confidenceFactors).reduce((sum, score) => sum + score, 0) / 5;
-
+    const now = new Date().toISOString();
+    
     return {
-      id: `google-trends-${query}-${timestamp}`,
-      title: `Trend Analysis: ${query}`,
-      content: `Market demand analysis for "${query}" shows ${this.describeTrend(metrics)}`,
+      id: `gt_${query}_${Date.now()}`,
+      query,
+      title: `Google Trends: ${query}`,
+      content: `Trend analysis for "${query}" with related queries: ${relatedQueries.join(', ')}`,
       url: `https://trends.google.com/trends/explore?q=${encodeURIComponent(query)}`,
-      timestamp,
+      timestamp: now,
+      trendMetrics: metrics,
       confidence: {
-        overall: overallConfidence,
-        factors: confidenceFactors,
+        overall: 0.85,
+        factors: {
+          textQuality: 0.9,
+          communityEngagement: 0.8,
+          authorCredibility: 0.95,
+          contentRelevance: 0.85,
+          temporalRelevance: 0.9,
+        },
       },
       context: {
         thread: {
-          id: `trends-${query}`,
+          id: `gt_${query}`,
           depth: 0,
           isOriginalPost: true,
         },
         author: {
-          id: 'google-trends',
+          id: 'google_trends',
+          domainActivity: 1,
         },
         community: {
-          name: 'google-trends',
-          size: 1e9, // Google's reach is massive
-          topicRelevance: 1.0,
-          activityLevel: metrics.currentValue,
+          name: 'Google Trends',
+          topicRelevance: 0.9,
+          activityLevel: 1,
         },
       },
       analysis: {
-        sentiment: this.calculateSentiment(metrics),
-        topics: [
-          {
-            name: query,
-            confidence: metrics.currentValue,
-            keywords: relatedQueries.map((q) => q.query),
-          },
-        ],
+        sentiment: 0,
+        topics: [{
+          name: query,
+          confidence: 1,
+          keywords: relatedQueries,
+        }],
         pricePoints: [],
         features: {},
         relationships: {
           relatedThreads: [],
-          crossReferences: relatedQueries.map((q) => q.query),
+          crossReferences: [],
           temporalConnections: [],
         },
       },
       metadata: {
         processingTime: Date.now(),
         extractionVersion: '1.0.0',
-        dataQualityScore: this.calculateDataQuality(metrics),
-        source: 'google-trends',
-        sourceWeight: this.weight,
+        dataQualityScore: 0.9,
+        source: 'google_trends',
+        sourceWeight: 0.8,
       },
     };
-  }
-
-  private calculateRelevance(metrics: TrendMetrics): number {
-    return (
-      metrics.currentValue * 0.3 +
-      metrics.regionalSpread.ratio * 0.3 +
-      (1 - metrics.volatility) * 0.4
-    );
-  }
-
-  private calculateTemporalRelevance(metrics: TrendMetrics): number {
-    const momentumFactor = Math.min(Math.max(metrics.momentum + 1, 0), 1);
-    const seasonalityFactor = 1 - metrics.seasonalityScore;
-    return momentumFactor * 0.7 + seasonalityFactor * 0.3;
-  }
-
-  private calculateSentiment(metrics: TrendMetrics): number {
-    const momentum = Math.tanh(metrics.momentum); // Normalize to [-1, 1]
-    const popularity = metrics.currentValue / metrics.historicalAverage - 1;
-    return momentum * 0.7 + Math.tanh(popularity) * 0.3;
-  }
-
-  private calculateDataQuality(metrics: TrendMetrics): number {
-    return (
-      (1 - metrics.volatility) * 0.4 +
-      metrics.currentValue * 0.3 +
-      (1 - metrics.seasonalityScore) * 0.3
-    );
-  }
-
-  private describeTrend(metrics: TrendMetrics): string {
-    const momentum = metrics.momentum > 0 ? 'increasing' : 'decreasing';
-    const intensity = metrics.currentValue > metrics.historicalAverage ? 'above' : 'below';
-    const volatility = metrics.volatility > 0.5 ? 'volatile' : 'stable';
-    const spread = metrics.regionalSpread.ratio > 1 ? 'concentrated' : 'widespread';
-
-    return (
-      `${momentum} interest with ${intensity} average engagement. ` +
-      `Trend is ${volatility} and ${spread} geographically.`
-    );
   }
 
   validateSignal(signal: ScrapedDemandSignal): boolean {
     return (
       !!signal.id &&
       !!signal.timestamp &&
-      !!signal.confidence?.overall &&
-      signal.confidence.overall >= 0 &&
-      signal.confidence.overall <= 1
+      !!signal.trendMetrics &&
+      typeof signal.trendMetrics.momentum === 'number' &&
+      typeof signal.trendMetrics.volume === 'number' &&
+      typeof signal.trendMetrics.velocity === 'number' &&
+      typeof signal.trendMetrics.acceleration === 'number' &&
+      typeof signal.trendMetrics.seasonality === 'number' &&
+      !!signal.trendMetrics.geographicSpread
     );
   }
 }
