@@ -1,0 +1,32 @@
+{
+  "platforms": {
+    "googleCloud": {
+      "status": "active",
+      "projects": ["valueex-prod", "valueex-dev"],
+      "enabledAPIs": [
+        "compute.googleapis.com",
+        "cloudfunctions.googleapis.com",
+        "aiplatform.googleapis.com"
+      ],
+      "monthlyCost": "$X"
+    },
+    "workspace": {
+      "status": "active",
+      "licenses": ["enterprise"],
+      "users": ["dean@valueex.ai"],
+      "monthlyCost": "$Y"
+    }
+  },
+  "models": {
+    "vertexAI": {
+      "status": "active",
+      "endpoints": [],
+      "usage": "on-demand"
+    },
+    "palm": {
+      "status": "active",
+      "apiKeys": ["configured"],
+      "usage": "on-demand"
+    }
+  }
+}

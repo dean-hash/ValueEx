@@ -1,0 +1,51 @@
+{
+  "signals": [
+    {
+      "id": "batch-1",
+      "query": "sustainable food packaging wholesale",
+      "source": "distributor portal",
+      "strength": 0.85,
+      "vertical": {
+        "id": "packaging",
+        "name": "Packaging"
+      },
+      "insights": {
+        "confidence": 0.82,
+        "urgency": 0.75,
+        "keywords": ["sustainable", "food", "packaging", "wholesale"],
+        "context": "Food distributor seeking eco-friendly packaging solutions",
+        "valueEvidence": {
+          "authenticityMarkers": ["verified distributor", "purchase history"],
+          "realWorldImpact": ["waste reduction", "brand reputation"],
+          "practicalUtility": ["cost effective", "food safe"]
+        }
+      }
+    },
+    {
+      "id": "batch-2",
+      "query": "AI inventory forecasting system",
+      "source": "retail chain",
+      "strength": 0.92,
+      "vertical": {
+        "id": "software",
+        "name": "Software"
+      },
+      "insights": {
+        "confidence": 0.88,
+        "urgency": 0.85,
+        "keywords": ["AI", "inventory", "forecasting", "retail"],
+        "context": "Large retail chain looking to optimize inventory",
+        "valueEvidence": {
+          "authenticityMarkers": ["verified retailer", "current system analysis"],
+          "realWorldImpact": ["reduced stockouts", "lower carrying costs"],
+          "practicalUtility": ["real-time updates", "ML-powered predictions"]
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "timestamp": "2025-01-03T18:42:45-05:00",
+    "batchId": "test-batch-1",
+    "version": "1.0"
+  }
+}

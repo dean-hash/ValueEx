@@ -1,0 +1,48 @@
+{
+  "setup": {
+    "version": "1.1.0",
+    "environment": "Windsurf",
+    "dependencies": {
+      "codeium": "1.30.2",
+      "vscode": "1.94.0"
+    }
+  },
+  "features": [
+    {
+      "name": "Context Pinning",
+      "description": "Allows developers to pin files, directories, and repositories for persistent model reference.",
+      "usage": [
+        {
+          "type": "directory",
+          "example": "Pin `/docs` to retain reference to all project documentation."
+        }
+      ]
+    },
+    {
+      "name": "Global AI Rules",
+      "description": "Defines universal behavior and restrictions across all workspaces.",
+      "examples": [
+        {
+          "rule": "Prevent overwriting pinned files without explicit confirmation."
+        },
+        {
+          "rule": "Adhere to semantic versioning standards."
+        }
+      ]
+    },
+    {
+      "name": "Workspace-Specific Rules",
+      "description": "Tailors behavior to the specific project environment.",
+      "examples": [
+        {
+          "workspace": "Development",
+          "rule": "Enable full AI capabilities for rapid development and innovation."
+        },
+        {
+          "workspace": "QA",
+          "rule": "Maintain comprehensive testing and validation while preserving development agility."
+        }
+      ]
+    }
+  ]
+}

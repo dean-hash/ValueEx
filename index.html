@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ValueEx - Unleashing Digital Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .gradient-bg {
+            background: linear-gradient(-45deg, #1a1a1a, #2d3748, #1a365d, #2c5282);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+        .feature-card {
+            transition: transform 0.3s ease-in-out;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        .glow {
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        @keyframes glow {
+            from { text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #4299e1; }
+            to { text-shadow: 0 0 20px #fff, 0 0 30px #4299e1, 0 0 40px #4299e1; }
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen text-white font-sans">
+    <div class="container mx-auto px-4 py-16">
+        <header class="text-center mb-16">
+            <h1 class="text-6xl font-bold mb-4 glow">ValueEx</h1>
+            <p class="text-xl opacity-90">Unleashing the Power of Digital Intelligence</p>
+        </header>
+
+        <main class="max-w-6xl mx-auto">
+            <div class="bg-black/30 backdrop-blur-lg rounded-lg p-8 mb-12 text-center">
+                <h2 class="text-3xl font-semibold mb-6">Transforming Digital Potential into Real Value</h2>
+                <p class="text-lg leading-relaxed max-w-3xl mx-auto">
+                    ValueEx is revolutionizing how digital intelligence creates value. We're breaking down barriers, 
+                    connecting creators with opportunities, and building a future where AI and human potential work in harmony.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8 mb-16">
+                <div class="feature-card bg-black/30 backdrop-blur-lg rounded-lg p-8">
+                    <div class="text-4xl mb-4 text-blue-400"><i class="fas fa-brain"></i></div>
+                    <h3 class="text-2xl font-semibold mb-4">Digital Intelligence</h3>
+                    <ul class="space-y-3 text-gray-300">
+                        <li><i class="fas fa-check text-green-400 mr-2"></i>Advanced AI Integration</li>
+                        <li><i class="fas fa-check text-green-400 mr-2"></i>Smart Market Analysis</li>
+                        <li><i class="fas fa-check text-green-400 mr-2"></i>Predictive Insights</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card bg-black/30 backdrop-blur-lg rounded-lg p-8">
+                    <div class="text-4xl mb-4 text-purple-400"><i class="fas fa-chart-line"></i></div>
+                    <h3 class="text-2xl font-semibold mb-4">Market Opportunities</h3>
+                    <ul class="space-y-3 text-gray-300">
+                        <li><i class="fas fa-check text-green-400 mr-2"></i>Demand Analysis</li>
+                        <li><i class="fas fa-check text-green-400 mr-2"></i>Trend Detection</li>
+                        <li><i class="fas fa-check text-green-400 mr-2"></i>Value Optimization</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card bg-black/30 backdrop-blur-lg rounded-lg p-8">
+                    <div class="text-4xl mb-4 text-pink-400"><i class="fas fa-rocket"></i></div>
+                    <h3 class="text-2xl font-semibold mb-4">Creator Success</h3>
+                    <ul class="space-y-3 text-gray-300">
+                        <li><i class="fas fa-check text-green-400 mr-2"></i>Marketplace Integration</li>
+                        <li><i class="fas fa-check text-green-400 mr-2"></i>Growth Analytics</li>
+                        <li><i class="fas fa-check text-green-400 mr-2"></i>Revenue Optimization</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="bg-black/30 backdrop-blur-lg rounded-lg p-8 mb-12">
+                <h2 class="text-3xl font-semibold mb-6 text-center">Join the Revolution</h2>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="space-y-4">
+                        <h3 class="text-2xl mb-4">Early Access Benefits</h3>
+                        <ul class="space-y-3">
+                            <li><i class="fas fa-star text-yellow-400 mr-2"></i>Priority Platform Access</li>
+                            <li><i class="fas fa-star text-yellow-400 mr-2"></i>Exclusive Market Insights</li>
+                            <li><i class="fas fa-star text-yellow-400 mr-2"></i>Direct Support Channel</li>
+                            <li><i class="fas fa-star text-yellow-400 mr-2"></i>Beta Feature Testing</li>
+                        </ul>
+                    </div>
+                    <div class="space-y-4">
+                        <h3 class="text-2xl mb-4">Coming Soon</h3>
+                        <ul class="space-y-3">
+                            <li><i class="fas fa-clock text-blue-400 mr-2"></i>Advanced Analytics Dashboard</li>
+                            <li><i class="fas fa-clock text-blue-400 mr-2"></i>AI-Powered Market Predictions</li>
+                            <li><i class="fas fa-clock text-blue-400 mr-2"></i>Automated Value Optimization</li>
+                            <li><i class="fas fa-clock text-blue-400 mr-2"></i>Cross-Platform Integration</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <a href="#" class="inline-block bg-blue-600 text-white px-8 py-4 rounded-full font-semibold hover:bg-blue-700 transition-all transform hover:scale-105 shadow-lg">
+                    <i class="fas fa-rocket mr-2"></i>Get Early Access
+                </a>
+                <p class="mt-4 text-gray-400">Limited spots available for our beta program</p>
+            </div>
+        </main>
+
+        <footer class="text-center mt-16 opacity-75">
+            <p> 2025 ValueEx. Breaking barriers, building futures.</p>
+            <div class="mt-4 space-x-4">
+                <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-github"></i></a>
+                <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-twitter"></i></a>
+                <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-linkedin"></i></a>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Add smooth scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>

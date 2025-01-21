@@ -1,0 +1,83 @@
+{
+  "chat": {
+    "access": {
+      "location": "left sidebar",
+      "keyboard_shortcut": {
+        "open_panel": {
+          "mac": "⌘+⇧+A",
+          "windows": "Ctrl+⇧+A"
+        }
+      },
+      "features": ["Pop-out window capability"]
+    },
+    "context_features": {
+      "at_mentions": {
+        "description": "Deterministic way of bringing in context",
+        "supported_items": [
+          "Functions & classes",
+          "Directories and files",
+          "Remote repositories",
+          "Terminal contents",
+          "Git diff state (beta)"
+        ]
+      },
+      "persistent_context": {
+        "configuration": "Context tab in chat panel",
+        "elements": [
+          "Custom Chat Instructions",
+          "Pinned Contexts",
+          "Active Document",
+          "Local Indexes"
+        ]
+      }
+    },
+    "models": {
+      "base_model": {
+        "name": "Codeium Base",
+        "based_on": "Meta's Llama 3.1 70B",
+        "access": "All users",
+        "features": ["Fastest model", "Unlimited use"]
+      },
+      "premier_model": {
+        "name": "Codeium Premier",
+        "based_on": "Meta's Llama 3.1 405B",
+        "access": "Paid users",
+        "features": ["Highest performance", "Unlimited usage"]
+      },
+      "other_models": {
+        "available": ["GPT-4o", "Claude 3.5 Sonnet"],
+        "access": "Paid users"
+      }
+    }
+  },
+  "command": {
+    "access": {
+      "keyboard_shortcut": {
+        "windows": "Ctrl+I",
+        "accept": "Ctrl+Enter",
+        "reject": "Ctrl+Delete"
+      }
+    },
+    "capabilities": {
+      "code_generation": "Generate new code at cursor location",
+      "code_editing": "Edit highlighted code sections",
+      "terminal_commands": "Natural language terminal command generation"
+    },
+    "features": {
+      "refactors": {
+        "access": "Code lens above functions/classes",
+        "types": ["Pre-populated instructions", "Custom instructions"]
+      },
+      "docstrings": {
+        "description": "Generate documentation for functions",
+        "placement": "Above function header (language-dependent)"
+      }
+    },
+    "best_practices": [
+      "Use for file-scoped, in-line changes",
+      "Provide specific prompts with clear objectives",
+      "Include relevant context and constraints",
+      "Reference specific functions or files when needed"
+    ]
+  }
+}

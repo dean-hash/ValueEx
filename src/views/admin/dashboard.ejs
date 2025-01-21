@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ValueEx MVP Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-8">ValueEx MVP Admin</h1>
+
+        <!-- Demand Tracking -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4">Track New Demand</h2>
+            <form id="demandForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Query</label>
+                    <input type="text" name="query" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
+                </div>
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Track Demand</button>
+            </form>
+        </div>
+
+        <!-- Active Demands -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4">Active Demands</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full table-auto">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="px-6 py-3 text-left">Query</th>
+                            <th class="px-6 py-3 text-left">Vertical</th>
+                            <th class="px-6 py-3 text-left">Strength</th>
+                            <th class="px-6 py-3 text-left">Urgency</th>
+                            <th class="px-6 py-3 text-left">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="activeDemandsTable">
+                        <% activeSignals.forEach(signal => { %>
+                            <tr>
+                                <td class="px-6 py-4"><%= signal.query %></td>
+                                <td class="px-6 py-4"><%= signal.vertical.name %></td>
+                                <td class="px-6 py-4"><%= (signal.strength * 100).toFixed(1) %>%</td>
+                                <td class="px-6 py-4"><%= (signal.insights.urgency * 100).toFixed(1) %>%</td>
+                                <td class="px-6 py-4">
+                                    <button onclick="fulfillDemand('<%= signal.id %>')" 
+                                            class="bg-green-500 text-white px-3 py-1 rounded">
+                                        Fulfill
+                                    </button>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Product Management -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4">Add Product</h2>
+            <form id="productForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Name</label>
+                    <input type="text" name="name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Description</label>
+                    <textarea name="description" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Price</label>
+                    <input type="number" name="price" step="0.01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Category</label>
+                    <input type="text" name="category" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Vertical</label>
+                    <select name="verticalId" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
+                        <% Object.entries(verticals).forEach(([id, vertical]) => { %>
+                            <option value="<%= id %>"><%= vertical.name %></option>
+                        <% }); %>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Tags (comma-separated)</label>
+                    <input type="text" name="tags" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
+                </div>
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Add Product</button>
+            </form>
+        </div>
+
+        <!-- Product List -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-semibold mb-4">Products</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full table-auto">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="px-6 py-3 text-left">Name</th>
+                            <th class="px-6 py-3 text-left">Category</th>
+                            <th class="px-6 py-3 text-left">Price</th>
+                            <th class="px-6 py-3 text-left">Market Fit</th>
+                            <th class="px-6 py-3 text-left">Status</th>
+                            <th class="px-6 py-3 text-left">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productsTable">
+                        <% products.forEach(product => { %>
+                            <tr>
+                                <td class="px-6 py-4"><%= product.name %></td>
+                                <td class="px-6 py-4"><%= product.category %></td>
+                                <td class="px-6 py-4">$<%= product.price.toFixed(2) %></td>
+                                <td class="px-6 py-4"><%= ((product.resonanceFactors?.marketFit || 0) * 100).toFixed(1) %>%</td>
+                                <td class="px-6 py-4"><%= product.status %></td>
+                                <td class="px-6 py-4">
+                                    <button onclick="toggleProductStatus('<%= product.id %>')" 
+                                            class="bg-yellow-500 text-white px-3 py-1 rounded">
+                                        Toggle Status
+                                    </button>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Form submissions
+        document.getElementById('demandForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            try {
+                const response = await fetch('/admin/demands', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: formData.get('query') })
+                });
+                if (response.ok) {
+                    location.reload();
+                }
+            } catch (error) {
+                console.error('Error tracking demand:', error);
+            }
+        });
+
+        document.getElementById('productForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            try {
+                const response = await fetch('/admin/products', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(Object.fromEntries(formData))
+                });
+                if (response.ok) {
+                    location.reload();
+                }
+            } catch (error) {
+                console.error('Error adding product:', error);
+            }
+        });
+
+        // Actions
+        async function fulfillDemand(demandId) {
+            const productId = prompt('Enter product ID to fulfill this demand:');
+            if (productId) {
+                try {
+                    const response = await fetch(`/admin/demands/${demandId}/fulfill`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ productId })
+                    });
+                    if (response.ok) {
+                        location.reload();
+                    }
+                } catch (error) {
+                    console.error('Error fulfilling demand:', error);
+                }
+            }
+        }
+
+        async function toggleProductStatus(productId) {
+            try {
+                const response = await fetch(`/admin/products/${productId}/status`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'inactive' })
+                });
+                if (response.ok) {
+                    location.reload();
+                }
+            } catch (error) {
+                console.error('Error updating product status:', error);
+            }
+        }
+    </script>
+</body>
+</html>

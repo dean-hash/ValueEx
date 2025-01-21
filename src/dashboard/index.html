@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ValueEx Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .monetization-panel {
+            grid-column: span 2;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .opportunity-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .opportunity-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #4CAF50;
+        }
+        .metrics-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+        .metric {
+            text-align: center;
+            flex: 1;
+        }
+        .metric-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2196F3;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #444;
+            margin: 0 0 15px 0;
+        }
+        canvas {
+            width: 100% !important;
+            height: 300px !important;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .card-header {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .card-body {
+            padding: 20px;
+        }
+        .table-responsive {
+            overflow-x: auto;
+        }
+        .table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        .table th, .table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        .table th {
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <h1>ValueEx Resonance Dashboard</h1>
+    
+    <div class="dashboard">
+        <!-- Monetization Overview Panel -->
+        <div class="monetization-panel">
+            <h2>Monetization Opportunities</h2>
+            <div class="opportunity-grid">
+                <div class="opportunity-card">
+                    <h3>Domain Portfolio</h3>
+                    <div class="metrics-container">
+                        <div class="metric">
+                            <div class="metric-value" id="domainCount">0</div>
+                            <div>Active Domains</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value" id="totalValue">$0</div>
+                            <div>Est. Value</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="opportunity-card">
+                    <h3>Affiliate Revenue</h3>
+                    <div class="metrics-container">
+                        <div class="metric">
+                            <div class="metric-value" id="activePrograms">0</div>
+                            <div>Active Programs</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value" id="monthlyRevenue">$0</div>
+                            <div>Monthly Revenue</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="opportunity-card">
+                    <h3>Growth Potential</h3>
+                    <div class="metrics-container">
+                        <div class="metric">
+                            <div class="metric-value" id="growthScore">0%</div>
+                            <div>Growth Score</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value" id="opportunities">0</div>
+                            <div>New Opportunities</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Domain Portfolio Analysis Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4 class="mb-0">Domain Portfolio Analysis</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <canvas id="domainValueChart"></canvas>
+                    </div>
+                    <div class="col-md-6">
+                        <canvas id="nicheDistributionChart"></canvas>
+                    </div>
+                </div>
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h5>Portfolio Metrics</h5>
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="domainMetricsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Domain</th>
+                                        <th>Est. Value</th>
+                                        <th>SEO Value</th>
+                                        <th>Market Demand</th>
+                                        <th>Affiliate Potential</th>
+                                        <th>Strategy</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="domainMetricsBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h5>Affiliate Opportunities</h5>
+                        <div id="affiliateOpportunities"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="resonanceChart"></canvas>
+        </div>
+        <div class="chart-container">
+            <canvas id="incomeChart"></canvas>
+        </div>
+        <div class="chart-container">
+            <canvas id="patternChart"></canvas>
+        </div>
+        <div class="chart-container">
+            <canvas id="coherenceChart"></canvas>
+        </div>
+    </div>
+
+    <script type="module">
+        import { ResonanceVisualizer } from './resonanceVisualizer.js';
+        import { DataSimulator } from '../core/simulation/dataSimulator.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const visualizer = new ResonanceVisualizer();
+            const simulator = new DataSimulator();
+            
+            // Initialize charts
+            visualizer.initializeCharts();
+            
+            // Subscribe to data updates
+            simulator.subscribe(data => {
+                visualizer.updateCharts(data);
+            });
+            
+            // Start simulation
+            simulator.startSimulation();
+        });
+    </script>
+</body>
+</html>

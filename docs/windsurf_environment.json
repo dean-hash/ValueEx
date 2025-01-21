@@ -1,0 +1,40 @@
+{
+  "system_info": {
+    "device": {
+      "name": "DESKTOP-QHPPNBD",
+      "processor": "11th Gen Intel(R) Core(TM) i7-1165G7 @ 2.80GHz   2.80 GHz",
+      "ram": "16.0 GB (15.7 GB usable)",
+      "device_id": "ADCF94EE-D967-4C7D-BC0F-DDABAB8382FC",
+      "product_id": "00342-21916-99709-AAOEM",
+      "system_type": "64-bit operating system, x64-based processor",
+      "input": "Pen and touch support with 10 touch points"
+    },
+    "windows": {
+      "edition": "Windows 11 Home",
+      "version": "23H2",
+      "install_date": "2024-08-08",
+      "os_build": "22631.4602",
+      "serial_number": "5BS99FDRA00365J",
+      "experience_pack": "Windows Feature Experience Pack 1000.22700.1055.0"
+    }
+  },
+  "windsurf_environment": {
+    "windsurf": {
+      "version": "1.1.0",
+      "description": "Tomorrow's editor, today - Codeium's next-generation AI IDE built to keep you in the flow"
+    },
+    "codeium": {
+      "version": "1.30.2",
+      "commit": "c418a14b63f051e96dafb37fe06f1fe0b10ba3c8"
+    },
+    "vscode": {
+      "version": "1.94.0",
+      "type": "user setup",
+      "commit_date": "2024-12-11T04:11:03.164Z",
+      "electron": "30.5.1",
+      "chromium": "124.0.6367.243",
+      "nodejs": "20.16.0",
+      "v8": "12.4.254.20-electron.0"
+    }
+  }
+}

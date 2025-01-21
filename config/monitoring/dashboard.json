@@ -1,0 +1,147 @@
+{
+  "dashboards": {
+    "demand_signals": {
+      "title": "Demand Signal Processing Dashboard",
+      "refresh": "10s",
+      "panels": [
+        {
+          "title": "Real-Time Demand Signals",
+          "type": "stream",
+          "metrics": [
+            "demand_signals_processed_total",
+            "demand_pattern_strength"
+          ],
+          "visualization": {
+            "type": "live-stream",
+            "maxDataPoints": 100,
+            "updateInterval": "1s"
+          }
+        },
+        {
+          "title": "System Resources",
+          "type": "multi-stat",
+          "panels": [
+            {
+              "title": "CPU Usage",
+              "metric": "process_cpu_usage",
+              "thresholds": {
+                "warning": 70,
+                "critical": 85
+              }
+            },
+            {
+              "title": "Memory Usage",
+              "metric": "process_memory_usage",
+              "thresholds": {
+                "warning": 75,
+                "critical": 90
+              }
+            },
+            {
+              "title": "API Rate",
+              "metric": "api_requests_per_second",
+              "thresholds": {
+                "warning": 80,
+                "critical": 95
+              }
+            }
+          ]
+        },
+        {
+          "title": "Demand Pattern Analysis",
+          "type": "correlation-matrix",
+          "metrics": [
+            "demand_pattern_strength",
+            "processing_time",
+            "error_rate",
+            "response_time"
+          ],
+          "dimensions": ["pattern_type"],
+          "updateInterval": "1m"
+        },
+        {
+          "title": "Processing Performance",
+          "type": "graph",
+          "metrics": [
+            "demand_signal_processing_time"
+          ],
+          "thresholds": {
+            "adaptive": true,
+            "baselineWindow": 60,
+            "sensitivity": 2.5
+          }
+        },
+        {
+          "title": "Error Analysis",
+          "type": "multi-chart",
+          "panels": [
+            {
+              "title": "Error Rate Trend",
+              "type": "line",
+              "metric": "demand_signal_errors_total",
+              "adaptive_threshold": true
+            },
+            {
+              "title": "Error Distribution",
+              "type": "pie",
+              "metric": "error_types_distribution"
+            }
+          ]
+        },
+        {
+          "title": "Resource Utilization Trends",
+          "type": "heatmap",
+          "metrics": [
+            "cpu_usage",
+            "memory_usage",
+            "api_rate",
+            "processing_time"
+          ],
+          "dimensions": ["time_of_day", "day_of_week"]
+        }
+      ],
+      "alerts": {
+        "adaptive_thresholds": {
+          "enabled": true,
+          "metrics": [
+            "processing_time",
+            "error_rate",
+            "response_time"
+          ],
+          "config": {
+            "baselineWindow": 60,
+            "sensitivity": 2.5,
+            "minDataPoints": 100
+          }
+        },
+        "severity_levels": {
+          "critical": {
+            "channels": ["slack", "email", "pager"],
+            "throttle": "15m",
+            "autoResolve": false
+          },
+          "warning": {
+            "channels": ["slack"],
+            "throttle": "30m",
+            "autoResolve": true
+          },
+          "info": {
+            "channels": ["slack"],
+            "throttle": "1h",
+            "autoResolve": true
+          }
+        },
+        "correlations": {
+          "enabled": true,
+          "metrics": [
+            "error_rate",
+            "processing_time",
+            "demand_pattern_strength"
+          ],
+          "threshold": 0.7,
+          "window": "1h"
+        }
+      }
+    }
+  }
+}

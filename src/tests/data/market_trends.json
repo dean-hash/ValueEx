@@ -1,0 +1,86 @@
+{
+  "trends": [
+    {
+      "id": "trend-1",
+      "category": "Packaging",
+      "name": "Sustainable Packaging",
+      "strength": 0.92,
+      "momentum": 0.85,
+      "signals": [
+        {
+          "type": "demand",
+          "volume": 1250,
+          "growth": 0.45,
+          "confidence": 0.88
+        },
+        {
+          "type": "supply",
+          "volume": 850,
+          "growth": 0.32,
+          "confidence": 0.91
+        }
+      ],
+      "drivers": [
+        {
+          "name": "Environmental Regulations",
+          "impact": 0.75,
+          "timeline": "immediate"
+        },
+        {
+          "name": "Consumer Preferences",
+          "impact": 0.82,
+          "timeline": "long-term"
+        }
+      ],
+      "validation": {
+        "marketResearch": true,
+        "expertConsensus": true,
+        "empiricalData": true
+      }
+    },
+    {
+      "id": "trend-2",
+      "category": "Software",
+      "name": "AI-Powered Analytics",
+      "strength": 0.88,
+      "momentum": 0.92,
+      "signals": [
+        {
+          "type": "demand",
+          "volume": 2200,
+          "growth": 0.65,
+          "confidence": 0.85
+        },
+        {
+          "type": "supply",
+          "volume": 1400,
+          "growth": 0.48,
+          "confidence": 0.89
+        }
+      ],
+      "drivers": [
+        {
+          "name": "Digital Transformation",
+          "impact": 0.88,
+          "timeline": "immediate"
+        },
+        {
+          "name": "Competitive Pressure",
+          "impact": 0.78,
+          "timeline": "medium-term"
+        }
+      ],
+      "validation": {
+        "marketResearch": true,
+        "expertConsensus": true,
+        "empiricalData": true
+      }
+    }
+  ],
+  "metadata": {
+    "timestamp": "2025-01-03T18:42:45-05:00",
+    "confidence": 0.89,
+    "coverage": 0.85,
+    "version": "1.0"
+  }
+}

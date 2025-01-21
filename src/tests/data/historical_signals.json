@@ -1,0 +1,59 @@
+{
+  "signals": [
+    {
+      "id": "hist-1",
+      "timestamp": "2024-12-01T10:00:00Z",
+      "category": "Packaging",
+      "query": "eco-friendly food containers",
+      "strength": 0.85,
+      "context": {
+        "market": "Food Service",
+        "region": "Northeast",
+        "segment": "Restaurant",
+        "volume": "medium",
+        "urgency": "high"
+      },
+      "patterns": {
+        "seasonal": true,
+        "cyclical": false,
+        "trending": true
+      },
+      "outcomes": {
+        "conversion": 0.72,
+        "satisfaction": 0.89,
+        "retention": 0.84
+      }
+    },
+    {
+      "id": "hist-2",
+      "timestamp": "2024-12-15T14:30:00Z",
+      "category": "Software",
+      "query": "inventory management system",
+      "strength": 0.92,
+      "context": {
+        "market": "Retail",
+        "region": "Global",
+        "segment": "Enterprise",
+        "volume": "high",
+        "urgency": "medium"
+      },
+      "patterns": {
+        "seasonal": false,
+        "cyclical": true,
+        "trending": true
+      },
+      "outcomes": {
+        "conversion": 0.68,
+        "satisfaction": 0.91,
+        "retention": 0.88
+      }
+    }
+  ],
+  "metadata": {
+    "timespan": "2024-Q4",
+    "totalSignals": 2,
+    "averageStrength": 0.885,
+    "dominantPatterns": ["trending"],
+    "version": "1.0"
+  }
+}

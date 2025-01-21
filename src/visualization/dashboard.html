@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ValueEx Demand Matching</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="dashboard">
+        <header>
+            <h1>Demand Signal Matching</h1>
+            <div class="filters">
+                <select id="categoryFilter">
+                    <option value="all">All Categories</option>
+                    <option value="software">Software & Services</option>
+                    <option value="hardware">Hardware & Devices</option>
+                    <option value="consulting">Consulting & Expertise</option>
+                </select>
+                <select id="timeRange">
+                    <option value="24h">Last 24 hours</option>
+                    <option value="7d">Last 7 days</option>
+                    <option value="30d">Last 30 days</option>
+                </select>
+            </div>
+        </header>
+
+        <div class="grid-container">
+            <!-- Active Demand Signals -->
+            <section class="demand-signals">
+                <h2>Active Demand Signals</h2>
+                <div class="signal-list">
+                    <!-- Each signal card shows specific demand details -->
+                    <div class="signal-template" style="display: none;">
+                        <div class="signal-header">
+                            <span class="category"></span>
+                            <span class="timestamp"></span>
+                        </div>
+                        <div class="signal-details">
+                            <div class="requirements">
+                                <h4>Requirements</h4>
+                                <ul class="feature-list"></ul>
+                            </div>
+                            <div class="constraints">
+                                <h4>Constraints</h4>
+                                <ul>
+                                    <li class="price-range"></li>
+                                    <li class="delivery-time"></li>
+                                    <li class="quantity"></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="match-potential">
+                            <span class="match-score"></span>
+                            <button class="view-matches">View Potential Matches</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Demand Patterns -->
+            <section class="demand-patterns">
+                <h2>Emerging Demand Patterns</h2>
+                <div class="pattern-grid">
+                    <div class="pattern-card feature-clusters">
+                        <h3>Feature Clusters</h3>
+                        <div class="cluster-viz"></div>
+                    </div>
+                    <div class="pattern-card price-distribution">
+                        <h3>Price Sensitivity</h3>
+                        <div class="price-viz"></div>
+                    </div>
+                    <div class="pattern-card temporal-patterns">
+                        <h3>Temporal Patterns</h3>
+                        <div class="temporal-viz"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Match Recommendations -->
+            <section class="match-recommendations">
+                <h2>Potential Matches</h2>
+                <div class="match-grid">
+                    <!-- Dynamic match cards will be inserted here -->
+                </div>
+            </section>
+
+            <!-- Demand Timeline -->
+            <section class="demand-timeline">
+                <h2>Signal Evolution</h2>
+                <div id="signal-timeline">
+                    <!-- Timeline shows how demands evolve and merge -->
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script type="module">
+        import IntelligenceViz from './intelligenceViz.js';
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const viz = new IntelligenceViz();
+            
+            // Example of a concrete demand signal
+            viz.processDemandSignal({
+                category: 'software',
+                subcategory: 'enterprise-automation',
+                requirements: {
+                    features: [
+                        'Process automation',
+                        'API integration',
+                        'Custom workflows',
+                        'Role-based access'
+                    ],
+                    constraints: {
+                        priceRange: {
+                            min: 5000,
+                            max: 15000,
+                            period: 'monthly'
+                        },
+                        deployment: 'cloud',
+                        availability: '99.9%',
+                        support: '24/7'
+                    },
+                    volume: {
+                        users: '100-500',
+                        transactions: '10000/day'
+                    }
+                },
+                location: 'North America',
+                urgency: 'medium',
+                timestamp: new Date().toISOString()
+            });
+        });
+    </script>
+</body>
+</html>

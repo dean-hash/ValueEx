@@ -1,0 +1,80 @@
+{
+  "subscription_status": {
+    "plan": "Pro",
+    "monthly_quotas": {
+      "user_prompt_credits": 500,
+      "flow_action_credits": 1500
+    }
+  },
+  "enabled_features": {
+    "models": {
+      "premium_access": [
+        "GPT-4o",
+        "Claude 3.5 Sonnet",
+        "Codeium Premier (Llama 3.1 405B)"
+      ]
+    },
+    "autocomplete": {
+      "status": "Unlimited",
+      "includes": "Fast Autocomplete"
+    },
+    "command": {
+      "status": "Full access",
+      "premium_models": "Unlimited requests"
+    },
+    "context_awareness": {
+      "local_indexing": "Full access",
+      "expanded_context_length": true,
+      "increased_indexing_limits": true,
+      "higher_custom_context_limits": true
+    },
+    "flex_credits": {
+      "description": "Can be purchased if monthly quota is exceeded",
+      "usage": [
+        "Can substitute for User Prompt credits",
+        "Can substitute for Flow Action credits"
+      ]
+    }
+  },
+  "limitations": {
+    "teams_features_unavailable": {
+      "remote_indexing": {
+        "description": "Cannot index remote repositories globally",
+        "impact": "Limited to local codebase context only"
+      },
+      "shared_context": {
+        "description": "No access to team-wide shared context",
+        "impact": "Context must be managed individually"
+      },
+      "analytics": {
+        "description": "No access to team usage analytics",
+        "impact": "Cannot track team-wide patterns and optimization opportunities"
+      }
+    },
+    "quota_management": {
+      "when_flow_actions_depleted": [
+        "Purchase Flex credits",
+        "Use Legacy mode (no tool calls)",
+        "Switch to Cascade Base model"
+      ],
+      "when_user_prompts_depleted": [
+        "Purchase Flex credits",
+        "Switch to Cascade Base model"
+      ]
+    }
+  },
+  "best_practices": {
+    "credit_optimization": [
+      "Use Base model for simpler tasks",
+      "Leverage Legacy mode when tool calls unnecessary",
+      "Pin relevant context to improve first-attempt accuracy",
+      "Break complex tasks into smaller, focused interactions"
+    ],
+    "context_management": [
+      "Maintain organized local codebase",
+      "Use .codeiumignore for irrelevant files",
+      "Keep pinned context focused and relevant",
+      "Regular cleanup of unused context items"
+    ]
+  }
+}

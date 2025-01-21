@@ -1,0 +1,69 @@
+{
+  "cascade": {
+    "description": "Next-gen evolution of traditional Chat panel, providing agentic chatbot capabilities with real-time awareness",
+    "access": {
+      "icon_location": "top right corner",
+      "keyboard_shortcut": "Cmd+L",
+      "features": ["Selected text auto-inclusion", "Terminal integration"]
+    },
+    "modes": {
+      "write": {
+        "description": "Create and modify codebase",
+        "capabilities": ["File creation", "Code modification", "Project generation"]
+      },
+      "chat": {
+        "description": "Optimized for codebase questions and coding principles",
+        "capabilities": ["Code explanation", "Best practices", "Architecture discussion"]
+      }
+    },
+    "features": {
+      "image_upload": {
+        "supported_models": ["GPT-4o", "Claude 3.5 Sonnet"],
+        "limitations": "1MB max size",
+        "use_cases": ["Figma designs", "Wireframes", "Screenshots"]
+      },
+      "real_time_collaboration": {
+        "capabilities": [
+          "Aware of real-time actions",
+          "Automatic context updates",
+          "Variable tracking"
+        ]
+      },
+      "tool_access": {
+        "features": [
+          "Package detection",
+          "Automatic installation",
+          "Error message interpretation",
+          "Terminal command execution"
+        ]
+      },
+      "version_control": {
+        "revert_changes": {
+          "method": "Hover over prompt, click right arrow",
+          "note": "Reverts are irreversible"
+        }
+      }
+    },
+    "memories": {
+      "description": "System for persisting context across conversations",
+      "rules": {
+        "global": {
+          "location": "~/.codeium/windsurf/memories/global_rules.md",
+          "access": "Windsurf Settings > Settings > Edit Rules",
+          "scope": "All workspaces"
+        },
+        "workspace": {
+          "location": ".windsurfrules in workspace",
+          "access": "Windsurf Settings > Settings > Edit Rules",
+          "scope": "Current workspace",
+          "note": "Add to .gitignore for local-only rules"
+        },
+        "limitations": {
+          "max_characters": 12000,
+          "priority": ["Global rules", "Workspace rules"],
+          "per_file_limit": 6000
+        }
+      }
+    }
+  }
+}
