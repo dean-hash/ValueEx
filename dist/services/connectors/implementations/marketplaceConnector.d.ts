@@ -1,0 +1,44 @@
+import { DataConnector } from '../dataConnector';
+import { MarketData, ProductData } from '../../../types/marketTypes';
+export declare class MarketplaceConnector extends DataConnector {
+    private readonly amazonEndpoint;
+    private readonly ebayEndpoint;
+    private signalAnalyzer;
+    private signalEnhancer;
+    private intelligenceCoordinator;
+    private trendAnalyzer;
+    private socialMediaConnector;
+    private marketTrendAdapter;
+    constructor(config: {
+        amazonEndpoint: string;
+        ebayEndpoint: string;
+    });
+    fetchMarketData(category: string): Promise<MarketData>;
+    fetchProductData(productId: string): Promise<ProductData>;
+    fetchPriceHistory(productId: string): Promise<any[]>;
+    private calculateDemandScore;
+    private calculateConfidence;
+    private calculateMarketSentiment;
+    protected calculateSentiment(metadata: Record<string, any>): number;
+    protected calculateUrgency(metadata: Record<string, any>): Promise<number>;
+    private extractSocialMotivation;
+    private extractPracticalMotivation;
+    private extractEmotionalMotivation;
+    private extractMilestoneMotivation;
+    private calculateSocialTrendStrength;
+    private calculateTrendSentiment;
+    private calculateDynamicWeights;
+    private calculateNetworkUrgency;
+    private calculatePriceUrgency;
+    private detectPriceManipulation;
+    private getCurrentSeason;
+    private calculateMilestoneUrgency;
+    private calculateEngagementUrgency;
+    getAmazonCategoryData(category: string): Promise<any[]>;
+    getEbayListings(category: string): Promise<any[]>;
+    private calculateAveragePrice;
+    private fetchAmazonData;
+    private fetchEbayData;
+    protected makeRequest(url: string): Promise<Response>;
+    protected validateResponse<T>(data: unknown): T;
+}

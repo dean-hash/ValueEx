@@ -1,18 +1,23 @@
-export interface MatchRequest {
-    userId: string;
-    skills: string[];
-    interests: string[];
-    availability: {
-        startTime: string;
-        endTime: string;
+import { Demand } from '../../types/mvp/demand';
+import { Product } from '../../types/mvp/product';
+
+export interface Match {
+    demand: Demand;
+    product: Product;
+    matchScore: number;
+    matchReason: string[];
+    metadata: {
+        categoryMatch: boolean;
+        priceMatch: boolean;
+        descriptionSimilarity: number;
     };
 }
 
-export interface Match {
-    users: string[];
-    matchScore: number;
-    commonSkills: string[];
-    commonInterests: string[];
+export interface MatchRequest {
+    products: Product[];
+    demandSignals: Demand[];
+    minMatchScore?: number;
+    maxResults?: number;
 }
 
 export interface MatchingMetrics {

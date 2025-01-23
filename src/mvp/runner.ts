@@ -5,175 +5,338 @@ import { ProductSourcing } from '../services/mvp/productSourcing';
 import { MVPStorage } from '../services/mvp/storage';
 import { CommissionTracker } from '../services/mvp/commissionTracker';
 import { logger } from '../utils/logger';
+import { TeamsNotificationService } from '../services/monitoring/teams-notifications';
+import { configService } from '../config/configService';
+
+interface RunnerConfig {
+    matchInterval: number;
+    analyticsInterval: number;
+    maxConcurrentMatches: number;
+    minConfidenceThreshold: number;
+    enableHealthChecks: boolean;
+}
 
 class MVPRunner {
-  private storage = MVPStorage.getInstance();
-  private demandMatcher = DemandMatcher.getInstance();
-  private fulfillment = DemandFulfillment.getInstance();
-  private productSourcing = ProductSourcing.getInstance();
-  private commissionTracker = CommissionTracker.getInstance();
+    private static instance: MVPRunner;
+    private storage: MVPStorage;
+    private demandMatcher: DemandMatcher;
+    private fulfillment: DemandFulfillment;
+    private productSourcing: ProductSourcing;
+    private commissionTracker: CommissionTracker;
+    private teamsNotifier: TeamsNotificationService;
+    private config: RunnerConfig;
+    private isRunning: boolean;
+    private matchInterval: NodeJS.Timeout | null = null;
+    private analyticsInterval: NodeJS.Timeout | null = null;
+    private healthCheckInterval: NodeJS.Timeout | null = null;
 
-  private isRunning = false;
-  private matchInterval: NodeJS.Timeout | null = null;
-  private analyticsInterval: NodeJS.Timeout | null = null;
-
-  private readonly MATCH_INTERVAL = 5 * 60 * 1000; // 5 minutes
-  private readonly ANALYTICS_INTERVAL = 60 * 60 * 1000; // 1 hour
-
-  async start() {
-    if (this.isRunning) {
-      logger.warn('MVP Runner is already running');
-      return;
+    private constructor() {
+        this.storage = MVPStorage.getInstance();
+        this.demandMatcher = DemandMatcher.getInstance();
+        this.fulfillment = DemandFulfillment.getInstance();
+        this.productSourcing = ProductSourcing.getInstance();
+        this.commissionTracker = CommissionTracker.getInstance();
+        this.teamsNotifier = TeamsNotificationService.getInstance();
+        this.config = this.loadConfig();
+        this.isRunning = false;
     }
 
-    this.isRunning = true;
-    logger.info('Starting MVP Runner');
+    public static getInstance(): MVPRunner {
+        if (!MVPRunner.instance) {
+            MVPRunner.instance = new MVPRunner();
+        }
+        return MVPRunner.instance;
+    }
 
-    // Initial run
-    await this.runMatchingCycle();
-    await this.runAnalytics();
+    private loadConfig(): RunnerConfig {
+        return {
+            matchInterval: Number(configService.get('MATCH_INTERVAL_MS')) || 5 * 60 * 1000,
+            analyticsInterval: Number(configService.get('ANALYTICS_INTERVAL_MS')) || 60 * 60 * 1000,
+            maxConcurrentMatches: Number(configService.get('MAX_CONCURRENT_MATCHES')) || 5,
+            minConfidenceThreshold: Number(configService.get('MIN_CONFIDENCE_THRESHOLD')) || 0.7,
+            enableHealthChecks: configService.get('ENABLE_HEALTH_CHECKS') === 'true'
+        };
+    }
 
-    // Set up intervals
-    this.matchInterval = setInterval(() => this.runMatchingCycle(), this.MATCH_INTERVAL);
+    public async start(): Promise<void> {
+        if (this.isRunning) {
+            logger.warn('MVP Runner is already running');
+            return;
+        }
 
-    this.analyticsInterval = setInterval(() => this.runAnalytics(), this.ANALYTICS_INTERVAL);
+        this.isRunning = true;
+        logger.info('Starting MVP Runner', { 
+            matchInterval: this.config.matchInterval,
+            analyticsInterval: this.config.analyticsInterval,
+            maxConcurrentMatches: this.config.maxConcurrentMatches
+        });
 
-    process.on('SIGINT', () => this.shutdown());
-    process.on('SIGTERM', () => this.shutdown());
-  }
+        try {
+            // Initial health check
+            await this.checkHealth();
 
-  private async runMatchingCycle() {
-    try {
-      logger.info('Starting matching cycle');
+            // Initial runs
+            await Promise.all([
+                this.runMatchingCycle(),
+                this.runAnalytics()
+            ]);
 
-      // 1. Find product opportunities
-      const opportunities = await this.productSourcing.findOpportunities();
+            // Set up intervals
+            this.matchInterval = setInterval(() => this.runMatchingCycle(), this.config.matchInterval);
+            this.analyticsInterval = setInterval(() => this.runAnalytics(), this.config.analyticsInterval);
+            this.healthCheckInterval = setInterval(() => this.checkHealth(), 60 * 1000); // 1 minute
 
-      // 2. For each opportunity, find potential matches
-      for (const opportunity of opportunities) {
+            // Handle graceful shutdown
+            process.on('SIGINT', () => this.shutdown());
+            process.on('SIGTERM', () => this.shutdown());
+            
+            await this.teamsNotifier.sendHealthAlert({
+                service: 'MVP Runner',
+                status: 'healthy',
+                message: 'Service started successfully'
+            });
+        } catch (error) {
+            logger.error('Failed to start MVP Runner:', error);
+            await this.teamsNotifier.sendHealthAlert({
+                service: 'MVP Runner',
+                status: 'down',
+                message: `Failed to start: ${error.message}`
+            });
+            throw error;
+        }
+    }
+
+    private async checkHealth(): Promise<boolean> {
+        try {
+            const health = {
+                storage: await this.storage.isHealthy(),
+                matcher: await this.demandMatcher.isHealthy(),
+                fulfillment: await this.fulfillment.isHealthy(),
+                sourcing: await this.productSourcing.isHealthy()
+            };
+
+            const isHealthy = Object.values(health).every(h => h);
+            
+            if (!isHealthy) {
+                const unhealthyServices = Object.entries(health)
+                    .filter(([_, healthy]) => !healthy)
+                    .map(([service]) => service)
+                    .join(', ');
+                  
+                logger.error('Health check failed:', { unhealthyServices });
+                await this.teamsNotifier.sendHealthAlert({
+                    service: 'MVP Runner',
+                    status: 'degraded',
+                    message: `Unhealthy services: ${unhealthyServices}`
+                });
+            }
+
+            return isHealthy;
+        } catch (error) {
+            logger.error('Health check error:', error);
+            return false;
+        }
+    }
+
+    private async runMatchingCycle(): Promise<void> {
+        if (!this.isRunning) return;
+
+        try {
+            logger.info('Starting matching cycle');
+            const startTime = Date.now();
+
+            // 1. Find product opportunities with rate limiting
+            const opportunities = await this.productSourcing.findOpportunities();
+            
+            // 2. Process opportunities in batches
+            const batches = this.chunkArray(opportunities, this.config.maxConcurrentMatches);
+            
+            for (const batch of batches) {
+                await Promise.all(batch.map(async (opportunity) => {
+                    try {
+                        await this.processOpportunity(opportunity);
+                    } catch (error) {
+                        logger.error('Error processing opportunity:', { 
+                            opportunity: opportunity.category,
+                            error: error.message 
+                        });
+                    }
+                }));
+            }
+
+            const duration = Date.now() - startTime;
+            logger.info('Matching cycle completed', { duration });
+            
+        } catch (error) {
+            logger.error('Error in matching cycle:', error);
+            await this.teamsNotifier.sendHealthAlert({
+                service: 'MVP Runner',
+                status: 'degraded',
+                message: `Matching cycle error: ${error.message}`
+            });
+        }
+    }
+
+    private async processOpportunity(opportunity: any): Promise<void> {
         // Track API usage
         this.storage.trackAPICall();
 
         // Analyze market demand
         const analysis = await digitalIntelligence.analyzeNeed(opportunity.category);
 
-        if (analysis.accuracy.confidence > 0.7) {
-          // Generate fulfillment strategies
-          const strategies = await this.fulfillment.createFulfillmentStrategies(
-            {
-              id: `temp_${Date.now()}`,
-              name: opportunity.category,
-              description: opportunity.requirements.join(', '),
-              price: opportunity.priceRange?.min || 0,
-              category: opportunity.category,
-              vertical: opportunity.vertical,
-              tags: opportunity.searchTerms,
-              source: 'manual',
-              status: 'active',
-            },
-            {
-              id: `demand_${Date.now()}`,
-              query: opportunity.category,
-              timestamp: new Date(),
-              source: 'inferred',
-              vertical: opportunity.vertical,
-              strength: opportunity.demandStrength,
-              insights: {
+        if (analysis.accuracy.confidence > this.config.minConfidenceThreshold) {
+            const strategies = await this.fulfillment.createFulfillmentStrategies(
+                this.createProductDTO(opportunity),
+                this.createDemandDTO(opportunity, analysis)
+            );
+
+            // Track potential matches
+            await Promise.all(strategies.map(async (strategy) => {
+                if (strategy.confidence > 0.8) {
+                    const matchId = `match_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                    await this.storage.trackMatch(matchId, strategy.id);
+
+                    logger.info('High confidence match found:', {
+                        category: opportunity.category,
+                        confidence: strategy.confidence,
+                        platform: strategy.platform,
+                        matchId
+                    });
+                }
+            }));
+        }
+    }
+
+    private createProductDTO(opportunity: any): any {
+        return {
+            id: `prod_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            name: opportunity.category,
+            description: opportunity.requirements.join(', '),
+            price: opportunity.priceRange?.min || 0,
+            category: opportunity.category,
+            vertical: opportunity.vertical,
+            tags: opportunity.searchTerms,
+            source: 'manual',
+            status: 'active'
+        };
+    }
+
+    private createDemandDTO(opportunity: any, analysis: any): any {
+        return {
+            id: `demand_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            query: opportunity.category,
+            timestamp: new Date(),
+            source: 'inferred',
+            vertical: opportunity.vertical,
+            strength: opportunity.demandStrength,
+            insights: {
                 urgency: opportunity.urgency,
                 confidence: analysis.accuracy.confidence,
                 keywords: opportunity.requirements,
-                demographics: opportunity.targetAudience,
-              },
-              status: 'active',
-            }
-          );
+                demographics: opportunity.targetAudience
+            },
+            status: 'active'
+        };
+    }
 
-          // Track potential matches
-          strategies.forEach((strategy) => {
-            if (strategy.confidence > 0.8) {
-              this.storage.trackMatch(`demand_${Date.now()}`, `prod_${Date.now()}`);
+    private async runAnalytics(): Promise<void> {
+        if (!this.isRunning) return;
 
-              logger.info('High confidence match found:', {
-                category: opportunity.category,
-                confidence: strategy.confidence,
-                platform: strategy.platform,
-              });
-            }
-          });
+        try {
+            logger.info('Running analytics');
+            const startTime = Date.now();
+
+            const analytics = this.storage.getAnalytics();
+            const activeMatches = this.storage.getActiveMatches();
+            const bestVerticals = this.commissionTracker.getBestVerticals();
+
+            const metrics = this.calculateMetrics(analytics, activeMatches);
+            
+            logger.info('Performance Metrics:', metrics);
+            
+            await this.teamsNotifier.sendMetricsUpdate({
+                revenue: analytics.totalRevenue,
+                transactions: analytics.successfulMatches,
+                activeUsers: activeMatches.length
+            });
+
+            await this.adjustStrategies(metrics);
+
+            const duration = Date.now() - startTime;
+            logger.info('Analytics completed', { duration });
+            
+        } catch (error) {
+            logger.error('Error running analytics:', error);
+            await this.teamsNotifier.sendHealthAlert({
+                service: 'MVP Runner Analytics',
+                status: 'degraded',
+                message: `Analytics error: ${error.message}`
+            });
         }
-      }
-
-      logger.info('Matching cycle completed');
-    } catch (error) {
-      logger.error('Error in matching cycle:', error);
-    }
-  }
-
-  private async runAnalytics() {
-    try {
-      logger.info('Running analytics');
-
-      const analytics = this.storage.getAnalytics();
-      const activeMatches = this.storage.getActiveMatches();
-      const bestVerticals = this.commissionTracker.getBestVerticals();
-
-      // Calculate key metrics
-      const conversionRate = analytics.successfulMatches / analytics.apiCalls;
-      const revenuePerCall = analytics.totalRevenue / analytics.apiCalls;
-      const activeMatchRate = activeMatches.length / analytics.apiCalls;
-
-      // Log performance metrics
-      logger.info('Performance Metrics:', {
-        conversionRate,
-        revenuePerCall,
-        activeMatchRate,
-        bestVerticals: bestVerticals.slice(0, 3),
-        apiCalls: analytics.apiCalls,
-        totalRevenue: analytics.totalRevenue,
-      });
-
-      // Adjust strategies based on performance
-      if (conversionRate < 0.1) {
-        logger.warn('Low conversion rate - adjusting confidence thresholds');
-        // In production: Implement strategy adjustments
-      }
-
-      if (revenuePerCall < 0.5) {
-        logger.warn('Low revenue per call - focusing on higher commission verticals');
-        // In production: Implement vertical prioritization
-      }
-    } catch (error) {
-      logger.error('Error running analytics:', error);
-    }
-  }
-
-  private async shutdown() {
-    logger.info('Shutting down MVP Runner');
-
-    this.isRunning = false;
-
-    if (this.matchInterval) {
-      clearInterval(this.matchInterval);
     }
 
-    if (this.analyticsInterval) {
-      clearInterval(this.analyticsInterval);
+    private calculateMetrics(analytics: any, activeMatches: any[]): any {
+        return {
+            conversionRate: analytics.successfulMatches / analytics.apiCalls,
+            revenuePerCall: analytics.totalRevenue / analytics.apiCalls,
+            activeMatchRate: activeMatches.length / analytics.apiCalls,
+            apiCalls: analytics.apiCalls,
+            totalRevenue: analytics.totalRevenue,
+            activeMatches: activeMatches.length
+        };
     }
 
-    // Save final state
-    this.storage.cleanup();
+    private async adjustStrategies(metrics: any): Promise<void> {
+        if (metrics.conversionRate < 0.1) {
+            logger.warn('Low conversion rate - adjusting confidence thresholds');
+            await this.demandMatcher.adjustConfidenceThresholds(metrics.conversionRate);
+        }
 
-    process.exit(0);
-  }
+        if (metrics.revenuePerCall < 0.5) {
+            logger.warn('Low revenue per call - focusing on higher commission verticals');
+            await this.productSourcing.prioritizeHighCommissionVerticals();
+        }
+    }
+
+    private async shutdown(): Promise<void> {
+        logger.info('Shutting down MVP Runner');
+
+        this.isRunning = false;
+
+        if (this.matchInterval) clearInterval(this.matchInterval);
+        if (this.analyticsInterval) clearInterval(this.analyticsInterval);
+        if (this.healthCheckInterval) clearInterval(this.healthCheckInterval);
+
+        try {
+            // Save final state
+            await this.storage.cleanup();
+            
+            await this.teamsNotifier.sendHealthAlert({
+                service: 'MVP Runner',
+                status: 'down',
+                message: 'Service shut down gracefully'
+            });
+        } catch (error) {
+            logger.error('Error during shutdown:', error);
+        }
+
+        process.exit(0);
+    }
+
+    private chunkArray<T>(array: T[], size: number): T[][] {
+        return Array.from({ length: Math.ceil(array.length / size) }, (_, i) =>
+            array.slice(i * size, i * size + size)
+        );
+    }
 }
 
 // Create and export runner instance
-export const mvpRunner = new MVPRunner();
+export const mvpRunner = MVPRunner.getInstance();
 
 // If this file is run directly, start the runner
 if (require.main === module) {
-  mvpRunner.start().catch((error) => {
-    logger.error('Error starting MVP Runner:', error);
-    process.exit(1);
-  });
+    mvpRunner.start().catch((error) => {
+        logger.error('Error starting MVP Runner:', error);
+        process.exit(1);
+    });
 }
