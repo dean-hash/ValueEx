@@ -37,3 +37,13 @@ coverage/
 # Logs
 logs/
 *.log
+
+# Backup files
+ValueEx_Backup/
+*_Backup/
+*.backup
+*.bak
+
+# Hot updates
+*.hot-update.js
+*.hot-update.json
