@@ -1,30 +1,41 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "CommonJS",
+    "target": "es2020",
+    "module": "commonjs",
     "moduleResolution": "node",
+    "lib": [
+      "es2020",
+      "dom"
+    ],
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "./dist",
-    "rootDir": ".",
+    "rootDir": "./src",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
     "declaration": true,
     "sourceMap": true,
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
     "allowJs": true,
     "noEmit": true,
     "incremental": true
   },
   "include": [
-    "src/**/*",
-    "scripts/**/*"
+    "src/mvp/**/*",
+    "src/services/opportunities/**/*",
+    "src/services/revenue/**/*",
+    "src/services/integrations/**/*",
+    "src/services/monitoring/**/*"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "**/*.test.ts",
+    "src/examples",
+    "src/experimental",
+    ".next",
+    "out"
   ]
 }
