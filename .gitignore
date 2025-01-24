@@ -7,6 +7,8 @@ yarn-error.log*
 # Build output
 dist/
 build/
+.next/
+out/
 
 # Environment variables
 .env
@@ -21,3 +23,17 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+
+# Next.js
+.next/
+.vercel
+*.tsbuildinfo
+next-env.d.ts
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Logs
+logs/
+*.log
