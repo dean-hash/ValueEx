@@ -30,6 +30,11 @@ Thumbs.db
 *.tsbuildinfo
 next-env.d.ts
 
+# Large build files
+*.node
+cascade-space/node_modules/
+**/node_modules/@next/swc-*/
+
 # Coverage
 coverage/
 .nyc_output/
