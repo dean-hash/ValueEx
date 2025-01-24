@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { PortfolioAnalyzer } from '../../services/domain/portfolioAnalyzer';
-import { ResonanceField } from '../unified/intelligenceField';
+import type { ResonanceField } from '../../types/resonanceField';
 
 interface HealthMetric {
   component: string;

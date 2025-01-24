@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import { ResonanceField } from '../unified/intelligenceField';
+import type { ResonanceField } from '../../types/resonanceField';
 import { promises as fs } from 'fs';
 import path from 'path';
 import * as ts from 'typescript';

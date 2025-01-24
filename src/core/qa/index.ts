@@ -1,8 +1,8 @@
+import type { ResonanceField } from '../../types/resonanceField';
 import { IntelligentQA } from './intelligentQA';
 import { MetricsCollector } from './metricsCollector';
 import { OptimizationEngine } from './optimizationEngine';
 import { HealthMonitor } from './healthMonitor';
-import { ResonanceField } from '../unified/intelligenceField';
 import { EcosystemAnalyzer } from './ecosystemAnalyzer';
 
 export class QASystem {

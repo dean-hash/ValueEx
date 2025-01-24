@@ -15,20 +15,31 @@
     "rootDir": "./src",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": [
+        "src/*"
+      ]
     },
     "declaration": true,
     "sourceMap": true,
     "allowJs": true,
     "noEmit": true,
-    "incremental": true
+    "incremental": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
   },
   "include": [
     "src/mvp/**/*",
     "src/services/opportunities/**/*",
     "src/services/revenue/**/*",
     "src/services/integrations/**/*",
-    "src/services/monitoring/**/*"
+    "src/services/monitoring/**/*",
+    ".next/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

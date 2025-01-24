@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { MetricsCollector } from './metricsCollector';
-import { ResonanceField } from '../unified/intelligenceField';
+import type { ResonanceField } from '../../types/resonanceField';
 
 interface OptimizationStrategy {
   name: string;

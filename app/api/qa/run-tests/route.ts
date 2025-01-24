@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { spawn } from 'child_process';
+import testResults from '../../../../test-results.json';
 
 export async function POST() {
   try {
@@ -35,10 +36,9 @@ export async function POST() {
     });
 
     // Parse test results
-    const results = require('../../../test-results.json');
     let failed = 0;
 
-    results.testResults.forEach((suite: any) => {
+    testResults.testResults.forEach((suite: any) => {
       suite.testResults.forEach((test: any) => {
         const result = {
           name: test.title,

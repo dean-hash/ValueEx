@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import { MetricsCollector } from './metricsCollector';
 import { OptimizationEngine } from './optimizationEngine';
-import { ResonanceField } from '../unified/intelligenceField';
+import type { ResonanceField } from '../../types/resonanceField';
 
 interface HealthStatus {
   status: 'healthy' | 'warning' | 'critical';
