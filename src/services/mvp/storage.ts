@@ -169,4 +169,28 @@ export class MVPStorage {
     clearInterval(this.saveInterval);
     this.saveData();
   }
+
+  /**
+   * Check storage health
+   */
+  public async isHealthy(): Promise<boolean> {
+    try {
+      // Check if we can read and write to storage
+      const testData = { ...this.data };
+      await this.saveData();
+      
+      // Verify data integrity
+      const loadedData = await this.loadData();
+      const isIntact = JSON.stringify(loadedData) === JSON.stringify(testData);
+      
+      // Check disk space
+      const stats = await fs.promises.stat(this.filePath);
+      const isSizeOk = stats.size < 1024 * 1024 * 100; // 100MB limit
+      
+      return isIntact && isSizeOk;
+    } catch (error) {
+      logger.error('Storage health check failed:', error);
+      return false;
+    }
+  }
 }

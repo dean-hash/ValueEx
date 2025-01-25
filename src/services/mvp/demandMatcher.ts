@@ -9,6 +9,7 @@ import { ValueSignalProcessor } from '../analysis/providers/valueSignalProcessor
 import { ContextManager } from '../analysis/providers/contextManager';
 import { logger } from '../../utils/logger';
 import { firstValueFrom } from 'rxjs';
+import { MatchMetrics } from './metrics';
 
 export class DemandMatcher {
   private static instance: DemandMatcher;
@@ -19,6 +20,7 @@ export class DemandMatcher {
   private demandInference: DemandInference;
   private valueProcessor: ValueSignalProcessor;
   private contextManager: ContextManager;
+  private readonly metrics: MatchMetrics;
 
   private constructor() {
     this.correlationAnalyzer = CorrelationAnalyzer.getInstance();
@@ -28,6 +30,7 @@ export class DemandMatcher {
     this.demandInference = new DemandInference();
     this.valueProcessor = new ValueSignalProcessor();
     this.contextManager = new ContextManager();
+    this.metrics = MatchMetrics.getInstance();
   }
 
   static getInstance(): DemandMatcher {
@@ -208,5 +211,29 @@ export class DemandMatcher {
 
       return bScore - aScore;
     });
+  }
+
+  public async isHealthy(): Promise<boolean> {
+    try {
+      // Check connection to dependencies
+      const isStorageHealthy = await this.storage.isHealthy();
+      const isQueueHealthy = this.matchQueue.length < this.config.maxConcurrentMatches;
+      
+      // Check matching service performance
+      const lastMatchTimes = this.metrics.getLastNMatchTimes(10);
+      const avgMatchTime = lastMatchTimes.length > 0 
+        ? lastMatchTimes.reduce((a, b) => a + b, 0) / lastMatchTimes.length 
+        : 0;
+      const isPerformanceOk = avgMatchTime < 5000; // 5s threshold
+      
+      // Check error rate
+      const recentErrors = this.metrics.getErrorRate(60); // Last minute
+      const isErrorRateOk = recentErrors < 0.1; // 10% threshold
+      
+      return isStorageHealthy && isQueueHealthy && isPerformanceOk && isErrorRateOk;
+    } catch (error) {
+      logger.error('DemandMatcher health check failed:', error);
+      return false;
+    }
   }
 }
