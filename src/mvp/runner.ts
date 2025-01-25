@@ -49,61 +49,61 @@ class MVPRunner {
     }
 
     private loadConfig(): RunnerConfig {
+        const config = configService.get('runner');
         return {
-            matchInterval: Number(configService.get('MATCH_INTERVAL_MS')) || 5 * 60 * 1000,
-            analyticsInterval: Number(configService.get('ANALYTICS_INTERVAL_MS')) || 60 * 60 * 1000,
-            maxConcurrentMatches: Number(configService.get('MAX_CONCURRENT_MATCHES')) || 5,
-            minConfidenceThreshold: Number(configService.get('MIN_CONFIDENCE_THRESHOLD')) || 0.7,
-            enableHealthChecks: configService.get('ENABLE_HEALTH_CHECKS') === 'true'
+            matchInterval: config.matchIntervalMs,
+            analyticsInterval: config.analyticsIntervalMs,
+            maxConcurrentMatches: config.maxConcurrentMatches,
+            minConfidenceThreshold: config.minConfidenceThreshold,
+            enableHealthChecks: config.enableHealthChecks
         };
     }
 
     public async start(): Promise<void> {
         if (this.isRunning) {
-            logger.warn('MVP Runner is already running');
             return;
         }
 
-        this.isRunning = true;
-        logger.info('Starting MVP Runner', { 
-            matchInterval: this.config.matchInterval,
-            analyticsInterval: this.config.analyticsInterval,
-            maxConcurrentMatches: this.config.maxConcurrentMatches
-        });
-
         try {
-            // Initial health check
-            await this.checkHealth();
-
-            // Initial runs
-            await Promise.all([
-                this.runMatchingCycle(),
-                this.runAnalytics()
-            ]);
-
-            // Set up intervals
-            this.matchInterval = setInterval(() => this.runMatchingCycle(), this.config.matchInterval);
-            this.analyticsInterval = setInterval(() => this.runAnalytics(), this.config.analyticsInterval);
-            this.healthCheckInterval = setInterval(() => this.checkHealth(), 60 * 1000); // 1 minute
-
-            // Handle graceful shutdown
-            process.on('SIGINT', () => this.shutdown());
-            process.on('SIGTERM', () => this.shutdown());
-            
+            this.isRunning = true;
+            await this.initializeServices();
+            this.startIntervals();
             await this.teamsNotifier.sendHealthAlert({
                 service: 'MVP Runner',
                 status: 'healthy',
-                message: 'Service started successfully'
+                message: 'Successfully started'
             });
         } catch (error) {
-            logger.error('Failed to start MVP Runner:', error);
+            this.isRunning = false;
             await this.teamsNotifier.sendHealthAlert({
                 service: 'MVP Runner',
                 status: 'down',
-                message: `Failed to start: ${error.message}`
+                message: `Failed to start: ${error instanceof Error ? error.message : String(error)}`
             });
             throw error;
         }
+    }
+
+    private async initializeServices(): Promise<void> {
+        // Initial health check
+        await this.checkHealth();
+
+        // Initial runs
+        await Promise.all([
+            this.runMatchingCycle(),
+            this.runAnalytics()
+        ]);
+    }
+
+    private startIntervals(): void {
+        // Set up intervals
+        this.matchInterval = setInterval(() => this.runMatchingCycle(), this.config.matchInterval);
+        this.analyticsInterval = setInterval(() => this.runAnalytics(), this.config.analyticsInterval);
+        this.healthCheckInterval = setInterval(() => this.checkHealth(), 60 * 1000); // 1 minute
+
+        // Handle graceful shutdown
+        process.on('SIGINT', () => this.shutdown());
+        process.on('SIGTERM', () => this.shutdown());
     }
 
     private async checkHealth(): Promise<boolean> {

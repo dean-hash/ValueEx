@@ -147,15 +147,14 @@ export class HealthMonitor extends EventEmitter {
   }
 
   private handleOptimizationEvent(data: any) {
-    const { strategy, timestamp } = data;
+    const { timestamp } = data;
     this.emit('optimization-event', {
-      strategy,
       timestamp,
-      impact: this.calculateOptimizationImpact(strategy),
+      impact: this.calculateOptimizationImpact(),
     });
   }
 
-  private calculateOptimizationImpact(strategy: string): number {
+  private calculateOptimizationImpact(): number {
     // Calculate the impact of optimization based on metrics before and after
     return 0.5; // Placeholder
   }

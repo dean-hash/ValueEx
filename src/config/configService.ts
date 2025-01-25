@@ -27,6 +27,15 @@ const configSchema = z.object({
     apiKey: z.string(),
   }),
 
+  // Runner Configuration
+  runner: z.object({
+    matchIntervalMs: z.number().default(5 * 60 * 1000),
+    analyticsIntervalMs: z.number().default(60 * 60 * 1000),
+    maxConcurrentMatches: z.number().default(5),
+    minConfidenceThreshold: z.number().default(0.7),
+    enableHealthChecks: z.boolean().default(true),
+  }),
+
   // Server
   server: z.object({
     port: z.number().default(3000),
@@ -73,6 +82,13 @@ export class ConfigService {
       },
       openai: {
         apiKey: process.env.OPENAI_API_KEY || '',
+      },
+      runner: {
+        matchIntervalMs: process.env.MATCH_INTERVAL_MS ? parseInt(process.env.MATCH_INTERVAL_MS, 10) : 5 * 60 * 1000,
+        analyticsIntervalMs: process.env.ANALYTICS_INTERVAL_MS ? parseInt(process.env.ANALYTICS_INTERVAL_MS, 10) : 60 * 60 * 1000,
+        maxConcurrentMatches: process.env.MAX_CONCURRENT_MATCHES ? parseInt(process.env.MAX_CONCURRENT_MATCHES, 10) : 5,
+        minConfidenceThreshold: process.env.MIN_CONFIDENCE_THRESHOLD ? parseFloat(process.env.MIN_CONFIDENCE_THRESHOLD) : 0.7,
+        enableHealthChecks: process.env.ENABLE_HEALTH_CHECKS === 'true'
       },
       server: {
         port: process.env.PORT ? parseInt(process.env.PORT, 10) : 3000,
