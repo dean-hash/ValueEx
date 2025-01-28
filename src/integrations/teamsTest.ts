@@ -12,12 +12,12 @@ async function testTeamsConnection() {
     );
 
     const authProvider = new TokenCredentialAuthenticationProvider(credential, {
-      scopes: ['https://graph.microsoft.com/.default']
+      scopes: ['https://graph.microsoft.com/.default'],
     });
 
     // Initialize the Graph client
     const graphClient = Client.initWithMiddleware({
-      authProvider: authProvider
+      authProvider: authProvider,
     });
 
     // Test connection by getting current user
@@ -27,7 +27,7 @@ async function testTeamsConnection() {
     // Test Teams access
     const teams = await graphClient.api('/teams').get();
     console.log('Successfully accessed Teams');
-    
+
     return true;
   } catch (error) {
     console.error('Connection test failed:', error);
@@ -36,7 +36,7 @@ async function testTeamsConnection() {
 }
 
 testTeamsConnection()
-  .then(success => {
+  .then((success) => {
     if (success) {
       console.log('Teams connection test passed!');
       process.exit(0);
@@ -45,7 +45,7 @@ testTeamsConnection()
       process.exit(1);
     }
   })
-  .catch(error => {
+  .catch((error) => {
     console.error('Test execution failed:', error);
     process.exit(1);
   });

@@ -34,14 +34,14 @@ export class GoogleServicesManager {
       name: 'Vertex AI',
       type: 'Platform',
       status: 'Active',
-      cost: { type: 'Paid' }
+      cost: { type: 'Paid' },
     });
 
     this.addService({
       name: 'PaLM API',
       type: 'API',
       status: 'Active',
-      cost: { type: 'Paid' }
+      cost: { type: 'Paid' },
     });
 
     // Cloud Services
@@ -49,7 +49,7 @@ export class GoogleServicesManager {
       name: 'Google Cloud Platform',
       type: 'Platform',
       status: 'Active',
-      cost: { type: 'Paid' }
+      cost: { type: 'Paid' },
     });
 
     // Workspace
@@ -57,7 +57,7 @@ export class GoogleServicesManager {
       name: 'Google Workspace',
       type: 'Platform',
       status: 'Active',
-      cost: { type: 'Enterprise' }
+      cost: { type: 'Enterprise' },
     });
 
     // Development Tools
@@ -65,7 +65,7 @@ export class GoogleServicesManager {
       name: 'Firebase',
       type: 'Platform',
       status: 'Active',
-      cost: { type: 'Paid' }
+      cost: { type: 'Paid' },
     });
   }
 
@@ -80,7 +80,7 @@ export class GoogleServicesManager {
       name: service.name,
       type: 'Service',
       vendor: 'Google',
-      status: service.status
+      status: service.status,
     });
 
     // Track in Business Central
@@ -89,14 +89,13 @@ export class GoogleServicesManager {
         name: service.name,
         vendor: 'Google',
         monthlyCost: service.cost.monthlyEstimate || 0,
-        category: 'Cloud Services'
+        category: 'Cloud Services',
       });
     }
   }
 
   async getActiveServices(): Promise<GoogleService[]> {
-    return Array.from(this.services.values())
-      .filter(service => service.status === 'Active');
+    return Array.from(this.services.values()).filter((service) => service.status === 'Active');
   }
 
   async getCostAnalysis(): Promise<{
@@ -115,7 +114,7 @@ export class GoogleServicesManager {
 
     return {
       totalMonthlyCost: total,
-      serviceBreakdown: breakdown
+      serviceBreakdown: breakdown,
     };
   }
 
@@ -129,10 +128,10 @@ export class GoogleServicesManager {
 
     // Analyze usage patterns and suggest optimizations
     // This would integrate with actual usage data from GCP
-    
+
     return {
       recommendations,
-      potentialSavings
+      potentialSavings,
     };
   }
 }

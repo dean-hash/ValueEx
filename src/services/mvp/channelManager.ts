@@ -1,6 +1,6 @@
 import { MVPProduct } from '../../types/mvp/product';
 import { DemandSignal } from '../../types/mvp/demand';
-import { digitalIntelligence } from '../digitalIntelligence';
+import { DigitalIntelligenceProvider } from '../digitalIntelligence';
 import { logger } from '../../utils/logger';
 
 interface ChannelConfig {
@@ -29,8 +29,10 @@ export class ChannelManager {
   private static instance: ChannelManager;
   private channels: Map<string, ChannelConfig> = new Map();
   private deliveryHistory: Map<string, Date[]> = new Map(); // Track deliveries per user
+  private intelligence: DigitalIntelligenceProvider;
 
   private constructor() {
+    this.intelligence = new DigitalIntelligenceProvider();
     this.initializeDefaultChannels();
   }
 
@@ -110,7 +112,7 @@ export class ChannelManager {
     demand: DemandSignal
   ): Promise<DeliveryPayload> {
     // Generate personalized value proposition using Digital Intelligence
-    const analysis = await digitalIntelligence.analyzeNeed(`${product.name} for ${demand.query}`);
+    const analysis = await this.intelligence.analyzeNeed(`${product.name} for ${demand.query}`);
 
     // Extract key selling points from analysis
     const sellingPoints = analysis.signals
@@ -216,6 +218,25 @@ export class ChannelManager {
       case 'web':
         // await webNotificationService.send(...)
         break;
+    }
+  }
+
+  async processSignal(signal: DemandSignal): Promise<boolean> {
+    try {
+      const processedSignal = await this.intelligence.processSignal(signal);
+      return processedSignal.context.sentiment > 0.5;
+    } catch (err) {
+      console.error('Error processing signal in channel:', err);
+      return false;
+    }
+  }
+
+  async validateChannel(signal: DemandSignal): Promise<boolean> {
+    try {
+      return await this.intelligence.validateAlignment();
+    } catch (err) {
+      console.error('Error validating channel:', err);
+      return false;
     }
   }
 }

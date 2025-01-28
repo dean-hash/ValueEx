@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AzureConfig = void 0;
 exports.AzureConfig = {
-    tenant: {
+  tenant: {
         id: '045b7d24-2664-418d-9988-73ec9a6', // Divvy Technologies Inc tenant
         domain: 'divvytech.com'
     },

@@ -6,11 +6,11 @@ import { DynamicsService } from '../../integrations/dynamics365';
 import { BusinessCentralService } from '../../integrations/businessCentral';
 import { AwinService } from '../../services/awinService';
 import { ErrorHandler, ServiceError } from '../../utils/errorHandler';
-import { 
-  MockTeamsClient, 
-  MockSpeechService, 
+import {
+  MockTeamsClient,
+  MockSpeechService,
   MockAudioService,
-  MockMediaStream
+  MockMediaStream,
 } from '../mocks/services';
 import { setupTestEnvironment, cleanupTestEnvironment } from '../setup/testEnv';
 
@@ -51,8 +51,8 @@ describe('Teams Audio Integration', () => {
 
   afterEach(async () => {
     // Cleanup any active streams
-    activeStreams.forEach(stream => {
-      stream.getTracks().forEach(track => track.stop());
+    activeStreams.forEach((stream) => {
+      stream.getTracks().forEach((track) => track.stop());
     });
     activeStreams = [];
 
@@ -76,13 +76,13 @@ describe('Teams Audio Integration', () => {
     it('should start audio stream', async () => {
       const stream = await audioService.startAudioStream();
       activeStreams.push(stream as MockMediaStream);
-      
+
       expect(stream).toBeDefined();
       expect(stream.active).toBe(true);
-      
+
       const audioTracks = stream.getAudioTracks();
       expect(audioTracks.length).toBe(1);
-      
+
       const settings = audioTracks[0].getSettings();
       expect(settings.channelCount).toBe(2);
       expect(settings.sampleRate).toBe(48000);
@@ -91,11 +91,11 @@ describe('Teams Audio Integration', () => {
     it('should properly cleanup stream on stop', async () => {
       const stream = await audioService.startAudioStream();
       activeStreams.push(stream as MockMediaStream);
-      
+
       await audioService.stopAudioStream();
-      
+
       const tracks = stream.getAudioTracks();
-      tracks.forEach(track => {
+      tracks.forEach((track) => {
         expect(track.readyState).toBe('ended');
       });
     });
@@ -122,7 +122,7 @@ describe('Teams Audio Integration', () => {
 
     it('should convert speech to text', async () => {
       const audioConfig = {
-        stream: audioStream
+        stream: audioStream,
       };
       const recognizedText = await speechService.speechToText(audioConfig);
       expect(recognizedText).toBeDefined();
@@ -135,13 +135,13 @@ describe('Teams Audio Integration', () => {
         id: 'test-product',
         name: 'Test Product',
         price: 100,
-        category: 'test'
+        category: 'test',
       };
 
       const testPattern = {
         id: 'test-pattern',
         signals: [],
-        confidence: 0.9
+        confidence: 0.9,
       };
 
       const metrics = await resonanceField.measureValueCreation(testProduct, testPattern);
@@ -153,12 +153,7 @@ describe('Teams Audio Integration', () => {
 
   describe('Error Recovery', () => {
     it('should handle authentication errors', async () => {
-      const error = new ServiceError(
-        'Authentication failed',
-        'AUTH_FAILED',
-        'Teams',
-        true
-      );
+      const error = new ServiceError('Authentication failed', 'AUTH_FAILED', 'Teams', true);
       await expect(ErrorHandler.handleError(error)).resolves.not.toThrow();
     });
 
@@ -173,12 +168,7 @@ describe('Teams Audio Integration', () => {
     });
 
     it('should handle service errors', async () => {
-      const error = new ServiceError(
-        'Service unavailable',
-        'SERVICE_DOWN',
-        'Speech',
-        true
-      );
+      const error = new ServiceError('Service unavailable', 'SERVICE_DOWN', 'Speech', true);
       await expect(ErrorHandler.handleError(error)).resolves.not.toThrow();
     });
 
@@ -186,18 +176,13 @@ describe('Teams Audio Integration', () => {
       const stream = await audioService.startAudioStream();
       activeStreams.push(stream as MockMediaStream);
 
-      const error = new ServiceError(
-        'Stream error',
-        'STREAM_ERROR',
-        'Audio',
-        true
-      );
+      const error = new ServiceError('Stream error', 'STREAM_ERROR', 'Audio', true);
 
       await ErrorHandler.handleError(error);
       await audioService.stopAudioStream();
 
       const tracks = stream.getAudioTracks();
-      tracks.forEach(track => {
+      tracks.forEach((track) => {
         expect(track.readyState).toBe('ended');
       });
     });

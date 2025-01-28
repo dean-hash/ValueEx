@@ -94,7 +94,7 @@ export class DomainSetupManager {
         { type: 'A', name: '@', data: '185.199.109.153', ttl: 600 },
         { type: 'A', name: '@', data: '185.199.110.153', ttl: 600 },
         { type: 'A', name: '@', data: '185.199.111.153', ttl: 600 },
-        { type: 'CNAME', name: 'www', data: `${config.domain}.github.io`, ttl: 600 }
+        { type: 'CNAME', name: 'www', data: `${config.domain}.github.io`, ttl: 600 },
       ]);
 
       // Use GitHub Pages instead of Vercel
@@ -103,7 +103,7 @@ export class DomainSetupManager {
         name: config.domain,
         repo: 'valueex/alerion',
         branch: 'main',
-        cname: config.domain
+        cname: config.domain,
       });
 
       metrics.trackMetric('domains_configured', 1);
@@ -154,7 +154,7 @@ export class DomainSetupManager {
         name: domain,
         repo: 'valueex/alerion',
         branch: 'main',
-        cname: config.domain
+        cname: config.domain,
       });
 
       logger.info(`Endpoint ${config.path} configured for ${domain}`);
@@ -182,7 +182,7 @@ export class DomainSetupManager {
       { type: 'A', name: '@', data: '185.199.109.153', ttl: 600 },
       { type: 'A', name: '@', data: '185.199.110.153', ttl: 600 },
       { type: 'A', name: '@', data: '185.199.111.153', ttl: 600 },
-      { type: 'CNAME', name: 'www', data: `${config.domain}.github.io`, ttl: 600 }
+      { type: 'CNAME', name: 'www', data: `${config.domain}.github.io`, ttl: 600 },
     ]);
   }
 
@@ -193,7 +193,7 @@ export class DomainSetupManager {
       name: config.domain,
       repo: 'valueex/landing-pages',
       branch: 'main',
-      cname: config.domain
+      cname: config.domain,
     });
 
     const status = this.setupStatus.get(config.domain);

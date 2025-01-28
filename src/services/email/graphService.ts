@@ -9,17 +9,17 @@ export class GraphService {
 
   private constructor() {
     this.secureStore = SecureStore.getInstance();
-    
+
     // Use existing Office 365 connection
     const existingConfig = {
       connectionName: 'office365',
       resourceGroup: 'DefaultResourceGroup-EUS',
-      subscription: 'Azure subscription 1'
+      subscription: 'Azure subscription 1',
     };
 
     // Initialize Microsoft Graph client using existing connection
     this.client = Client.initWithMiddleware({
-      authProvider: new CustomAuthProvider(existingConfig)
+      authProvider: new CustomAuthProvider(existingConfig),
     });
   }
 
@@ -47,26 +47,25 @@ export class GraphService {
               <hr>
               <h3>AI Analysis</h3>
               <pre>${analysis}</pre>
-            `
+            `,
           },
           toRecipients: [
             {
               emailAddress: {
-                address: toAddress
-              }
-            }
-          ]
-        }
+                address: toAddress,
+              },
+            },
+          ],
+        },
       };
 
       // Send using Graph API
       await this.client.api('/me/sendMail').post(forwardMessage);
-      
+
       logger.info('Email forwarded successfully', {
         to: toAddress,
-        subject: message.subject
+        subject: message.subject,
       });
-
     } catch (error) {
       logger.error('Failed to forward email:', error);
       throw error;
@@ -79,16 +78,15 @@ export class GraphService {
       const mailbox = {
         displayName: name,
         alias: email.split('@')[0],
-        emailAddresses: [`${email}`]
+        emailAddresses: [`${email}`],
       };
 
       await this.client.api('/users').post(mailbox);
-      
+
       logger.info('Shared mailbox created successfully', {
         name,
-        email
+        email,
       });
-
     } catch (error) {
       logger.error('Failed to create shared mailbox:', error);
       throw error;
@@ -99,19 +97,19 @@ export class GraphService {
     try {
       const permission = {
         emailAddress: {
-          address: userEmail
+          address: userEmail,
         },
-        roles: ['Mail.ReadWrite']
+        roles: ['Mail.ReadWrite'],
       };
 
-      await this.client.api(`/users/${mailboxEmail}/mailboxSettings/delegateMeetingMessageDelivery`)
+      await this.client
+        .api(`/users/${mailboxEmail}/mailboxSettings/delegateMeetingMessageDelivery`)
         .patch(permission);
-      
+
       logger.info('Mailbox access granted', {
         mailbox: mailboxEmail,
-        user: userEmail
+        user: userEmail,
       });
-
     } catch (error) {
       logger.error('Failed to grant mailbox access:', error);
       throw error;

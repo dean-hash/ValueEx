@@ -1,4 +1,3 @@
-import { IntelligenceProvider, DemandSignal } from '../adapters/demandSignalAdapter';
 import { spawn, exec } from 'child_process';
 import { EventEmitter } from 'events';
 
@@ -12,10 +11,54 @@ interface SystemMetrics {
   }>;
 }
 
+interface DemandSignal {
+  // Assuming this interface is defined elsewhere
+}
+
+interface DemandContext {
+  sentiment: number;
+  volume: number;
+}
+
+interface ProviderStatus {
+  status: 'ready' | 'processing' | 'error';
+  error?: string;
+}
+
+interface IntelligenceProvider {
+  name: string;
+  type: 'processing' | 'validation' | 'enrichment' | 'research';
+  status: ProviderStatus;
+  confidence: number;
+  config: {
+    maxBatchSize: number;
+    timeout: number;
+    retryAttempts: number;
+    cacheEnabled: boolean;
+  };
+
+  processSignal(signal: DemandSignal): Promise<ProcessedSignal>;
+  processSignalBatch(signals: DemandSignal[]): Promise<ProcessedSignal[]>;
+  validateAlignment(): Promise<boolean>;
+  getStatus(): ProviderStatus;
+}
+
+interface ProcessedSignal {
+  signal: DemandSignal;
+  context: DemandContext;
+}
+
 export class SystemResourceProvider extends EventEmitter implements IntelligenceProvider {
   name = 'SystemResource';
-  type = 'monitoring' as const;
+  type = 'processing' as const;
   confidence = 0.95;
+  status: ProviderStatus = { status: 'ready' };
+  config = {
+    maxBatchSize: 10,
+    timeout: 30000,
+    retryAttempts: 3,
+    cacheEnabled: false,
+  };
   private metrics: SystemMetrics = {
     cpuUsage: 0,
     memoryUsage: 0,
@@ -98,26 +141,38 @@ export class SystemResourceProvider extends EventEmitter implements Intelligence
     }, 60000); // Check every minute
   }
 
-  async processSignal(signal: DemandSignal): Promise<DemandSignal> {
-    // Add resource context to demand signals
-    const metrics = await this.getSystemMetrics();
-
-    return {
-      ...signal,
-      context: {
-        ...signal.context,
-        systemHealth: {
-          cpuUsage: metrics.cpuUsage,
-          memoryUsage: metrics.memoryUsage,
-          timestamp: new Date().toISOString(),
+  async processSignal(signal: DemandSignal): Promise<ProcessedSignal> {
+    try {
+      // Add system resource context to the signal
+      return {
+        signal,
+        context: {
+          sentiment: this.metrics.cpuUsage,
+          volume: this.metrics.memoryUsage,
         },
-      },
-    };
+      };
+    } catch (err) {
+      this.status = {
+        status: 'error' as const,
+        error: err instanceof Error ? err.message : String(err),
+      };
+      throw err;
+    }
+  }
+
+  async processSignalBatch(signals: DemandSignal[]): Promise<ProcessedSignal[]> {
+    // Process signals in parallel using Promise.all
+    const processPromises = signals.map((signal) => this.processSignal(signal));
+    return Promise.all(processPromises);
   }
 
   async validateAlignment(): Promise<boolean> {
     // System resource provider is inherently aligned as it focuses on optimization
     return true;
+  }
+
+  getStatus(): ProviderStatus {
+    return this.status;
   }
 
   // Additional methods for direct resource management

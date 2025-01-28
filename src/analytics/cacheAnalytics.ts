@@ -6,12 +6,11 @@ export interface CacheStats {
 
 export class CacheAnalytics {
   private static instance: CacheAnalytics;
-  private hits: number;
-  private misses: number;
+  private hits: number = 0;
+  private misses: number = 0;
 
-  private constructor() {
-    this.hits = 0;
-    this.misses = 0;
+  constructor() {
+    this.reset();
   }
 
   public static getInstance(): CacheAnalytics {
@@ -29,7 +28,7 @@ export class CacheAnalytics {
     this.misses++;
   }
 
-  public getStats(): CacheStats {
+  public getStats(): { hits: number; misses: number; hitRate: number } {
     const total = this.hits + this.misses;
     return {
       hits: this.hits,

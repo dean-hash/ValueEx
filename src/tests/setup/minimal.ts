@@ -6,10 +6,10 @@ import { setupTeamsTestEnv } from './teams.env';
 export const setupMinimalTestEnv = () => {
   // Set default test timeouts
   jest.setTimeout(30000);
-  
+
   // Set up Teams test environment
   setupTeamsTestEnv();
-  
+
   // Mock MetricsCollector
   const mockMetricsCollector = {
     trackApiMetrics: jest.fn(),
@@ -17,7 +17,7 @@ export const setupMinimalTestEnv = () => {
     getApiMetrics: jest.fn().mockReturnValue({
       requests: 0,
       errors: 0,
-      latency: 0
+      latency: 0,
     }),
     getResourceMetrics: jest.fn().mockReturnValue({
       cpu: 0,
@@ -25,9 +25,9 @@ export const setupMinimalTestEnv = () => {
       disk: 0,
       network: {
         latency: 0,
-        bandwidth: 0
-      }
-    })
+        bandwidth: 0,
+      },
+    }),
   };
 
   // Use modern jest.spyOn pattern
@@ -45,7 +45,7 @@ export const setupMinimalTestEnv = () => {
       info: jest.fn(),
       error: jest.fn(),
       warn: jest.fn(),
-      debug: jest.fn()
-    }))
+      debug: jest.fn(),
+    })),
   }));
 };

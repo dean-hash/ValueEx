@@ -43,7 +43,7 @@ export class DomainAnalyzer {
       recommendations: [],
       aiInsights: {
         marketTrends: '',
-        valueOptimization: ''
+        valueOptimization: '',
       },
       metrics: {
         seoValue: 0,
@@ -63,13 +63,13 @@ export class DomainAnalyzer {
     try {
       const [marketTrends, valueOptimization] = await Promise.all([
         this.gemini.analyzeMarketTrends(this.extractNiche(domain.domain)),
-        this.gemini.optimizeDomainValue(domain.domain)
+        this.gemini.optimizeDomainValue(domain.domain),
       ]);
 
       analysis.aiInsights = {
         marketTrends,
         valueOptimization,
-        suggestedPrice: this.extractPriceFromAIInsights(valueOptimization)
+        suggestedPrice: this.extractPriceFromAIInsights(valueOptimization),
       };
 
       // Adjust values based on AI insights
@@ -92,9 +92,9 @@ export class DomainAnalyzer {
     // Extract likely niche from domain name
     const words = domain.split(/[.-]/);
     const commonNiches = ['tech', 'finance', 'health', 'education', 'ecommerce'];
-    
+
     for (const word of words) {
-      const niche = commonNiches.find(n => word.toLowerCase().includes(n));
+      const niche = commonNiches.find((n) => word.toLowerCase().includes(n));
       if (niche) return niche;
     }
 

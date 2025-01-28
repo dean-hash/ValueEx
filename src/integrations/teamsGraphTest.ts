@@ -1,32 +1,32 @@
 import fetch from 'node-fetch';
 
 async function testTeamsConnection() {
-    const token = process.env.TEAMS_TOKEN;
-    if (!token) {
-        console.error('No Teams token found in environment');
-        return false;
+  const token = process.env.TEAMS_TOKEN;
+  if (!token) {
+    console.error('No Teams token found in environment');
+    return false;
+  }
+
+  try {
+    // Test connection by getting current user
+    const response = await fetch('https://graph.microsoft.com/v1.0/me', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    try {
-        // Test connection by getting current user
-        const response = await fetch('https://graph.microsoft.com/v1.0/me', {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log('Connected as:', data.displayName);
-        return true;
-    } catch (error) {
-        console.error('Teams connection failed:', error);
-        return false;
-    }
+    const data = await response.json();
+    console.log('Connected as:', data.displayName);
+    return true;
+  } catch (error) {
+    console.error('Teams connection failed:', error);
+    return false;
+  }
 }
 
 testTeamsConnection();

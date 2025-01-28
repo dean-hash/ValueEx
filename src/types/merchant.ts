@@ -15,3 +15,12 @@ export interface MerchantProfile {
   notes?: string;
   integrationLevel?: 'basic' | 'advanced' | 'custom';
 }
+
+export interface MerchantMatch {
+  merchantId: string;
+  category: string;
+  commissionRate: number;
+  relevanceScore: number;
+  recommendedProducts?: string[];
+  profile?: MerchantProfile;
+}

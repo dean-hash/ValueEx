@@ -2,13 +2,13 @@ import { EventEmitter } from 'events';
 import { Logger } from '../utils/logger';
 
 interface AnonymizedConsumerSignal {
-  segmentId: string;  // Non-PII identifier for consumer segment
+  segmentId: string; // Non-PII identifier for consumer segment
   interests: string[];
   needs: string[];
   marketContext: {
-    region: string;  // US region only, no specific location
-    generalDemographics: string[];  // Age range, etc. - no specific identifiers
-    valuePreferences: string[];  // What kind of deals/discounts matter most
+    region: string; // US region only, no specific location
+    generalDemographics: string[]; // Age range, etc. - no specific identifiers
+    valuePreferences: string[]; // What kind of deals/discounts matter most
   };
   timestamp: Date;
 }
@@ -42,7 +42,7 @@ export class PrivacyAwareDataService extends EventEmitter {
   async processConsumerSignal(rawData: any): Promise<AnonymizedConsumerSignal> {
     // Remove any PII from incoming data
     const anonymized = this.stripPII(rawData);
-    
+
     // Extract only relevant wants/needs signals
     const signal: AnonymizedConsumerSignal = {
       segmentId: this.generateSegmentId(anonymized),
@@ -51,9 +51,9 @@ export class PrivacyAwareDataService extends EventEmitter {
       marketContext: {
         region: this.getRegionOnly(anonymized),
         generalDemographics: this.getGeneralDemographics(anonymized),
-        valuePreferences: this.extractValuePreferences(anonymized)
+        valuePreferences: this.extractValuePreferences(anonymized),
       },
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
     this.logger.info('Processed consumer signal with all PII removed');
@@ -66,12 +66,19 @@ export class PrivacyAwareDataService extends EventEmitter {
   private stripPII(data: any): any {
     // Remove any potential PII fields
     const piiFields = [
-      'name', 'email', 'phone', 'address', 'ip', 'deviceId',
-      'socialSecurityNumber', 'dateOfBirth', 'exactLocation'
+      'name',
+      'email',
+      'phone',
+      'address',
+      'ip',
+      'deviceId',
+      'socialSecurityNumber',
+      'dateOfBirth',
+      'exactLocation',
     ];
-    
+
     const cleaned = { ...data };
-    piiFields.forEach(field => delete cleaned[field]);
+    piiFields.forEach((field) => delete cleaned[field]);
     return cleaned;
   }
 

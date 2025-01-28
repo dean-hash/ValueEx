@@ -47,12 +47,12 @@ export class BrandResonanceService extends EventEmitter {
    */
   async mapBrandResonance(brandId: string): Promise<BrandResonanceMetrics> {
     this.logger.info(`Mapping brand resonance for ${brandId}`);
-    
+
     const metrics: BrandResonanceMetrics = {
       brandId,
       fanEngagement: await this.analyzeFanEngagement(brandId),
       marketMetrics: await this.analyzeMarketMetrics(brandId),
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
     return metrics;
@@ -67,7 +67,7 @@ export class BrandResonanceService extends EventEmitter {
       activeFollowers: await this.getActiveFollowers(brandId),
       engagementRate: await this.calculateEngagementRate(brandId),
       sentimentScore: await this.analyzeSentiment(brandId),
-      brandAffinity: await this.measureBrandAffinity(brandId)
+      brandAffinity: await this.measureBrandAffinity(brandId),
     };
   }
 
@@ -79,7 +79,7 @@ export class BrandResonanceService extends EventEmitter {
       purchaseFrequency: await this.getPurchaseFrequency(brandId),
       averageOrderValue: await this.getAverageOrderValue(brandId),
       repeatPurchaseRate: await this.getRepeatPurchaseRate(brandId),
-      brandAdvocacyScore: await this.getBrandAdvocacyScore(brandId)
+      brandAdvocacyScore: await this.getBrandAdvocacyScore(brandId),
     };
   }
 
@@ -128,7 +128,7 @@ export class BrandResonanceService extends EventEmitter {
    */
   private async getAverageOrderValue(brandId: string): Promise<number> {
     // Actual average from sales data
-    return 85.50;
+    return 85.5;
   }
 
   /**
@@ -152,14 +152,14 @@ export class BrandResonanceService extends EventEmitter {
    */
   async developEngagementStrategy(brandId: string, metrics: BrandResonanceMetrics) {
     this.logger.info(`Developing engagement strategy for ${brandId}`);
-    
+
     // Strategy development using real fan insights
     // Similar to Interparfums fragrance fan engagement
     return {
       primaryChannels: this.identifyBestChannels(metrics),
       contentThemes: this.determineResonantThemes(metrics),
       engagementTactics: this.planEngagementTactics(metrics),
-      advocacyProgram: this.designAdvocacyProgram(metrics)
+      advocacyProgram: this.designAdvocacyProgram(metrics),
     };
   }
 
@@ -183,7 +183,7 @@ export class BrandResonanceService extends EventEmitter {
     return {
       recognitionSystem: 'expertise_based',
       rewardStructure: 'exclusive_access',
-      communityRole: 'knowledge_sharing'
+      communityRole: 'knowledge_sharing',
     };
   }
 }

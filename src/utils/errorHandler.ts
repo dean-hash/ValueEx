@@ -23,7 +23,7 @@ export class ErrorHandler {
 
   private static async handleServiceError(error: ServiceError): Promise<void> {
     console.error(`[${error.service}] Error ${error.code}: ${error.message}`);
-    
+
     if (error.recoverable) {
       await this.attemptRecovery(error);
     } else {

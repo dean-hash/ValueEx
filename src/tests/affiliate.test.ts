@@ -1,4 +1,41 @@
-import { AffiliateManager } from '../services/affiliateManager';
+import { AffiliateManager } from '../services/affiliate/affiliateManager';
+import { MerchantMatch } from '../types/merchant';
+
+describe('AffiliateManager', () => {
+  let manager: AffiliateManager;
+
+  beforeEach(() => {
+    manager = AffiliateManager.getInstance();
+  });
+
+  describe('findMerchants', () => {
+    it('should find matching merchants', async () => {
+      const matches = await manager.findMerchants('electronics under $500');
+      expect(Array.isArray(matches)).toBe(true);
+
+      matches.forEach((match: MerchantMatch) => {
+        expect(match).toHaveProperty('merchantId');
+        expect(match).toHaveProperty('category');
+        expect(match).toHaveProperty('commissionRate');
+        expect(match).toHaveProperty('relevanceScore');
+      });
+    });
+
+    it('should handle no matches gracefully', async () => {
+      const matches = await manager.findMerchants('nonexistent product category');
+      expect(Array.isArray(matches)).toBe(true);
+      expect(matches.length).toBe(0);
+    });
+  });
+
+  describe('validateMerchant', () => {
+    it('should validate merchant credentials', async () => {
+      const isValid = await manager.validateMerchant('test-merchant-id');
+      expect(typeof isValid).toBe('boolean');
+    });
+  });
+});
+
 import { RedditManager } from '../services/redditManager';
 import { RateLimiter } from '../services/rateLimiter';
 
@@ -27,76 +64,6 @@ jest.mock('snoowrap', () => {
       })),
     })),
   };
-});
-
-describe('AffiliateManager', () => {
-  let affiliateManager: AffiliateManager;
-
-  beforeEach(() => {
-    affiliateManager = new AffiliateManager();
-  });
-
-  describe('canRespond', () => {
-    it('should reject banned subreddits', async () => {
-      const result = await affiliateManager.canRespond('banned_subreddit', {
-        questionAnswered: true,
-        detailLevel: 2,
-        sourcesProvided: true,
-        upvotes: 100,
-        comments: 50,
-        reportCount: 0,
-        clickCount: 10,
-        conversionCount: 2,
-        karmaBalance: 0.95,
-        communityStanding: 0.8,
-      });
-      expect(result).toBe(false);
-    });
-
-    it('should accept valid metrics', async () => {
-      const result = await affiliateManager.canRespond('good_subreddit', {
-        questionAnswered: true,
-        detailLevel: 3,
-        sourcesProvided: true,
-        upvotes: 100,
-        comments: 50,
-        reportCount: 0,
-        clickCount: 10,
-        conversionCount: 2,
-        karmaBalance: 0.95,
-        communityStanding: 0.8,
-      });
-      expect(result).toBe(true);
-    });
-  });
-
-  describe('generateResponse', () => {
-    it('should generate valid response with disclosure', async () => {
-      const response = await affiliateManager.generateResponse(
-        "What's the best product for beginners?",
-        {
-          name: 'Test Product',
-          link: 'http://affiliate.link',
-          details: 'Great for beginners',
-        }
-      );
-
-      expect(response).not.toBeNull();
-      expect(response?.content).toContain("Here's what you need to know");
-      expect(response?.content).toContain('Test Product');
-      expect(response?.disclosure).toContain('affiliate');
-    });
-
-    it('should reject irrelevant questions', async () => {
-      const response = await affiliateManager.generateResponse('What time is it?', {
-        name: 'Test Product',
-        link: 'http://affiliate.link',
-        details: 'Great for beginners',
-      });
-
-      expect(response).toBeNull();
-    });
-  });
 });
 
 describe('RateLimiter', () => {

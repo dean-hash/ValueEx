@@ -83,7 +83,7 @@ export class IntelligenceEnhancer {
       this.context = {
         signal,
         insights,
-        metadata: {}
+        metadata: {},
       };
 
       const enhancedInsights = await this.applyEnhancements(insights);
@@ -122,7 +122,7 @@ export class IntelligenceEnhancer {
       this.enhanceKeywords(enhancedInsights),
       this.enhanceIntent(enhancedInsights),
       this.enhanceValueEvidence(enhancedInsights),
-      this.enhanceDemographics(enhancedInsights)
+      this.enhanceDemographics(enhancedInsights),
     ]);
 
     return enhancedInsights;
@@ -130,7 +130,7 @@ export class IntelligenceEnhancer {
 
   private async enhanceConfidence(insights: DemandInsights): Promise<void> {
     if (!this.context) return;
-    
+
     // Implement confidence enhancement logic
     insights.confidence = insights.confidence || 0;
     insights.confidence = Math.min(insights.confidence * 1.1, 1);
@@ -138,7 +138,7 @@ export class IntelligenceEnhancer {
 
   private async enhanceRelevance(insights: DemandInsights): Promise<void> {
     if (!this.context) return;
-    
+
     // Implement relevance enhancement logic
     insights.relevance = insights.relevance || 0;
     insights.relevance = Math.min(insights.relevance * 1.2, 1);
@@ -146,7 +146,7 @@ export class IntelligenceEnhancer {
 
   private async enhanceKeywords(insights: DemandInsights): Promise<void> {
     if (!this.context) return;
-    
+
     // Implement keyword enhancement logic
     const enhancedKeywords = await this.extractKeywords(insights.context || '');
     insights.keywords = [...new Set([...insights.keywords, ...enhancedKeywords])];
@@ -154,7 +154,7 @@ export class IntelligenceEnhancer {
 
   private async enhanceIntent(insights: DemandInsights): Promise<void> {
     if (!this.context) return;
-    
+
     // Implement intent enhancement logic
     const enhancedIntent = await this.analyzeIntent(insights.context || '');
     insights.intent = enhancedIntent || insights.intent;
@@ -162,7 +162,7 @@ export class IntelligenceEnhancer {
 
   private async enhanceValueEvidence(insights: DemandInsights): Promise<void> {
     if (!this.context) return;
-    
+
     // Implement value evidence enhancement logic
     const enhancedValueEvidence = await this.analyzeValueEvidence(insights);
     insights.valueEvidence = {
@@ -173,7 +173,7 @@ export class IntelligenceEnhancer {
 
   private async enhanceDemographics(insights: DemandInsights): Promise<void> {
     if (!this.context) return;
-    
+
     // Implement demographics enhancement logic
     const enhancedDemographics = await this.analyzeDemographics(insights);
     insights.demographics = [...new Set([...insights.demographics, ...enhancedDemographics])];
@@ -255,7 +255,10 @@ export class IntelligenceEnhancer {
     return ['business', 'personal']; // MVP: Placeholder
   }
 
-  private async processSignal(signal: DemandSignal, context: SignalContext): Promise<ProcessedSignal> {
+  private async processSignal(
+    signal: DemandSignal,
+    context: SignalContext
+  ): Promise<ProcessedSignal> {
     const enhancedText = await this.enhanceText(signal.content);
     const enhancedInsights = await this.enhanceInsights(signal.insights || []);
     const enhancedConfidence = await this.enhanceConfidence(signal);
@@ -280,8 +283,8 @@ export class IntelligenceEnhancer {
         intent: enhancedIntent,
         valueEvidence: enhancedEvidence,
         demographics: enhancedDemographics,
-        processingTime
-      }
+        processingTime,
+      },
     };
   }
 
@@ -291,7 +294,7 @@ export class IntelligenceEnhancer {
       text: analysis.text,
       sentiment: analysis.sentiment,
       entities: analysis.entities,
-      metadata: analysis.metadata
+      metadata: analysis.metadata,
     };
   }
 
@@ -299,7 +302,7 @@ export class IntelligenceEnhancer {
     const enhancedInsights = await Promise.all(
       insights.map(async (insight) => ({
         ...insight,
-        analysis: await this.analyzer.analyzeInsight(insight)
+        analysis: await this.analyzer.analyzeInsight(insight),
       }))
     );
     return { insights: enhancedInsights };
@@ -310,7 +313,7 @@ export class IntelligenceEnhancer {
     return {
       context: context,
       analysis: analysis,
-      metadata: { timestamp: new Date().toISOString() }
+      metadata: { timestamp: new Date().toISOString() },
     };
   }
 
@@ -355,7 +358,7 @@ export class IntelligenceEnhancer {
       engagement: 500,
       velocity: 0.4,
       acceleration: 0.3,
-      momentum: 0.2
+      momentum: 0.2,
     };
   }
 
@@ -365,7 +368,7 @@ export class IntelligenceEnhancer {
       keyFindings: [],
       opportunities: [],
       risks: [],
-      recommendations: []
+      recommendations: [],
     };
   }
 
@@ -375,7 +378,7 @@ export class IntelligenceEnhancer {
       historicalTrend: [],
       forecast: [],
       seasonality: [],
-      anomalies: []
+      anomalies: [],
     };
   }
 
@@ -384,7 +387,7 @@ export class IntelligenceEnhancer {
     return {
       repeatingPatterns: [],
       correlations: [],
-      causations: []
+      causations: [],
     };
   }
 
@@ -394,7 +397,7 @@ export class IntelligenceEnhancer {
       marketContext: '',
       competitiveContext: '',
       customerContext: '',
-      productContext: ''
+      productContext: '',
     };
   }
 
@@ -404,7 +407,7 @@ export class IntelligenceEnhancer {
       isValid: true,
       validationMethod: '',
       validationScore: 1,
-      validationDetails: ''
+      validationDetails: '',
     };
   }
 
@@ -418,7 +421,7 @@ export class IntelligenceEnhancer {
     return {
       confidence: 0,
       relevance: 0,
-      quality: 0
+      quality: 0,
     };
   }
 
@@ -432,7 +435,7 @@ export class IntelligenceEnhancer {
     return {
       isValid: true,
       score: 1,
-      issues: []
+      issues: [],
     };
   }
 
@@ -441,7 +444,7 @@ export class IntelligenceEnhancer {
     return {
       processed: true,
       score: 1,
-      metadata: {}
+      metadata: {},
     };
   }
 
@@ -455,7 +458,7 @@ export class IntelligenceEnhancer {
     return {
       enriched: true,
       metadata: {} as Record<string, unknown>,
-      context
+      context,
     };
   }
 
@@ -464,7 +467,7 @@ export class IntelligenceEnhancer {
     return {
       isValid: true,
       score: 1,
-      issues: []
+      issues: [],
     };
   }
 
@@ -473,7 +476,7 @@ export class IntelligenceEnhancer {
     return {
       enhanced: true,
       metadata: {} as Record<string, unknown>,
-      context
+      context,
     };
   }
 
@@ -482,7 +485,7 @@ export class IntelligenceEnhancer {
     return {
       isValid: true,
       score: 1,
-      issues: []
+      issues: [],
     };
   }
 
@@ -491,7 +494,7 @@ export class IntelligenceEnhancer {
     return {
       processed: true,
       score: 1,
-      metadata: {}
+      metadata: {},
     };
   }
 
@@ -505,7 +508,7 @@ export class IntelligenceEnhancer {
     return {
       enriched: true,
       metadata: {} as Record<string, unknown>,
-      context
+      context,
     };
   }
 
@@ -514,7 +517,7 @@ export class IntelligenceEnhancer {
     return {
       processed: true,
       score: 1,
-      metadata: {}
+      metadata: {},
     };
   }
 
@@ -523,7 +526,7 @@ export class IntelligenceEnhancer {
     return {
       isValid: true,
       score: 1,
-      issues: []
+      issues: [],
     };
   }
 
@@ -532,7 +535,7 @@ export class IntelligenceEnhancer {
     return {
       enriched: true,
       metadata: {} as Record<string, unknown>,
-      context
+      context,
     };
   }
 
@@ -541,7 +544,7 @@ export class IntelligenceEnhancer {
     return {
       processed: true,
       score: 1,
-      metadata: {}
+      metadata: {},
     };
   }
 
@@ -550,17 +553,17 @@ export class IntelligenceEnhancer {
     return {
       isValid: true,
       score: 1,
-      issues: []
+      issues: [],
     };
   }
 
   private updateMetrics(processingTime: number, confidence: number): void {
     this.metrics.enhancedCount++;
-    this.metrics.avgProcessingTime = 
-      (this.metrics.avgProcessingTime * (this.metrics.enhancedCount - 1) + processingTime) / 
+    this.metrics.avgProcessingTime =
+      (this.metrics.avgProcessingTime * (this.metrics.enhancedCount - 1) + processingTime) /
       this.metrics.enhancedCount;
-    this.metrics.avgConfidence = 
-      (this.metrics.avgConfidence * (this.metrics.enhancedCount - 1) + confidence) / 
+    this.metrics.avgConfidence =
+      (this.metrics.avgConfidence * (this.metrics.enhancedCount - 1) + confidence) /
       this.metrics.enhancedCount;
   }
 

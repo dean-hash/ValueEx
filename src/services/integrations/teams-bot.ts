@@ -1,92 +1,73 @@
-import { TeamsActivityHandler, TurnContext, MessageFactory } from 'botbuilder';
+import { TeamsActivityHandler, TurnContext } from 'botbuilder';
+import { AffiliateManager } from '../affiliateManager';
 import { logger } from '../../utils/logger';
-import { DemandMatcher } from '../mvp/demandMatcher';
-import { ProductSourcing } from '../mvp/productSourcing';
-
-interface Demand {
-    category: string;
-    strength: number;
-    confidence: number;
-}
-
-interface ProductOpportunity {
-    category: string;
-    priceRange?: {
-        min: number;
-        max: number;
-    };
-}
 
 export class TeamsBot extends TeamsActivityHandler {
-    private demandMatcher = DemandMatcher.getInstance();
-    private productSourcing = ProductSourcing.getInstance();
+  private affiliateManager = AffiliateManager.getInstance();
 
-    constructor() {
-        super();
-        this.onMessage(this.handleMessage.bind(this));
-    }
+  constructor() {
+    super();
+    this.onMessage(this.handleMessage.bind(this));
+  }
 
-    async handleMessage(context: TurnContext): Promise<void> {
-        try {
-            const text = context.activity.text.toLowerCase();
+  async handleMessage(context: TurnContext): Promise<void> {
+    try {
+      const text = context.activity.text.toLowerCase();
 
-            if (text.includes('demand') || text.includes('opportunity')) {
-                await this.handleDemandQuery(context);
-            } else if (text.includes('product') || text.includes('source')) {
-                await this.handleProductQuery(context);
-            } else if (text.includes('status') || text.includes('health')) {
-                await this.handleStatusQuery(context);
-            } else {
-                await this.handleHelp(context);
-            }
-        } catch (error) {
-            logger.error('Error handling Teams message:', error);
-            await context.sendActivity('Sorry, I encountered an error processing your request.');
-        }
-    }
+      // Help command
+      if (text.includes('help')) {
+        await context.sendActivity(`
+🤖 ValueEx Bot - Your AI Tool Assistant
 
-    private async handleDemandQuery(context: TurnContext): Promise<void> {
-        const demands: Demand[] = await this.demandMatcher.getCurrentDemands();
-        const message = MessageFactory.text(
-            `Current Demand Overview:\n${demands.map(d => 
-                `- ${d.category}: ${d.strength} strength, ${d.confidence.toFixed(2)} confidence`
-            ).join('\n')}`
+Commands:
+- *ai writing* - Get recommendations for AI writing tools
+- *ai image* - Get recommendations for AI image generation tools
+- *help* - Show this help message
+
+Example: "I need an AI tool for writing blog posts"
+                `);
+        return;
+      }
+
+      // Extract user need
+      const need = {
+        query: text,
+        category: text.includes('image') ? 'ai_image' : 'ai_writing',
+        context: {
+          urgency: text.includes('urgent') ? 0.9 : 0.5,
+          priceRange: '0-1000',
+          categories: ['ai', 'software', 'productivity'],
+        },
+      };
+
+      // Get relevant affiliate products
+      const products = await this.affiliateManager.getRelevantProducts(need.category);
+
+      if (products.length === 0) {
+        await context.sendActivity(
+          "I couldn't find any relevant AI tools for your needs. Try asking for 'ai writing' or 'ai image' tools."
         );
-        await context.sendActivity(message);
-    }
+        return;
+      }
 
-    private async handleProductQuery(context: TurnContext): Promise<void> {
-        const opportunities: ProductOpportunity[] = await this.productSourcing.findOpportunities();
-        const message = MessageFactory.text(
-            `Product Opportunities:\n${opportunities.map(o => 
-                `- ${o.category}: $${o.priceRange?.min}-${o.priceRange?.max}`
-            ).join('\n')}`
-        );
-        await context.sendActivity(message);
-    }
+      // Format and send response
+      const response = products
+        .map(
+          (product) => `
+📌 ${product.name}
+${product.description}
+💰 Commission: ${product.commission * 100}%
+🔗 Try it: ${this.affiliateManager.generateAffiliateLink(product.name, context.activity.from.id)}
+            `
+        )
+        .join('\n');
 
-    private async handleStatusQuery(context: TurnContext): Promise<void> {
-        const status: Record<string, boolean> = {
-            matcher: await this.demandMatcher.isHealthy(),
-            sourcing: await this.productSourcing.isHealthy()
-        };
-
-        const message = MessageFactory.text(
-            `System Status:\n` +
-            `- Demand Matcher: ${status.matcher ? '✅' : '❌'}\n` +
-            `- Product Sourcing: ${status.sourcing ? '✅' : '❌'}`
-        );
-        await context.sendActivity(message);
+      await context.sendActivity(response);
+    } catch (error) {
+      logger.error('Error handling Teams message:', error);
+      await context.sendActivity(
+        'Sorry, I encountered an error. Please try again or type "help" for available commands.'
+      );
     }
-
-    private async handleHelp(context: TurnContext): Promise<void> {
-        const message = MessageFactory.text(
-            'Available commands:\n' +
-            '- "demand": View current demand metrics\n' +
-            '- "product": View product opportunities\n' +
-            '- "status": Check system health\n' +
-            '- "help": Show this message'
-        );
-        await context.sendActivity(message);
-    }
+  }
 }

@@ -39,3 +39,17 @@ export interface ProductMatchCriteria {
     sustainability: number;
   };
 }
+
+export interface ProductOpportunity {
+  id: string;
+  category: string;
+  query: string;
+  confidence: number;
+  priceRange: string;
+  requirements: string[];
+  audience: string[];
+  metadata: {
+    demandStrength: number;
+    dataPoints: number;
+  };
+}

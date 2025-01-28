@@ -26,7 +26,7 @@ class WorkspaceManager {
       plannerEnabled: true,
       teamsEnabled: true,
       aiEnabled: true,
-      domainManagementEnabled: true
+      domainManagementEnabled: true,
     });
     this.bc = new BusinessCentralService();
     this.dynamics = new DynamicsService();
@@ -40,15 +40,15 @@ class WorkspaceManager {
       industry: 'AI and Software',
       fiscalYear: {
         start: new Date(new Date().getFullYear(), 0, 1),
-        end: new Date(new Date().getFullYear(), 11, 31)
-      }
+        end: new Date(new Date().getFullYear(), 11, 31),
+      },
     });
 
     // Create corresponding customer in Dynamics
     await this.dynamics.createAccount({
       name: setup.name,
       type: 'Internal',
-      relationship: 'Parent Company'
+      relationship: 'Parent Company',
     });
 
     // Set up automated tax tracking
@@ -58,12 +58,8 @@ class WorkspaceManager {
   private async setupTaxTracking(taxId: string) {
     await this.bc.configureTaxTracking({
       taxId,
-      trackingCategories: [
-        'Software Development',
-        'Cloud Services',
-        'Professional Services'
-      ],
-      automatedFiling: true
+      trackingCategories: ['Software Development', 'Cloud Services', 'Professional Services'],
+      automatedFiling: true,
     });
   }
 
@@ -71,20 +67,20 @@ class WorkspaceManager {
     const channels = [
       {
         name: 'strategy-planning',
-        description: 'High-level strategy and planning discussions'
+        description: 'High-level strategy and planning discussions',
       },
       {
         name: 'development',
-        description: 'Technical development and implementation'
+        description: 'Technical development and implementation',
       },
       {
         name: 'business-ops',
-        description: 'Business operations and administration'
+        description: 'Business operations and administration',
       },
       {
         name: 'revenue-tracking',
-        description: 'Revenue streams and financial monitoring'
-      }
+        description: 'Revenue streams and financial monitoring',
+      },
     ];
 
     for (const channel of channels) {
@@ -96,22 +92,18 @@ class WorkspaceManager {
     // Configure automated reports in Business Central
     await this.bc.setupReporting({
       frequency: 'daily',
-      reports: [
-        'CashFlow',
-        'ProfitLoss',
-        'TaxLiability',
-        'ExpenseTracking'
-      ],
+      reports: ['CashFlow', 'ProfitLoss', 'TaxLiability', 'ExpenseTracking'],
       automation: {
         emailRecipients: ['dean@valueex.ai'],
-        teamsChannel: 'business-ops'
-      }
+        teamsChannel: 'business-ops',
+      },
     });
   }
 }
 
 // Initialize and run setup
 const manager = new WorkspaceManager();
-manager.createWorkspaceChannels()
+manager
+  .createWorkspaceChannels()
   .then(() => console.log('Workspace channels created'))
   .catch(console.error);

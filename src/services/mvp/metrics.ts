@@ -23,7 +23,7 @@ export class MatchMetrics {
   public recordMatchTime(timeMs: number): void {
     this.matchTimes.push({
       timestamp: Date.now(),
-      value: timeMs
+      value: timeMs,
     });
 
     if (this.matchTimes.length > this.maxHistorySize) {
@@ -34,7 +34,7 @@ export class MatchMetrics {
   public recordError(): void {
     this.errors.push({
       timestamp: Date.now(),
-      value: 1
+      value: 1,
     });
 
     if (this.errors.length > this.maxHistorySize) {
@@ -43,18 +43,16 @@ export class MatchMetrics {
   }
 
   public getLastNMatchTimes(n: number): number[] {
-    return this.matchTimes
-      .slice(-n)
-      .map(entry => entry.value);
+    return this.matchTimes.slice(-n).map((entry) => entry.value);
   }
 
   public getErrorRate(timeWindowSeconds: number): number {
     const now = Date.now();
-    const windowStart = now - (timeWindowSeconds * 1000);
-    
-    const recentErrors = this.errors.filter(error => error.timestamp >= windowStart);
+    const windowStart = now - timeWindowSeconds * 1000;
+
+    const recentErrors = this.errors.filter((error) => error.timestamp >= windowStart);
     const totalErrors = recentErrors.length;
-    
+
     // Calculate error rate as errors per second
     return totalErrors / timeWindowSeconds;
   }

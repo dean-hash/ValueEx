@@ -124,10 +124,7 @@ describe('Adaptive Thresholds Integration Tests', () => {
     it('should handle rapid fluctuations', async (): Promise<void> => {
       // Simulate noisy data
       for (let i = 0; i < 30; i++) {
-        metrics.addMetricValue(
-          'processing_time',
-          Math.sin(i) * 500 + 1000 + Math.random() * 200
-        );
+        metrics.addMetricValue('processing_time', Math.sin(i) * 500 + 1000 + Math.random() * 200);
       }
 
       const threshold = thresholds.calculateThreshold('processing_time');

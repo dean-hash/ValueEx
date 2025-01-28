@@ -13,10 +13,10 @@ app.use(express.static(__dirname));
 
 // Serve index.html
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.listen(port, () => {
-    console.log(`Cascade Teams interface running at http://localhost:${port}`);
-    console.log('Open this URL in your browser to start voice communication');
+  console.log(`Cascade Teams interface running at http://localhost:${port}`);
+  console.log('Open this URL in your browser to start voice communication');
 });

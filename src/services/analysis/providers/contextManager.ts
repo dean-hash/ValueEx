@@ -272,8 +272,8 @@ export class ContextManager extends EventEmitter implements IntelligenceProvider
     const allDependents = this.context.relationships.getAllDependents(filePath);
 
     const impact = {
-      direct: directDependents,
-      indirect: allDependents.filter((d) => !directDependents.includes(d)),
+      direct: Array.from(directDependents),
+      indirect: Array.from(allDependents).filter((d) => !Array.from(directDependents).includes(d)),
     };
 
     // Check for breaking changes

@@ -1,30 +1,37 @@
 import { createTransport } from 'nodemailer';
+import { configService } from '../../config/configService';
 import Stripe from 'stripe';
 import Redis from 'ioredis';
-import { configService } from '../../config/configService';
 
 // Email Service
 export const emailTransport = createTransport({
-  host: configService.get('EMAIL_HOST'),
-  port: configService.get('EMAIL_PORT'),
-  secure: configService.get('EMAIL_TLS'),
+  host: configService.getConfigServiceConfig('AOA_EMAIL_HOST'),
+  port: Number(configService.getConfigServiceConfig('AOA_EMAIL_PORT')),
+  secure: configService.getConfigServiceConfig('AOA_EMAIL_TLS') === 'true',
   auth: {
-    user: configService.get('EMAIL_USER'),
-    pass: configService.get('EMAIL_PASSWORD'),
+    user: configService.getConfigServiceConfig('AOA_EMAIL_USER'),
+    pass: configService.getConfigServiceConfig('AOA_EMAIL_PASSWORD'),
   },
 });
 
 // Stripe Integration
-export const stripe = new Stripe(configService.get('STRIPE_SECRET_KEY'), {
+const stripeSecretKey = configService.getConfigServiceConfig('STRIPE_SECRET_KEY');
+if (!stripeSecretKey) {
+  throw new Error('STRIPE_SECRET_KEY is required');
+}
+
+export const stripe = new Stripe(stripeSecretKey, {
   apiVersion: '2023-10-16',
-  typescript: true,
 });
 
 // Redis Client
-export const redis = new Redis(configService.get('REDIS_URL'));
+export const redis = new Redis(configService.getConfigServiceConfig('REDIS_URL'));
 
 // Health Check
-export async function checkIntegrations(): Promise<{ status: 'healthy' | 'unhealthy', error?: any }> {
+export async function checkIntegrations(): Promise<{
+  status: 'healthy' | 'unhealthy';
+  error?: any;
+}> {
   try {
     // Verify email
     await emailTransport.verify();

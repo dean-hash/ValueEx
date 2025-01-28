@@ -27,12 +27,12 @@ export class DomainPortfolioManager {
   async analyzeDomain(domain: string): Promise<DomainStrategy> {
     // Get domain metrics
     const metrics = await this.godaddy.getDomainMetrics(domain);
-    
+
     // Use AI to analyze potential
     const analysis = await this.ai.analyze('domain-strategy', {
       domain,
       metrics,
-      market: await this.getMarketData(domain)
+      market: await this.getMarketData(domain),
     });
 
     // Track in business systems
@@ -49,20 +49,20 @@ export class DomainPortfolioManager {
       marketSize: dynamics.marketSize,
       competition: dynamics.competitionLevel,
       profitMargin: financial.averageMargin,
-      growthRate: financial.marketGrowth
+      growthRate: financial.marketGrowth,
     };
   }
 
   async listDomainsForSale() {
     const domains = await this.godaddy.listDomains();
     const strategies = await Promise.all(
-      domains.map(async domain => ({
+      domains.map(async (domain) => ({
         domain,
-        strategy: await this.analyzeDomain(domain)
+        strategy: await this.analyzeDomain(domain),
       }))
     );
 
-    return strategies.filter(s => s.strategy.action === 'sell');
+    return strategies.filter((s) => s.strategy.action === 'sell');
   }
 
   private async trackDomainStrategy(domain: string, strategy: DomainStrategy) {
@@ -70,7 +70,7 @@ export class DomainPortfolioManager {
     await this.dynamics.createOpportunity({
       name: `Domain Strategy: ${domain}`,
       expectedRevenue: strategy.expectedValue,
-      probability: this.calculateProbability(strategy)
+      probability: this.calculateProbability(strategy),
     });
 
     // Track financials in Business Central
@@ -78,7 +78,7 @@ export class DomainPortfolioManager {
       name: domain,
       type: 'Domain',
       expectedValue: strategy.expectedValue,
-      timeToMaturity: strategy.timeToValue
+      timeToMaturity: strategy.timeToValue,
     });
   }
 
@@ -106,7 +106,7 @@ export class DomainPortfolioManager {
       { type: 'A', name: '@', value: '185.199.110.153' },
       { type: 'A', name: '@', value: '185.199.111.153' },
       { type: 'MX', name: '@', value: 'aspmx.l.google.com', priority: 1 },
-      { type: 'TXT', name: '@', value: 'v=spf1 include:_spf.google.com ~all' }
+      { type: 'TXT', name: '@', value: 'v=spf1 include:_spf.google.com ~all' },
     ];
   }
 
@@ -115,7 +115,7 @@ export class DomainPortfolioManager {
     const content = await this.ai.generate('landing-page', {
       domain,
       purpose: 'domain-warmup',
-      style: 'professional'
+      style: 'professional',
     });
 
     // Deploy using GitHub Pages
@@ -126,7 +126,7 @@ export class DomainPortfolioManager {
     await this.dynamics.trackActivity({
       type: 'Domain Warmup',
       subject: domain,
-      description: 'Automated domain warmup process completed'
+      description: 'Automated domain warmup process completed',
     });
   }
 }

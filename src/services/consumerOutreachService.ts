@@ -10,7 +10,7 @@ interface OutreachStrategy {
     timing: string;
     channel: string;
   };
-  expectedResonance: number;  // 0-1 score of expected effectiveness
+  expectedResonance: number; // 0-1 score of expected effectiveness
 }
 
 /**
@@ -48,9 +48,9 @@ export class ConsumerOutreachService extends EventEmitter {
         valueProposition: this.determineValueProposition(segmentId),
         relevantOffers: await this.findRelevantOffers(segmentId),
         timing: this.determineBestTiming(segmentId),
-        channel: this.selectOptimalChannel(segmentId)
+        channel: this.selectOptimalChannel(segmentId),
       },
-      expectedResonance: this.calculateResonance(segmentId)
+      expectedResonance: this.calculateResonance(segmentId),
     };
 
     return strategy;
@@ -69,11 +69,7 @@ export class ConsumerOutreachService extends EventEmitter {
    */
   private async findRelevantOffers(segmentId: string): Promise<string[]> {
     // Match segment characteristics to available offers
-    return [
-      'trending_tech_deals',
-      'seasonal_discounts',
-      'popular_in_your_area'
-    ];
+    return ['trending_tech_deals', 'seasonal_discounts', 'popular_in_your_area'];
   }
 
   /**
@@ -105,7 +101,7 @@ export class ConsumerOutreachService extends EventEmitter {
    */
   async executeOutreach(strategy: OutreachStrategy): Promise<void> {
     this.logger.info(`Executing outreach for segment ${strategy.segmentId}`);
-    
+
     // Implement outreach while maintaining privacy
     // TODO: Implement actual outreach logic
   }

@@ -1,6 +1,10 @@
 import { describe, expect, beforeEach, it } from '@jest/globals';
 import { RealtimeAnalyzer } from '../../../services/analysis/realtimeAnalyzer';
-import type { AnalysisConfig, AnalysisResult, ResourceSnapshot } from '../../../types/analysisTypes';
+import type {
+  AnalysisConfig,
+  AnalysisResult,
+  ResourceSnapshot,
+} from '../../../types/analysisTypes';
 import { setupMinimalTestEnv } from '../../setup/minimal';
 
 // Set up test environment
@@ -14,7 +18,7 @@ describe('Real-Time Passive Analysis', () => {
     config = {
       updateInterval: 1000,
       batchSize: 100,
-      maxQueueSize: 1000
+      maxQueueSize: 1000,
     };
     analyzer = new RealtimeAnalyzer(config);
   });
@@ -24,11 +28,11 @@ describe('Real-Time Passive Analysis', () => {
       const signal = {
         type: 'demand',
         source: 'test',
-        value: 100
+        value: 100,
       };
 
       const result = await analyzer.processSignal(signal);
-      
+
       expect(result).toBeDefined();
       expect(result.confidence).toBeGreaterThanOrEqual(0);
       expect(result.confidence).toBeLessThanOrEqual(1);
@@ -43,9 +47,9 @@ describe('Real-Time Passive Analysis', () => {
 
     it('should track resource usage', async () => {
       const snapshots = await analyzer.getResourceSnapshots(60);
-      
+
       expect(snapshots.length).toBeGreaterThan(0);
-      snapshots.forEach(snapshot => {
+      snapshots.forEach((snapshot) => {
         expect(snapshot.timestamp).toBeDefined();
         expect(snapshot.cpu).toBeGreaterThanOrEqual(0);
         expect(snapshot.cpu).toBeLessThanOrEqual(100);
@@ -57,7 +61,7 @@ describe('Real-Time Passive Analysis', () => {
 
     it('should provide performance metrics', async () => {
       const metrics = await analyzer.getPerformanceMetrics();
-      
+
       expect(metrics.averageCpu).toBeGreaterThanOrEqual(0);
       expect(metrics.averageCpu).toBeLessThanOrEqual(100);
       expect(metrics.averageMemory).toBeGreaterThanOrEqual(0);

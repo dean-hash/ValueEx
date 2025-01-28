@@ -1,10 +1,10 @@
-import { 
+import {
   Call,
   CallClient,
   CallAgent,
   AudioDeviceInfo,
   RemoteParticipant,
-  CallEndReason
+  CallEndReason,
 } from '@azure/communication-calling';
 import { AzureCommunicationTokenCredential } from '@azure/communication-common';
 import { EventEmitter } from 'events';
@@ -35,8 +35,8 @@ export class AudioStreamService extends EventEmitter {
     if (!this.callAgent) throw new Error('Call agent not initialized');
 
     this.callAgent.on('callsUpdated', ({ added, removed }) => {
-      added.forEach(call => this.handleCallAdded(call));
-      removed.forEach(call => this.handleCallRemoved(call));
+      added.forEach((call) => this.handleCallAdded(call));
+      removed.forEach((call) => this.handleCallRemoved(call));
     });
   }
 
@@ -46,8 +46,8 @@ export class AudioStreamService extends EventEmitter {
     });
 
     call.on('remoteParticipantsUpdated', ({ added, removed }) => {
-      added.forEach(participant => this.handleParticipantAdded(participant));
-      removed.forEach(participant => this.handleParticipantRemoved(participant));
+      added.forEach((participant) => this.handleParticipantAdded(participant));
+      removed.forEach((participant) => this.handleParticipantRemoved(participant));
     });
   }
 
@@ -57,7 +57,7 @@ export class AudioStreamService extends EventEmitter {
 
   private handleParticipantAdded(participant: RemoteParticipant) {
     participant.on('audioStreamsUpdated', ({ added }) => {
-      added.forEach(stream => {
+      added.forEach((stream) => {
         this.activeStream = stream;
         this.emit('audioStreamAvailable', stream);
       });
@@ -71,12 +71,12 @@ export class AudioStreamService extends EventEmitter {
   async joinCall(meetingUrl: string): Promise<void> {
     try {
       if (!this.callAgent) throw new Error('Call agent not initialized');
-      
+
       this.call = await this.callAgent.join({ meetingLink: meetingUrl });
-      
+
       // Mute local audio initially
       await this.call.mute();
-      
+
       this.emit('callJoined', this.call);
     } catch (error) {
       throw new Error(`Failed to join call: ${error}`);
@@ -97,16 +97,16 @@ export class AudioStreamService extends EventEmitter {
   async startAudioStream(): Promise<MediaStream> {
     try {
       if (!this.deviceManager) throw new Error('Device manager not initialized');
-      
+
       const microphone = await this.selectMicrophone();
       const speaker = await this.selectSpeaker();
-      
+
       await this.deviceManager.selectMicrophone(microphone);
       await this.deviceManager.selectSpeaker(speaker);
-      
+
       if (!this.call) throw new Error('No active call');
       await this.call.unmute();
-      
+
       return this.activeStream!;
     } catch (error) {
       throw new Error(`Failed to start audio stream: ${error}`);

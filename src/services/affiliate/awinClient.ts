@@ -1,5 +1,21 @@
 import axios from 'axios';
 
+export interface AffiliateProgram {
+  id: string;
+  name: string;
+  description: string;
+  commissionRate: number;
+  category: string;
+  requirements: string[];
+  status: 'active' | 'pending' | 'inactive';
+  lastUpdated: string;
+  metrics?: {
+    conversionRate?: number;
+    averageOrderValue?: number;
+    clickThroughRate?: number;
+  };
+}
+
 export class AwinClient {
   private readonly baseUrl = 'https://api.awin.com';
   private readonly apiKey: string;

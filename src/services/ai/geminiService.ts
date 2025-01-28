@@ -26,7 +26,7 @@ export class GeminiService {
     this.config = {
       apiKey: 'AIzaSyDEqY8Ao_KC2EysVcuY2kQwkOye0QkTj08',
       model: 'gemini-1.5-flash',
-      endpoint: 'https://generativelanguage.googleapis.com/v1beta'
+      endpoint: 'https://generativelanguage.googleapis.com/v1beta',
     };
   }
 
@@ -42,16 +42,20 @@ export class GeminiService {
       const response = await axios.post<GeminiResponse>(
         `${this.config.endpoint}/models/${this.config.model}:generateContent?key=${this.config.apiKey}`,
         {
-          contents: [{
-            parts: [{
-              text: prompt
-            }]
-          }]
+          contents: [
+            {
+              parts: [
+                {
+                  text: prompt,
+                },
+              ],
+            },
+          ],
         },
         {
           headers: {
-            'Content-Type': 'application/json'
-          }
+            'Content-Type': 'application/json',
+          },
         }
       );
 
@@ -73,7 +77,7 @@ export class GeminiService {
     2. Key competitors and their strategies
     3. Emerging opportunities and gaps
     4. Revenue potential and monetization strategies`;
-    
+
     return this.generateContent(prompt);
   }
 
@@ -84,7 +88,7 @@ export class GeminiService {
     2. Brand potential and memorability
     3. Industry relevance and market fit
     4. Monetization strategies and revenue potential`;
-    
+
     return this.generateContent(prompt);
   }
 
@@ -96,7 +100,7 @@ export class GeminiService {
     2. Industry relevance
     3. Growth potential
     4. Monetization opportunities`;
-    
+
     return this.generateContent(prompt);
   }
 }

@@ -1,113 +1,103 @@
-import axios from 'axios';
 import { logger } from '../utils/logger';
-import { RevenueTracker } from './affiliate/revenueTracker';
 
-interface AffiliateProgram {
+interface AffiliateProduct {
   name: string;
+  description: string;
   baseUrl: string;
   affiliateId: string;
   commission: number;
   category: string;
 }
 
-interface AffiliateLink {
-  originalUrl: string;
-  affiliateUrl: string;
-  program: string;
-  potentialCommission: number;
-}
-
 export class AffiliateManager {
   private static instance: AffiliateManager;
-  private programs: Map<string, AffiliateProgram>;
-  private revenueTracker: RevenueTracker;
+  private products: Map<string, AffiliateProduct>;
 
   private constructor() {
-    this.programs = new Map();
-    this.revenueTracker = new RevenueTracker();
+    this.products = new Map();
 
-    // Initialize with real, high-commission AI affiliate programs
-    this.addProgram({
-      name: 'jasper',
+    // Initialize with real, high-commission AI affiliate products
+    this.addProduct({
+      name: 'Jasper',
+      description:
+        'AI writing assistant that helps you create amazing content 10X faster. Perfect for marketing, blogs, and social media.',
       baseUrl: 'https://jasper.ai',
       affiliateId: process.env.JASPER_AFFILIATE_ID || '',
       commission: 0.3, // 30% commission
       category: 'ai_writing',
     });
 
-    this.addProgram({
-      name: 'midjourney',
+    this.addProduct({
+      name: 'Midjourney',
+      description:
+        'Create stunning AI-generated artwork and illustrations. Ideal for designers, marketers, and creators.',
       baseUrl: 'https://midjourney.com',
       affiliateId: process.env.MIDJOURNEY_AFFILIATE_ID || '',
       commission: 0.2, // 20% commission
       category: 'ai_image',
     });
 
-    this.addProgram({
-      name: 'amazon_aws',
-      baseUrl: 'https://aws.amazon.com',
-      affiliateId: process.env.AWS_AFFILIATE_ID || '',
-      commission: 0.1, // 10% first month
-      category: 'cloud_ai',
+    this.addProduct({
+      name: 'Copy.ai',
+      description:
+        'AI-powered copywriting tool that helps you write better marketing copy, faster.',
+      baseUrl: 'https://copy.ai',
+      affiliateId: process.env.COPYAI_AFFILIATE_ID || '',
+      commission: 0.25, // 25% commission
+      category: 'ai_writing',
+    });
+
+    this.addProduct({
+      name: 'Stable Diffusion',
+      description:
+        'Professional AI image generation platform for creating unique, high-quality visuals.',
+      baseUrl: 'https://stability.ai',
+      affiliateId: process.env.STABILITY_AFFILIATE_ID || '',
+      commission: 0.2, // 20% commission
+      category: 'ai_image',
     });
   }
 
-  static getInstance(): AffiliateManager {
+  public static getInstance(): AffiliateManager {
     if (!AffiliateManager.instance) {
       AffiliateManager.instance = new AffiliateManager();
     }
     return AffiliateManager.instance;
   }
 
-  addProgram(program: AffiliateProgram) {
-    this.programs.set(program.name, program);
-    logger.info(`Added affiliate program: ${program.name}`);
+  private addProduct(product: AffiliateProduct): void {
+    this.products.set(product.name.toLowerCase(), product);
+    logger.info(`Added affiliate product: ${product.name}`);
   }
 
-  async generateAffiliateLink(url: string, programName: string): Promise<AffiliateLink> {
-    const program = this.programs.get(programName);
-    if (!program) {
-      throw new Error(`Affiliate program ${programName} not found`);
-    }
-
+  async getRelevantProducts(category: string): Promise<AffiliateProduct[]> {
     try {
-      // Generate real affiliate link based on program
-      let affiliateUrl = '';
-      if (programName === 'jasper') {
-        affiliateUrl = `${url}?fpr=${program.affiliateId}`;
-      } else if (programName === 'midjourney') {
-        affiliateUrl = `${url}?ref=${program.affiliateId}`;
-      } else if (programName === 'amazon_aws') {
-        affiliateUrl = `${url}?tag=${program.affiliateId}`;
+      return Array.from(this.products.values())
+        .filter((product) => product.category === category)
+        .sort((a, b) => b.commission - a.commission);
+    } catch (err) {
+      logger.error('Error getting relevant products:', err);
+      return [];
+    }
+  }
+
+  generateAffiliateLink(productName: string, userId: string): string {
+    try {
+      const product = this.products.get(productName.toLowerCase());
+      if (!product) {
+        throw new Error(`Product not found: ${productName}`);
       }
 
-      const link: AffiliateLink = {
-        originalUrl: url,
-        affiliateUrl,
-        program: programName,
-        potentialCommission: program.commission,
-      };
-
-      // Track potential revenue
-      await this.revenueTracker.trackOpportunity({
-        source: programName,
-        value: program.commission * 100, // Assuming $100 average sale
-        probability: 0.05, // 5% conversion rate
-        category: program.category,
-      });
-
-      return link;
-    } catch (error) {
-      logger.error('Error generating affiliate link', error);
-      throw error;
+      // Generate trackable affiliate link
+      const trackingId = `vex_${Date.now()}_${userId}`;
+      return `${product.baseUrl}?ref=${product.affiliateId}&track=${trackingId}`;
+    } catch (err) {
+      logger.error('Error generating affiliate link:', err);
+      return '';
     }
   }
 
-  async getActivePrograms(): Promise<AffiliateProgram[]> {
-    return Array.from(this.programs.values());
-  }
-
-  async getRevenueStats(): Promise<any> {
-    return this.revenueTracker.getStats();
+  async isHealthy(): Promise<boolean> {
+    return this.products.size > 0;
   }
 }

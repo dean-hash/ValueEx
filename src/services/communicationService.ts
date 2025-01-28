@@ -1,15 +1,17 @@
-import { 
+import {
   CommunicationIdentityClient,
-  CommunicationUserIdentifier
+  CommunicationUserIdentifier,
 } from '@azure/communication-identity';
 import { AzureCommunicationTokenCredential } from '@azure/communication-common';
 import { credentials } from '../../scripts/getGraphToken';
 
 export class CommunicationService {
   private identityClient: CommunicationIdentityClient;
-  
+
   constructor() {
-    this.identityClient = new CommunicationIdentityClient(process.env.COMMUNICATION_CONNECTION_STRING!);
+    this.identityClient = new CommunicationIdentityClient(
+      process.env.COMMUNICATION_CONNECTION_STRING!
+    );
   }
 
   async createUserAndToken(): Promise<{
@@ -18,12 +20,12 @@ export class CommunicationService {
     expiresOn: Date;
   }> {
     const user = await this.identityClient.createUser();
-    const tokenResponse = await this.identityClient.getToken(user, ["voip", "chat"]);
-    
+    const tokenResponse = await this.identityClient.getToken(user, ['voip', 'chat']);
+
     return {
       user,
       token: tokenResponse.token,
-      expiresOn: tokenResponse.expiresOn
+      expiresOn: tokenResponse.expiresOn,
     };
   }
 
@@ -35,7 +37,7 @@ export class CommunicationService {
     token: string;
     expiresOn: Date;
   }> {
-    return await this.identityClient.getToken(user, ["voip", "chat"]);
+    return await this.identityClient.getToken(user, ['voip', 'chat']);
   }
 
   async revokeTokens(user: CommunicationUserIdentifier): Promise<void> {

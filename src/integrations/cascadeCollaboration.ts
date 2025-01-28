@@ -27,10 +27,10 @@ export class CascadeCollaboration {
   public async startCollaboration() {
     // Set up real-time communication channels
     await this.setupChannels();
-    
+
     // Initialize business intelligence monitoring
     await this.initializeBusinessIntelligence();
-    
+
     // Start proactive opportunity identification
     this.startOpportunityMonitoring();
   }
@@ -46,7 +46,7 @@ export class CascadeCollaboration {
     // Connect to Dynamics 365 and Business Central
     await this.dynamicsService.connect();
     await this.bcService.connect();
-    
+
     // Set up real-time monitoring
     this.startMetricsMonitoring();
   }
@@ -65,7 +65,7 @@ export class CascadeCollaboration {
     // Analyze various data sources for business opportunities
     const dynamicsData = await this.dynamicsService.getLatestMetrics();
     const bcData = await this.bcService.getFinancialMetrics();
-    
+
     return this.aiService.analyzeBusinessOpportunities(dynamicsData, bcData);
   }
 
@@ -74,7 +74,7 @@ export class CascadeCollaboration {
     await this.plannerService.createTasks(opportunities);
     await this.teamsClient.sendMessage('Business-Intelligence', {
       content: 'New business opportunities identified',
-      data: opportunities
+      data: opportunities,
     });
   }
 }

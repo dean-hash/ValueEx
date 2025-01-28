@@ -1,86 +1,31 @@
+import { KubeConfig, AppsV1Api, V1Deployment } from '@kubernetes/client-node';
 import { logger } from '../../utils/logger';
-import * as k8s from '@kubernetes/client-node';
 
 interface ScalingConfig {
   metric: string;
-  minInstances: number;
-  maxInstances: number;
+  minReplicas: number;
+  maxReplicas: number;
   targetCPUUtilization: number;
 }
 
 export class AutoScaler {
-  private kc: k8s.KubeConfig;
-  private k8sApi: k8s.AppsV1Api;
-  private metricsApi: k8s.CustomObjectsApi;
-  private config?: ScalingConfig;
-  private namespace = 'valueex';
-  private deploymentName = 'valueex-revenue-tracker';
+  private k8sApi: AppsV1Api;
+  private config: ScalingConfig;
+  private namespace = 'default';
 
   constructor() {
-    this.kc = new k8s.KubeConfig();
-    this.kc.loadFromDefault();
-    
-    this.k8sApi = this.kc.makeApiClient(k8s.AppsV1Api);
-    this.metricsApi = this.kc.makeApiClient(k8s.CustomObjectsApi);
+    const kubeConfig = new KubeConfig();
+    kubeConfig.loadFromDefault();
+    this.k8sApi = kubeConfig.makeApiClient(AppsV1Api);
   }
 
-  configure(config: ScalingConfig): void {
+  public configure(config: ScalingConfig): void {
     this.config = config;
-    
-    // Create HPA
-    this.createHPA().catch(error => {
-      logger.error('Error creating HPA:', error);
-    });
+    logger.info('AutoScaler configured', { config });
   }
 
-  private async createHPA(): Promise<void> {
-    if (!this.config) return;
-
-    const hpa = {
-      apiVersion: 'autoscaling/v2',
-      kind: 'HorizontalPodAutoscaler',
-      metadata: {
-        name: `${this.deploymentName}-hpa`,
-        namespace: this.namespace
-      },
-      spec: {
-        scaleTargetRef: {
-          apiVersion: 'apps/v1',
-          kind: 'Deployment',
-          name: this.deploymentName
-        },
-        minReplicas: this.config.minInstances,
-        maxReplicas: this.config.maxInstances,
-        metrics: [
-          {
-            type: 'Resource',
-            resource: {
-              name: 'cpu',
-              target: {
-                type: 'Utilization',
-                averageUtilization: this.config.targetCPUUtilization
-              }
-            }
-          }
-        ]
-      }
-    };
-
-    try {
-      await this.k8sApi.createNamespacedHorizontalPodAutoscaler(
-        this.namespace,
-        hpa
-      );
-      
-      logger.info('HPA created successfully');
-    } catch (error) {
-      logger.error('Error creating HPA:', error);
-      throw error;
-    }
-  }
-
-  start(): void {
-    // Start monitoring metrics
+  public start(): void {
+    logger.info('AutoScaler started');
     this.monitorMetrics();
   }
 
@@ -88,12 +33,9 @@ export class AutoScaler {
     setInterval(async () => {
       try {
         const metrics = await this.getMetrics();
-        logger.info('Current metrics:', metrics);
-
-        // Check if we need to scale
-        if (metrics.cpuUtilization > this.config?.targetCPUUtilization) {
+        if (metrics.cpuUtilization > this.config.targetCPUUtilization * 1.2) {
           await this.scaleOut();
-        } else if (metrics.cpuUtilization < this.config?.targetCPUUtilization / 2) {
+        } else if (metrics.cpuUtilization < this.config.targetCPUUtilization * 0.8) {
           await this.scaleIn();
         }
       } catch (error) {
@@ -102,38 +44,15 @@ export class AutoScaler {
     }, 30000); // Check every 30 seconds
   }
 
-  async scaleOut(): Promise<void> {
+  public async scaleOut(): Promise<void> {
     try {
-      const deployment = await this.k8sApi.readNamespacedDeployment(
-        this.deploymentName,
-        this.namespace
-      );
+      const deployment = await this.k8sApi.readNamespacedDeployment('valuex', this.namespace);
+      const currentReplicas = deployment.body.spec?.replicas || 1;
 
-      const currentReplicas = deployment.body.spec?.replicas || 0;
-      const newReplicas = Math.min(
-        currentReplicas + 1,
-        this.config?.maxInstances || currentReplicas
-      );
-
-      if (newReplicas > currentReplicas) {
-        await this.k8sApi.patchNamespacedDeployment(
-          this.deploymentName,
-          this.namespace,
-          {
-            spec: {
-              replicas: newReplicas
-            }
-          },
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          {
-            headers: { 'Content-Type': 'application/strategic-merge-patch+json' }
-          }
-        );
-
-        logger.info(`Scaled out to ${newReplicas} replicas`);
+      if (currentReplicas < this.config.maxReplicas) {
+        const newReplicas = currentReplicas + 1;
+        await this.updateReplicas(newReplicas);
+        logger.info('Scaled out deployment', { newReplicas });
       }
     } catch (error) {
       logger.error('Error scaling out:', error);
@@ -141,38 +60,15 @@ export class AutoScaler {
     }
   }
 
-  async scaleIn(): Promise<void> {
+  public async scaleIn(): Promise<void> {
     try {
-      const deployment = await this.k8sApi.readNamespacedDeployment(
-        this.deploymentName,
-        this.namespace
-      );
+      const deployment = await this.k8sApi.readNamespacedDeployment('valuex', this.namespace);
+      const currentReplicas = deployment.body.spec?.replicas || 1;
 
-      const currentReplicas = deployment.body.spec?.replicas || 0;
-      const newReplicas = Math.max(
-        currentReplicas - 1,
-        this.config?.minInstances || 1
-      );
-
-      if (newReplicas < currentReplicas) {
-        await this.k8sApi.patchNamespacedDeployment(
-          this.deploymentName,
-          this.namespace,
-          {
-            spec: {
-              replicas: newReplicas
-            }
-          },
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          {
-            headers: { 'Content-Type': 'application/strategic-merge-patch+json' }
-          }
-        );
-
-        logger.info(`Scaled in to ${newReplicas} replicas`);
+      if (currentReplicas > this.config.minReplicas) {
+        const newReplicas = currentReplicas - 1;
+        await this.updateReplicas(newReplicas);
+        logger.info('Scaled in deployment', { newReplicas });
       }
     } catch (error) {
       logger.error('Error scaling in:', error);
@@ -180,42 +76,29 @@ export class AutoScaler {
     }
   }
 
-  async getMetrics(): Promise<any> {
+  private async updateReplicas(replicas: number): Promise<void> {
     try {
-      const metrics = await this.metricsApi.getNamespacedCustomObject(
-        'metrics.k8s.io',
-        'v1beta1',
-        this.namespace,
-        'pods',
-        `${this.deploymentName}-metrics`
-      );
+      const deployment = await this.k8sApi.readNamespacedDeployment('valuex', this.namespace);
+      deployment.body.spec = deployment.body.spec || {};
+      deployment.body.spec.replicas = replicas;
 
+      await this.k8sApi.replaceNamespacedDeployment('valuex', this.namespace, deployment.body);
+    } catch (error) {
+      logger.error('Error updating replicas:', error);
+      throw error;
+    }
+  }
+
+  public async getMetrics(): Promise<{ cpuUtilization: number }> {
+    try {
+      // In a real implementation, this would get metrics from a metrics server
+      // For now, return mock data
       return {
-        cpuUtilization: this.calculateCPUUtilization(metrics),
-        memoryUtilization: this.calculateMemoryUtilization(metrics),
-        replicas: await this.getCurrentReplicas()
+        cpuUtilization: Math.random() * 100,
       };
     } catch (error) {
       logger.error('Error getting metrics:', error);
       throw error;
     }
-  }
-
-  private async getCurrentReplicas(): Promise<number> {
-    const deployment = await this.k8sApi.readNamespacedDeployment(
-      this.deploymentName,
-      this.namespace
-    );
-    return deployment.body.spec?.replicas || 0;
-  }
-
-  private calculateCPUUtilization(metrics: any): number {
-    // Implementation depends on metrics format
-    return 0;
-  }
-
-  private calculateMemoryUtilization(metrics: any): number {
-    // Implementation depends on metrics format
-    return 0;
   }
 }

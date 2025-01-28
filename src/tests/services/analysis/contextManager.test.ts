@@ -19,7 +19,7 @@ describe('ContextManager', () => {
     (fs.promises.stat as jest.Mock).mockResolvedValue({ mtimeMs: Date.now() });
     contextManager = new ContextManager(mockProjectRoot);
     mockComponent = {
-      processSignal: jest.fn()
+      processSignal: jest.fn(),
     };
   });
 

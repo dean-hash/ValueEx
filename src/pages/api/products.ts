@@ -1,20 +1,59 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { AwinClient } from '../../services/affiliate/awinClient';
-import { OpportunityMatcher } from '../../services/affiliate/opportunityMatcher';
+import { ProductSourcing } from '../../services/product/productSourcing';
+import { logger } from '../../utils/logger';
 
-const awinClient = new AwinClient(process.env.AWIN_API_TOKEN || '29f5f656-d632-4cdd-b0c1-e4ad3f1fd0e2');
-const matcher = new OpportunityMatcher(awinClient);
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  tags: string[];
+  url: string;
+}
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+interface ProductResponse {
+  products: Product[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+}
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse<ProductResponse>
+): Promise<void> {
   if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    res.status(405).json({
+      products: [],
+      totalCount: 0,
+      page: 1,
+      pageSize: 10,
+    });
+    return;
   }
 
   try {
-    const matches = await matcher.findHighValueMatches();
-    return res.status(200).json(matches);
+    const page = parseInt(req.query.page as string) || 1;
+    const pageSize = parseInt(req.query.pageSize as string) || 10;
+    const category = req.query.category as string;
+
+    const sourcing = ProductSourcing.getInstance();
+    const products = await sourcing.getProducts({ page, pageSize, category });
+
+    res.status(200).json({
+      products,
+      totalCount: products.length,
+      page,
+      pageSize,
+    });
   } catch (error) {
-    console.error('Error fetching products:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    logger.error('Error in products endpoint:', error);
+    res.status(500).json({
+      products: [],
+      totalCount: 0,
+      page: 1,
+      pageSize: 10,
+    });
   }
 }

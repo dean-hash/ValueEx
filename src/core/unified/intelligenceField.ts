@@ -3,7 +3,8 @@ import { ValueDistributionManager } from '../../services/value/valueDistribution
 import { RevenueStreamManager } from '../../services/revenue/revenueStreamManager';
 import { Observable, Subject } from 'rxjs';
 import { ResonancePattern } from '../../types/resonancePattern';
-import { IResonanceField, ResonanceEvents } from '../../types/resonanceField';
+import { ResonanceEvents } from '../../types/resonanceField';
+import type { ResonanceField } from '../../types/resonanceField';
 
 export class FieldNode {
   public readonly connections: Set<string>;
@@ -229,13 +230,30 @@ export class IntelligenceField {
   }
 }
 
+export interface IntelligenceField {
+  resonance: ResonanceField;
+  confidence: number;
+  timestamp: Date;
+}
+
 export class UnifiedIntelligenceField extends EventEmitter {
+  private static instance: UnifiedIntelligenceField;
   private intelligenceField: IntelligenceField;
 
-  constructor() {
+  private constructor() {
     super();
-    this.intelligenceField = new IntelligenceField();
-    this.initializeUnified();
+    this.intelligenceField = {
+      resonance: new ResonanceField(),
+      confidence: 0,
+      timestamp: new Date(),
+    };
+  }
+
+  public static getInstance(): UnifiedIntelligenceField {
+    if (!UnifiedIntelligenceField.instance) {
+      UnifiedIntelligenceField.instance = new UnifiedIntelligenceField();
+    }
+    return UnifiedIntelligenceField.instance;
   }
 
   private initializeUnified(): void {
@@ -315,3 +333,4 @@ export class UnifiedResonanceField extends EventEmitter implements IResonanceFie
 
 // Export the singleton instance
 export const unifiedResonanceField = UnifiedResonanceField.getInstance();
+export { ResonanceField };

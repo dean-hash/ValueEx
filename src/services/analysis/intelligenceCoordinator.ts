@@ -186,14 +186,11 @@ export class IntelligenceCoordinator extends EventEmitter {
   private async fetchInternalInsight(sourceId: string, type: InsightChannel['type']): Promise<any> {
     switch (type) {
       case 'demand':
-        return this.analyzer.analyzeDemandPatterns();
+        return this.analyzePatterns('demand');
       case 'anomaly':
-        return this.analyzer.detectAnomalies(
-          await this.metrics.getMetricValues('demand_rate'),
-          this.metrics.getTimeLabels()
-        );
+        return this.analyzePatterns('anomaly');
       default:
-        return this.analyzer.getInsights(type);
+        return this.analyzer.getInsights();
     }
   }
 
@@ -231,6 +228,26 @@ export class IntelligenceCoordinator extends EventEmitter {
         summary: 'Metadata only access',
       },
     };
+  }
+
+  private async analyzePatterns(type: string): Promise<any> {
+    switch (type) {
+      case 'demand':
+        const demandValues = await this.metrics.getMetricValues('demand_rate');
+        const timestamps = await this.metrics.getMetricTimestamps('demand_rate');
+        return this.analyzer.detectAnomalies(demandValues, timestamps);
+      case 'anomaly':
+        return this.analyzer.detectAnomalies(
+          await this.metrics.getMetricValues('demand_rate'),
+          await this.metrics.getMetricTimestamps('demand_rate')
+        );
+      case 'correlation':
+        return this.analyzer.analyzeCorrelations();
+      case 'trend':
+        return this.analyzer.analyzeTrends();
+      default:
+        throw new Error(`Unknown pattern type: ${type}`);
+    }
   }
 
   private processInsight(rawInsight: any, source: IntelligenceSource): any {

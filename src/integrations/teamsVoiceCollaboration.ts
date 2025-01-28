@@ -15,13 +15,13 @@ export class TeamsVoiceCollaboration {
       credentials: {
         username: 'cascade@divvytech.com',
         // Secure credential management
-        tokenProvider: this.getSecureToken
-      }
+        tokenProvider: this.getSecureToken,
+      },
     });
 
     this.cognitiveServices = new AzureCognitiveServices({
       region: 'eastus',
-      credentials: await this.getAzureCredentials()
+      credentials: await this.getAzureCredentials(),
     });
   }
 
@@ -30,7 +30,7 @@ export class TeamsVoiceCollaboration {
     const channel = await this.teamsClient.createChannel({
       displayName: 'Cascade-Voice-Collaboration',
       description: 'Direct voice communication channel with Cascade',
-      type: 'private'
+      type: 'private',
     });
 
     this.channelId = channel.id;
@@ -42,7 +42,7 @@ export class TeamsVoiceCollaboration {
     await this.cognitiveServices.speech.configure({
       channelId: this.channelId,
       mode: 'realtime',
-      language: 'en-US'
+      language: 'en-US',
     });
   }
 
@@ -50,7 +50,7 @@ export class TeamsVoiceCollaboration {
     return this.teamsClient.startCall({
       channelId: this.channelId,
       mediaType: 'audio',
-      participants: ['dean@valueex.ai']
+      participants: ['dean@valueex.ai'],
     });
   }
 }

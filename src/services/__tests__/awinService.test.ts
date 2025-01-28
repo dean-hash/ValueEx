@@ -45,7 +45,7 @@ describe('AwinService', () => {
         isActive: true,
         regions: ['2'], // US region
         commissionRate: 8,
-        primaryCategory: 'Electronics'
+        primaryCategory: 'Electronics',
       },
       {
         id: '2',
@@ -53,7 +53,7 @@ describe('AwinService', () => {
         isActive: true,
         regions: ['1'], // UK region
         commissionRate: 10,
-        primaryCategory: 'Fashion'
+        primaryCategory: 'Fashion',
       },
       {
         id: '3',
@@ -61,8 +61,8 @@ describe('AwinService', () => {
         isActive: true,
         regions: ['2'],
         commissionRate: 3,
-        primaryCategory: 'Books'
-      }
+        primaryCategory: 'Books',
+      },
     ];
 
     it('should filter and rank US merchants correctly', async () => {
@@ -73,8 +73,8 @@ describe('AwinService', () => {
 
       expect(result.length).toBeLessThanOrEqual(10);
       expect(result[0].merchantId).toBe('1'); // Should be the US merchant
-      expect(result.some(m => m.merchantId === '2')).toBe(false); // UK merchant should be filtered out
-      expect(result.some(m => m.merchantId === '3')).toBe(false); // Low commission merchant should be filtered out
+      expect(result.some((m) => m.merchantId === '2')).toBe(false); // UK merchant should be filtered out
+      expect(result.some((m) => m.merchantId === '3')).toBe(false); // Low commission merchant should be filtered out
     });
 
     it('should cache merchant recommendations', async () => {
@@ -100,8 +100,8 @@ describe('AwinService', () => {
           params: expect.objectContaining({
             region: '2',
             merchantCountry: 'US',
-            minCommissionRate: '5'
-          })
+            minCommissionRate: '5',
+          }),
         })
       );
     });

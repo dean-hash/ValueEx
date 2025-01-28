@@ -1,10 +1,26 @@
 import axios from 'axios';
 import { MeetingInfo, ValueMetrics } from '../../services/minimal';
+import { MVPRunner } from '../../mvp/runner';
+import { DemandMatcher } from '../../services/mvp/demandMatcher';
+import { MVPStorage } from '../../services/mvp/storage';
+import { TeamsChannelService } from '../../services/teams/TeamsChannelService';
+import { HealthStatus } from '../../types/health';
 
 const API_BASE = 'http://localhost:3000/api';
 
 describe('ValueEx MVP Integration Tests', () => {
   let meetingInfo: MeetingInfo;
+  let runner: MVPRunner;
+  let matcher: DemandMatcher;
+  let storage: MVPStorage;
+  let teamsService: TeamsChannelService;
+
+  beforeEach(() => {
+    storage = MVPStorage.getInstance();
+    matcher = DemandMatcher.getInstance();
+    teamsService = TeamsChannelService.getInstance();
+    runner = new MVPRunner();
+  });
 
   beforeAll(() => {
     // Ensure server is running
@@ -14,14 +30,14 @@ describe('ValueEx MVP Integration Tests', () => {
   describe('Teams Integration', () => {
     it('should start a new meeting', async () => {
       const response = await axios.post(`${API_BASE}/meetings/start`, {
-        subject: 'Test Meeting'
+        subject: 'Test Meeting',
       });
-      
+
       expect(response.status).toBe(200);
       expect(response.data).toHaveProperty('joinUrl');
       expect(response.data).toHaveProperty('threadId');
       expect(response.data.subject).toBe('Test Meeting');
-      
+
       meetingInfo = response.data;
     });
 
@@ -35,17 +51,17 @@ describe('ValueEx MVP Integration Tests', () => {
       const testProduct = {
         id: 'test-product',
         name: 'Test Product',
-        price: 99.99
+        price: 99.99,
       };
 
       const testPattern = {
         type: 'purchase_intent',
-        confidence: 0.85
+        confidence: 0.85,
       };
 
       const response = await axios.post(`${API_BASE}/value/measure`, {
         product: testProduct,
-        pattern: testPattern
+        pattern: testPattern,
       });
 
       expect(response.status).toBe(200);
@@ -79,6 +95,47 @@ describe('ValueEx MVP Integration Tests', () => {
         expect(error.response.status).toBe(500);
         expect(error.response.data).toHaveProperty('error');
       }
+    });
+  });
+
+  describe('Health Monitoring', () => {
+    it('should report system health correctly', async () => {
+      const healthStatus = await runner.checkHealth();
+      expect(healthStatus).toBeDefined();
+      expect(healthStatus.status).toMatch(/^(healthy|degraded|down)$/);
+    });
+
+    it('should notify Teams on health status changes', async () => {
+      const mockAlert: HealthStatus = {
+        service: 'MVP Runner',
+        status: 'healthy',
+        message: 'System operational',
+      };
+
+      const spy = jest.spyOn(teamsService, 'sendHealthAlert');
+      await runner.start();
+
+      expect(spy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          service: 'MVP Runner',
+          status: expect.stringMatching(/^(healthy|down)$/),
+          message: expect.any(String),
+        })
+      );
+    });
+  });
+
+  describe('Demand Matching', () => {
+    it('should process demand requests', async () => {
+      const demand = {
+        id: 'test-demand-1',
+        requirements: ['test requirement'],
+        preferences: ['test preference'],
+        constraints: {},
+      };
+
+      const result = await matcher.matchDemand(demand);
+      expect(result.status).toMatch(/^(matched|queued|no_match)$/);
     });
   });
 });

@@ -19,14 +19,18 @@ describe('GeminiService', () => {
     it('should successfully generate content', async () => {
       const mockResponse = {
         data: {
-          candidates: [{
-            content: {
-              parts: [{
-                text: 'Generated content'
-              }]
-            }
-          }]
-        }
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    text: 'Generated content',
+                  },
+                ],
+              },
+            },
+          ],
+        },
       };
 
       mockedAxios.post.mockResolvedValueOnce(mockResponse);
@@ -46,14 +50,18 @@ describe('GeminiService', () => {
     it('should analyze market trends for a niche', async () => {
       const mockResponse = {
         data: {
-          candidates: [{
-            content: {
-              parts: [{
-                text: 'Market analysis result'
-              }]
-            }
-          }]
-        }
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    text: 'Market analysis result',
+                  },
+                ],
+              },
+            },
+          ],
+        },
       };
 
       mockedAxios.post.mockResolvedValueOnce(mockResponse);
@@ -67,14 +75,18 @@ describe('GeminiService', () => {
     it('should analyze domain value', async () => {
       const mockResponse = {
         data: {
-          candidates: [{
-            content: {
-              parts: [{
-                text: 'Domain value analysis'
-              }]
-            }
-          }]
-        }
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    text: 'Domain value analysis',
+                  },
+                ],
+              },
+            },
+          ],
+        },
       };
 
       mockedAxios.post.mockResolvedValueOnce(mockResponse);
@@ -88,21 +100,25 @@ describe('GeminiService', () => {
     it('should generate domain listing description', async () => {
       const mockResponse = {
         data: {
-          candidates: [{
-            content: {
-              parts: [{
-                text: 'Domain listing description'
-              }]
-            }
-          }]
-        }
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    text: 'Domain listing description',
+                  },
+                ],
+              },
+            },
+          ],
+        },
       };
 
       mockedAxios.post.mockResolvedValueOnce(mockResponse);
 
       const result = await service.generateListingDescription('example.com', {
         marketSize: 1000000,
-        growth: 15
+        growth: 15,
       });
       expect(result).toBe('Domain listing description');
     });

@@ -67,7 +67,7 @@ export class CredentialsManager {
     return JSON.stringify({
       iv: iv.toString('hex'),
       authTag: authTag.toString('hex'),
-      data: encrypted.toString('hex')
+      data: encrypted.toString('hex'),
     });
   }
 

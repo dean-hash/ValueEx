@@ -21,7 +21,7 @@ jest.mock('../../services/minimal', () => {
   return {
     TeamsService: jest.fn().mockImplementation(() => {
       return new MockTeamsService();
-    })
+    }),
   };
 });
 
@@ -39,7 +39,7 @@ describe('Teams Integration Tests', () => {
       const mockMeeting: MeetingInfo = {
         subject,
         joinUrl: 'https://teams.microsoft.com/l/meetup-join/test',
-        threadId: 'test-thread-id'
+        threadId: 'test-thread-id',
       };
 
       jest.spyOn(teamsService as any, 'makeApiCall').mockResolvedValueOnce(mockMeeting);
@@ -53,9 +53,9 @@ describe('Teams Integration Tests', () => {
 
     it('should handle empty subject gracefully', async () => {
       const subject = '';
-      await expect(teamsService.startMeeting(subject))
-        .rejects
-        .toThrow('Meeting subject is required');
+      await expect(teamsService.startMeeting(subject)).rejects.toThrow(
+        'Meeting subject is required'
+      );
     });
 
     it('should handle special characters in subject', async () => {
@@ -63,12 +63,12 @@ describe('Teams Integration Tests', () => {
       const mockMeeting: MeetingInfo = {
         subject,
         joinUrl: 'https://teams.microsoft.com/l/meetup-join/test',
-        threadId: 'test-thread-id'
+        threadId: 'test-thread-id',
       };
 
       jest.spyOn(teamsService as any, 'makeApiCall').mockResolvedValueOnce(mockMeeting);
       const meeting = await teamsService.startMeeting(subject);
-      
+
       expect(meeting.subject).toBe(subject);
       expect(meeting.joinUrl).toMatch(/^https:\/\/teams\.microsoft\.com\/l\/meetup-join/);
     });
@@ -79,22 +79,22 @@ describe('Teams Integration Tests', () => {
       const mockMeeting: MeetingInfo = {
         subject: 'Audio Test',
         joinUrl: 'https://teams.microsoft.com/l/meetup-join/test',
-        threadId: 'test-thread-id'
+        threadId: 'test-thread-id',
       };
 
       jest.spyOn(teamsService as any, 'makeApiCall').mockResolvedValueOnce(mockMeeting);
       const meeting = await teamsService.startMeeting('Audio Test');
       const stream = await teamsService.initializeAudioStream(meeting.threadId);
-      
+
       expect(stream).toBeDefined();
       expect(stream.status).toBe('active');
       expect(stream.sampleRate).toBeGreaterThan(0);
     });
 
     it('should handle audio stream errors gracefully', async () => {
-      await expect(teamsService.initializeAudioStream('invalid-thread'))
-        .rejects
-        .toThrow('Invalid thread ID');
+      await expect(teamsService.initializeAudioStream('invalid-thread')).rejects.toThrow(
+        'Invalid thread ID'
+      );
     });
   });
 
@@ -103,16 +103,16 @@ describe('Teams Integration Tests', () => {
       const mockMeeting: MeetingInfo = {
         subject: 'Transcription Test',
         joinUrl: 'https://teams.microsoft.com/l/meetup-join/test',
-        threadId: 'test-thread-id'
+        threadId: 'test-thread-id',
       };
 
       jest.spyOn(teamsService as any, 'makeApiCall').mockResolvedValueOnce(mockMeeting);
       const meeting = await teamsService.startMeeting('Transcription Test');
       const stream = await teamsService.initializeAudioStream(meeting.threadId);
-      
+
       const audioData = Buffer.from('mock audio data');
       const transcription = await teamsService.transcribeAudio(audioData);
-      
+
       expect(transcription).toBeDefined();
       expect(transcription.text).toBeDefined();
       expect(transcription.confidence).toBeGreaterThanOrEqual(0);
@@ -122,7 +122,7 @@ describe('Teams Integration Tests', () => {
     it('should handle silence or low-quality audio', async () => {
       const emptyAudio = Buffer.alloc(0);
       const transcription = await teamsService.transcribeAudio(emptyAudio);
-      
+
       expect(transcription.text).toBe('');
       expect(transcription.confidence).toBe(0);
     });
@@ -130,29 +130,30 @@ describe('Teams Integration Tests', () => {
 
   describe('Error Handling', () => {
     it('should handle network interruptions', async () => {
-      jest.spyOn(teamsService as any, 'makeApiCall').mockRejectedValueOnce(new Error('Network error'));
+      jest
+        .spyOn(teamsService as any, 'makeApiCall')
+        .mockRejectedValueOnce(new Error('Network error'));
 
-      await expect(teamsService.startMeeting('Test Meeting'))
-        .rejects
-        .toThrow('Network error');
+      await expect(teamsService.startMeeting('Test Meeting')).rejects.toThrow('Network error');
     });
 
     it('should handle authentication failures', async () => {
-      jest.spyOn(teamsService as any, 'authenticate').mockRejectedValueOnce(new Error('Authentication failed'));
+      jest
+        .spyOn(teamsService as any, 'authenticate')
+        .mockRejectedValueOnce(new Error('Authentication failed'));
 
-      await expect(teamsService.initialize())
-        .rejects
-        .toThrow('Authentication failed');
+      await expect(teamsService.initialize()).rejects.toThrow('Authentication failed');
     });
 
     it('should retry failed operations', async () => {
       const mockMeeting: MeetingInfo = {
         subject: 'Retry Test',
         joinUrl: 'https://teams.microsoft.com/l/meetup-join/test',
-        threadId: 'test-thread-id'
+        threadId: 'test-thread-id',
       };
 
-      const spy = jest.spyOn(teamsService as any, 'makeApiCall')
+      const spy = jest
+        .spyOn(teamsService as any, 'makeApiCall')
         .mockRejectedValueOnce(new Error('Temporary error'))
         .mockResolvedValueOnce(mockMeeting);
 
@@ -167,18 +168,18 @@ describe('Teams Integration Tests', () => {
       const mockMeeting: MeetingInfo = {
         subject: 'Cleanup Test',
         joinUrl: 'https://teams.microsoft.com/l/meetup-join/test',
-        threadId: 'test-thread-id'
+        threadId: 'test-thread-id',
       };
 
       jest.spyOn(teamsService as any, 'makeApiCall').mockResolvedValueOnce(mockMeeting);
       const meeting = await teamsService.startMeeting('Cleanup Test');
       const stream = await teamsService.initializeAudioStream(meeting.threadId);
-      
+
       await teamsService.endMeeting(meeting.threadId);
-      
-      await expect(teamsService.getStreamStatus(meeting.threadId))
-        .rejects
-        .toThrow('Meeting has ended');
+
+      await expect(teamsService.getStreamStatus(meeting.threadId)).rejects.toThrow(
+        'Meeting has ended'
+      );
     });
 
     it('should handle concurrent meetings', async () => {
@@ -186,21 +187,22 @@ describe('Teams Integration Tests', () => {
         {
           subject: 'Meeting 1',
           joinUrl: 'https://teams.microsoft.com/l/meetup-join/test1',
-          threadId: 'thread-1'
+          threadId: 'thread-1',
         },
         {
           subject: 'Meeting 2',
           joinUrl: 'https://teams.microsoft.com/l/meetup-join/test2',
-          threadId: 'thread-2'
+          threadId: 'thread-2',
         },
         {
           subject: 'Meeting 3',
           joinUrl: 'https://teams.microsoft.com/l/meetup-join/test3',
-          threadId: 'thread-3'
-        }
+          threadId: 'thread-3',
+        },
       ];
 
-      const spy = jest.spyOn(teamsService as any, 'makeApiCall')
+      const spy = jest
+        .spyOn(teamsService as any, 'makeApiCall')
         .mockResolvedValueOnce(mockMeetings[0])
         .mockResolvedValueOnce(mockMeetings[1])
         .mockResolvedValueOnce(mockMeetings[2]);
@@ -208,11 +210,11 @@ describe('Teams Integration Tests', () => {
       const meetings = await Promise.all([
         teamsService.startMeeting('Meeting 1'),
         teamsService.startMeeting('Meeting 2'),
-        teamsService.startMeeting('Meeting 3')
+        teamsService.startMeeting('Meeting 3'),
       ]);
 
       expect(meetings).toHaveLength(3);
-      meetings.forEach(meeting => {
+      meetings.forEach((meeting) => {
         expect(meeting.joinUrl).toBeDefined();
         expect(meeting.threadId).toBeDefined();
       });

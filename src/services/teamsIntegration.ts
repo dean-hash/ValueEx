@@ -19,11 +19,11 @@ export class TeamsIntegration {
   async initialize() {
     const config = await getGraphToken();
     const authProvider = {
-      getAccessToken: async () => config.token
+      getAccessToken: async () => config.token,
     };
 
     this.graphClient = Client.initWithMiddleware({
-      authProvider
+      authProvider,
     });
   }
 
@@ -31,18 +31,17 @@ export class TeamsIntegration {
     joinUrl: string;
     threadId: string;
   }> {
-    const meeting = await this.graphClient.api('/me/onlineMeetings')
-      .post({
-        startDateTime: new Date().toISOString(),
-        subject,
-        lobbyBypassSettings: {
-          scope: 'everyone'
-        }
-      });
+    const meeting = await this.graphClient.api('/me/onlineMeetings').post({
+      startDateTime: new Date().toISOString(),
+      subject,
+      lobbyBypassSettings: {
+        scope: 'everyone',
+      },
+    });
 
     return {
       joinUrl: meeting.joinUrl,
-      threadId: meeting.chatInfo.threadId
+      threadId: meeting.chatInfo.threadId,
     };
   }
 
@@ -54,11 +53,11 @@ export class TeamsIntegration {
     const onSpeechRecognized = async (text: string) => {
       // Process speech through revenue metrics
       const metrics = await this.metricsService.processRealTimeMetrics(text);
-      
+
       // Generate and speak response based on metrics
       const response = await this.generateResponse(metrics);
       const audioData = await this.speechService.textToSpeech(response);
-      
+
       // Send audio to meeting
       await this.sendAudioToMeeting(audioData);
     };
@@ -72,7 +71,7 @@ export class TeamsIntegration {
 
     return {
       user,
-      recognizer
+      recognizer,
     };
   }
 

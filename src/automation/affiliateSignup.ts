@@ -1,10 +1,11 @@
 import puppeteer from 'puppeteer';
+import { logger } from '../utils/logger';
 
-async function delay(ms: number) {
+async function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function signupForAffiliatePrograms() {
+async function signupForAffiliatePrograms(): Promise<void> {
   // Launch with Chrome's normal window
   const browser = await puppeteer.launch({
     headless: false,
@@ -21,7 +22,7 @@ async function signupForAffiliatePrograms() {
   );
 
   // Human-like typing
-  const humanType = async (selector: string, text: string) => {
+  const humanType = async (selector: string, text: string): Promise<void> => {
     await page.waitForSelector(selector, { visible: true });
     await page.click(selector);
     for (const char of text) {
@@ -30,11 +31,9 @@ async function signupForAffiliatePrograms() {
     }
   };
 
-  console.log('Starting affiliate signups...');
-
-  // Awin Network (owns ShareASale)
   try {
-    console.log('Accessing Awin...');
+    // Awin Network (owns ShareASale)
+    logger.info('Starting Awin signup process...');
     await page.goto('https://www.awin.com/us/publishers/signup', { waitUntil: 'networkidle0' });
     await delay(2000);
 
@@ -44,15 +43,11 @@ async function signupForAffiliatePrograms() {
     await humanType('input[name="email"]', 'dean@divvytech.com');
     await humanType('input[name="website"]', 'divvytech.com');
 
-    console.log('Filled Awin form');
+    logger.info('Filled Awin form');
     await delay(3000);
-  } catch (error) {
-    console.error('Awin error:', error);
-  }
 
-  // CJ Affiliate (Commission Junction)
-  try {
-    console.log('Accessing CJ Affiliate...');
+    // CJ Affiliate (Commission Junction)
+    logger.info('Starting CJ Affiliate signup process...');
     await page.goto('https://signup.cj.com/member/signup/publisher', { waitUntil: 'networkidle0' });
     await delay(2000);
 
@@ -62,15 +57,11 @@ async function signupForAffiliatePrograms() {
     await humanType('#email', 'dean@divvytech.com');
     await humanType('#websiteUrl', 'divvytech.com');
 
-    console.log('Filled CJ form');
+    logger.info('Filled CJ form');
     await delay(3000);
-  } catch (error) {
-    console.error('CJ error:', error);
-  }
 
-  // FlexOffers
-  try {
-    console.log('Accessing FlexOffers...');
+    // FlexOffers
+    logger.info('Starting FlexOffers signup process...');
     await page.goto('https://publishers.flexoffers.com/signup', { waitUntil: 'networkidle0' });
     await delay(2000);
 
@@ -80,15 +71,15 @@ async function signupForAffiliatePrograms() {
     await humanType('input[name="email"]', 'dean@divvytech.com');
     await humanType('input[name="website"]', 'divvytech.com');
 
-    console.log('Filled FlexOffers form');
+    logger.info('Filled FlexOffers form');
     await delay(3000);
   } catch (error) {
-    console.error('FlexOffers error:', error);
+    logger.error('Error during affiliate signup:', error);
+  } finally {
+    logger.info('Completed signup attempts. Keeping browser open for review...');
+    await delay(10000); // Keep open to see results
+    await browser.close();
   }
-
-  console.log('Completed signup attempts. Keeping browser open for review...');
-  await delay(10000); // Keep open to see results
-  await browser.close();
 }
 
 signupForAffiliatePrograms();

@@ -1,7 +1,8 @@
-import { DemandSignal } from '../types';
+import { DemandSignal } from '../../../types/mvp/demand';
 import { EventEmitter } from 'events';
 import * as natural from 'natural';
 import { v4 as uuidv4 } from 'uuid';
+import { MARKET_VERTICALS } from '../../../types/marketTypes';
 
 interface BehaviorData {
   searches: string[];
@@ -32,6 +33,17 @@ interface InferenceResult {
   };
 }
 
+interface DemandContext {
+  market: string;
+  category: string;
+  priceRange: string;
+  intent: string;
+  urgency: number;
+  volume: number;
+  sentiment: number;
+  categories: string[];
+}
+
 export class DemandInference extends EventEmitter {
   private readonly confidenceThreshold = 0.7;
   private readonly minKeywords = 3;
@@ -48,13 +60,13 @@ export class DemandInference extends EventEmitter {
     this.initializeClassifier();
   }
 
-  private async initializeClassifier() {
-    // Train the classifier with sample data
-    // In production, this would load from a proper dataset
-    this.classifier.addDocument('price cost budget money', 'price_sensitive');
-    this.classifier.addDocument('fast quick urgent immediate', 'urgent');
-    this.classifier.addDocument('compare review difference between', 'research');
-    this.classifier.addDocument('buy purchase acquire', 'purchase_intent');
+  public initializeClassifier(): void {
+    // Initialize with some basic training data
+    this.classifier.addDocument('buy now urgent need', 'immediate_purchase');
+    this.classifier.addDocument('looking for best price', 'price_comparison');
+    this.classifier.addDocument('research product details', 'research');
+    this.classifier.addDocument('when will it be available', 'availability');
+    this.classifier.addDocument('compare features specs', 'comparison');
     this.classifier.train();
   }
 
@@ -86,7 +98,7 @@ export class DemandInference extends EventEmitter {
     }
 
     // Convert inferences to signals
-    return this.convertToSignals(inferences, data.context);
+    return inferences.flatMap((inference) => this.createSignal(inference, data));
   }
 
   private async analyzeSearchPatterns(searches: string[]): Promise<InferenceResult> {
@@ -248,32 +260,49 @@ export class DemandInference extends EventEmitter {
     };
   }
 
-  private convertToSignals(
-    inferences: InferenceResult[],
-    context?: BehaviorData['context']
-  ): DemandSignal[] {
-    return inferences.map((inference) => ({
+  private createSignal(result: InferenceResult, behaviorData: BehaviorData): DemandSignal[] {
+    const signal: DemandSignal = {
       id: uuidv4(),
+      query: behaviorData.searches.join(' '),
       source: 'demand_inference',
-      timestamp: Date.now(),
-      type: 'inferred',
-      confidence: inference.confidence,
-      context: {
-        keywords: inference.keywords,
-        relatedCategories: inference.categories,
-        sentiment: inference.context.sentiment,
-        urgency: inference.context.urgency,
-        matches: [],
-      },
-      requirements: {
-        features: inference.keywords,
-        constraints: {
-          ...(context?.location && { location: context.location }),
-          timeline: inference.context.urgency > 0.7 ? 'urgent' : 'normal',
+      strength: result.confidence,
+      vertical: MARKET_VERTICALS.electronics,
+      insights: {
+        keywords: result.keywords,
+        context: result.context.intent,
+        urgency: result.context.urgency,
+        intent: result.context.intent,
+        confidence: result.confidence,
+        valueEvidence: {
+          authenticityMarkers: [],
+          realWorldImpact: [],
+          practicalUtility: [],
+        },
+        demographics: [],
+        priceRange: {
+          min: 0,
+          max: 0,
+        },
+        demandPatterns: {
+          frequency: 0,
+          consistency: 0,
+          evidence: [],
         },
       },
-      category: inference.categories[0] || 'unknown',
-    }));
+      context: {
+        market: '',
+        category: '',
+        priceRange: '',
+        intent: result.context.intent,
+        urgency: result.context.urgency,
+        volume: 0,
+        sentiment: result.context.sentiment,
+        categories: result.categories,
+      },
+      timestamp: new Date().toISOString(),
+    };
+
+    return [signal];
   }
 
   private calculateTfIdfScore(token: string): number {
@@ -305,16 +334,22 @@ export class DemandInference extends EventEmitter {
     return score;
   }
 
-  async consolidateSignals(signals: DemandSignal[]): Promise<DemandSignal[]> {
-    // Group signals by source and type
+  private groupSignals(signals: DemandSignal[]): Map<string, DemandSignal[]> {
     const groups = new Map<string, DemandSignal[]>();
 
     signals.forEach((signal) => {
-      const key = `${signal.source}_${signal.type}`;
+      const key = `${signal.source}_${signal.vertical.id}`;
       const group = groups.get(key) || [];
       group.push(signal);
       groups.set(key, group);
     });
+
+    return groups;
+  }
+
+  async consolidateSignals(signals: DemandSignal[]): Promise<DemandSignal[]> {
+    // Group signals by source and type
+    const groups = this.groupSignals(signals);
 
     // Consolidate each group
     return Array.from(groups.values()).map((group) => this.mergeSignals(group));
@@ -335,24 +370,42 @@ export class DemandInference extends EventEmitter {
     let totalConfidence = 0;
     let totalSentiment = 0;
     let totalUrgency = 0;
+    let totalVolume = 0;
 
     signals.forEach((signal) => {
-      signal.context.keywords.forEach((kw) => keywords.add(kw));
-      signal.context.relatedCategories?.forEach((cat) => categories.add(cat));
-      totalConfidence += signal.confidence;
+      // Add keywords from insights
+      signal.insights.keywords.forEach((kw) => keywords.add(kw));
+
+      // Add categories from context
+      signal.context.categories.forEach((cat) => categories.add(cat));
+
+      totalConfidence += signal.insights.confidence;
       totalSentiment += signal.context.sentiment;
       totalUrgency += signal.context.urgency;
+      totalVolume += signal.context.volume;
     });
+
+    const avgConfidence = totalConfidence / signals.length;
+    const avgSentiment = totalSentiment / signals.length;
+    const avgUrgency = totalUrgency / signals.length;
+    const avgVolume = totalVolume / signals.length;
 
     return {
       ...base,
-      confidence: totalConfidence / signals.length,
       context: {
-        ...base.context,
+        market: base.context.market,
+        category: base.context.category,
+        priceRange: base.context.priceRange,
+        intent: base.context.intent,
+        categories: Array.from(categories),
+        sentiment: avgSentiment,
+        urgency: avgUrgency,
+        volume: totalVolume,
+      },
+      insights: {
+        ...base.insights,
         keywords: Array.from(keywords),
-        relatedCategories: Array.from(categories),
-        sentiment: totalSentiment / signals.length,
-        urgency: totalUrgency / signals.length,
+        confidence: avgConfidence,
       },
     };
   }

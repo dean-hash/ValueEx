@@ -8,9 +8,19 @@ interface LogEntry {
   error?: any;
 }
 
+interface RevenueEvent {
+  type: 'click' | 'sale';
+  productId: string;
+  userId: string;
+  amount?: number;
+  commission?: number;
+  timestamp: string;
+}
+
 export class Logger {
   private static instance: Logger;
   private logBuffer: LogEntry[] = [];
+  private revenueEvents: RevenueEvent[] = [];
   private readonly MAX_BUFFER_SIZE = 1000;
 
   constructor() {}
@@ -20,6 +30,15 @@ export class Logger {
       Logger.instance = new Logger();
     }
     return Logger.instance;
+  }
+
+  trackRevenueEvent(event: RevenueEvent) {
+    this.revenueEvents.push(event);
+    this.log('info', `Revenue event: ${event.type}`, event);
+  }
+
+  getRevenueEvents(): RevenueEvent[] {
+    return this.revenueEvents;
   }
 
   private log(level: LogLevel, message: string, context?: Record<string, any>, error?: any) {
@@ -65,16 +84,12 @@ export class Logger {
     this.log('warn', message, context);
   }
 
-  error(message: string, error: any, context?: Record<string, any>) {
+  error(message: string, error?: any, context?: Record<string, any>) {
     this.log('error', message, context, error);
   }
 
-  getRecentLogs(count: number = 100, level?: LogLevel): LogEntry[] {
-    let logs = this.logBuffer;
-    if (level) {
-      logs = logs.filter((log) => log.level === level);
-    }
-    return logs.slice(-count);
+  getRecentLogs(count: number = 100): LogEntry[] {
+    return this.logBuffer.slice(-count);
   }
 
   clearLogs() {

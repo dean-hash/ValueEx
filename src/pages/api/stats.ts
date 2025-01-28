@@ -1,23 +1,50 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { RevenueTracker } from '../../services/affiliate/revenueTracker';
+import { MetricsCollector } from '../../services/metrics/metricsCollector';
 import { logger } from '../../utils/logger';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+interface StatsResponse {
+  totalMatches: number;
+  averageMatchScore: number;
+  totalProducts: number;
+  topCategories: { category: string; count: number }[];
+  lastUpdated: string;
+}
+
+const metrics = MetricsCollector.getInstance();
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse<StatsResponse>
+): Promise<void> {
   if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    res.status(405).json({
+      totalMatches: 0,
+      averageMatchScore: 0,
+      totalProducts: 0,
+      topCategories: [],
+      lastUpdated: new Date().toISOString(),
+    });
+    return;
   }
 
   try {
-    const revenueTracker = RevenueTracker.getInstance();
-    const stats = await revenueTracker.getStats();
-    const recentEvents = logger.getRevenueEvents().slice(-10);
-    
-    return res.status(200).json({
-      ...stats,
-      recentEvents
+    const stats = await metrics.getMetrics();
+
+    res.status(200).json({
+      totalMatches: stats.totalMatches,
+      averageMatchScore: stats.averageMatchScore,
+      totalProducts: stats.totalProducts,
+      topCategories: stats.topCategories,
+      lastUpdated: stats.lastUpdated,
     });
   } catch (error) {
-    logger.error('Error getting stats:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    logger.error('Error in stats endpoint:', error);
+    res.status(500).json({
+      totalMatches: 0,
+      averageMatchScore: 0,
+      totalProducts: 0,
+      topCategories: [],
+      lastUpdated: new Date().toISOString(),
+    });
   }
 }

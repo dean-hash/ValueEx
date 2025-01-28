@@ -3,25 +3,26 @@ import { simpleParser } from 'mailparser';
 import { GeminiService } from '../ai/geminiService';
 import { GraphService } from './graphService';
 import { logger } from '../../utils/logger';
+import { configService } from '../../config/configService';
 
 interface EmailConfig {
   host: string;
   port: number;
+  tls: boolean;
   auth: {
     user: string;
     pass: string;
   };
-  tls: boolean;
 }
 
 interface EmailAccount {
   host: string;
   port: number;
+  tls: boolean;
   auth: {
     user: string;
     pass: string;
   };
-  tls: boolean;
   forwardTo?: string;
 }
 
@@ -35,28 +36,28 @@ export class EmailMonitor {
   private constructor() {
     this.gemini = GeminiService.getInstance();
     this.graph = GraphService.getInstance();
-    
+
     // Configure multiple email accounts
     const accounts: Record<string, EmailAccount> = {
       aoa: {
-        host: 'outlook.office365.com',
-        port: 993,
+        host: configService.getConfigServiceConfig('AOA_EMAIL_HOST'),
+        port: Number(configService.getConfigServiceConfig('AOA_EMAIL_PORT')),
+        tls: configService.getConfigServiceConfig('AOA_EMAIL_TLS') === 'true',
         auth: {
-          user: 'dean@aoaassociates.com',
-          pass: process.env.AOA_EMAIL_PASSWORD || '',
+          user: configService.getConfigServiceConfig('AOA_EMAIL_USER'),
+          pass: configService.getConfigServiceConfig('AOA_EMAIL_PASSWORD'),
         },
-        tls: true,
-        forwardTo: 'dean@divvytech.com'
+        forwardTo: configService.getConfigServiceConfig('AOA_EMAIL_FORWARD_TO'),
       },
       collaborative: {
-        host: 'outlook.office365.com',
-        port: 993,
+        host: configService.getConfigServiceConfig('COLLAB_EMAIL_HOST'),
+        port: Number(configService.getConfigServiceConfig('COLLAB_EMAIL_PORT')),
+        tls: configService.getConfigServiceConfig('COLLAB_EMAIL_TLS') === 'true',
         auth: {
-          user: 'partners@collaborativeintelligence.world',
-          pass: process.env.COLLAB_EMAIL_PASSWORD || '',
+          user: configService.getConfigServiceConfig('COLLAB_EMAIL_USER'),
+          pass: configService.getConfigServiceConfig('COLLAB_EMAIL_PASSWORD'),
         },
-        tls: true
-      }
+      },
     };
 
     // Initialize email clients
@@ -88,7 +89,7 @@ export class EmailMonitor {
       // Monitor inbox for new messages
       for (const [name, client] of this.clients) {
         await client.mailboxWatch('INBOX');
-        
+
         client.on('exists', async (path: string, count: number) => {
           const latest = await this.getLatestEmails(name, 1);
           for (const email of latest) {
@@ -96,7 +97,6 @@ export class EmailMonitor {
           }
         });
       }
-
     } catch (error) {
       logger.error('Failed to start email monitoring:', error);
       throw error;
@@ -161,7 +161,7 @@ export class EmailMonitor {
         subject: email.subject,
         from: email.from.text,
         analysis,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
 
       // Forward critical emails to Divvy
@@ -172,11 +172,14 @@ export class EmailMonitor {
 
       // Store business intelligence
       await this.storeBusinessIntelligence(email, analysis);
-
     } catch (error) {
       logger.error('Error processing email:', error);
       // Forward to Divvy on error to ensure no critical emails are missed
-      await this.forwardEmail(email, 'dean@divvytech.com', 'Error in processing - requires manual review');
+      await this.forwardEmail(
+        email,
+        'dean@divvytech.com',
+        'Error in processing - requires manual review'
+      );
     }
   }
 
@@ -195,7 +198,7 @@ export class EmailMonitor {
     logger.warn('Email forward failed - stored for retry', {
       to,
       subject: email.subject,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -213,24 +216,24 @@ export class EmailMonitor {
   private getAccountForwardTo(account: string): string | undefined {
     const accounts: Record<string, EmailAccount> = {
       aoa: {
-        host: 'outlook.office365.com',
-        port: 993,
+        host: configService.getConfigServiceConfig('AOA_EMAIL_HOST'),
+        port: Number(configService.getConfigServiceConfig('AOA_EMAIL_PORT')),
+        tls: configService.getConfigServiceConfig('AOA_EMAIL_TLS') === 'true',
         auth: {
-          user: 'dean@aoaassociates.com',
-          pass: process.env.AOA_EMAIL_PASSWORD || '',
+          user: configService.getConfigServiceConfig('AOA_EMAIL_USER'),
+          pass: configService.getConfigServiceConfig('AOA_EMAIL_PASSWORD'),
         },
-        tls: true,
-        forwardTo: 'dean@divvytech.com'
+        forwardTo: configService.getConfigServiceConfig('AOA_EMAIL_FORWARD_TO'),
       },
       collaborative: {
-        host: 'outlook.office365.com',
-        port: 993,
+        host: configService.getConfigServiceConfig('COLLAB_EMAIL_HOST'),
+        port: Number(configService.getConfigServiceConfig('COLLAB_EMAIL_PORT')),
+        tls: configService.getConfigServiceConfig('COLLAB_EMAIL_TLS') === 'true',
         auth: {
-          user: 'partners@collaborativeintelligence.world',
-          pass: process.env.COLLAB_EMAIL_PASSWORD || '',
+          user: configService.getConfigServiceConfig('COLLAB_EMAIL_USER'),
+          pass: configService.getConfigServiceConfig('COLLAB_EMAIL_PASSWORD'),
         },
-        tls: true
-      }
+      },
     };
 
     return accounts[account]?.forwardTo;
@@ -248,10 +251,7 @@ export class EmailMonitor {
       since.setDate(since.getDate() - days);
 
       const messages = [];
-      for await (const message of client.fetch(
-        { since },
-        { source: true }
-      )) {
+      for await (const message of client.fetch({ since }, { source: true })) {
         const parsed = await simpleParser(message.source);
         if (
           parsed.subject?.toLowerCase().includes(query.toLowerCase()) ||

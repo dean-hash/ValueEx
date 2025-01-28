@@ -1,4 +1,4 @@
-import { AwinClient } from './awinClient';
+import { AwinClient, AffiliateProgram } from './awinClient';
 
 export class OpportunityMatcher {
   private readonly awinClient: AwinClient;
@@ -8,10 +8,10 @@ export class OpportunityMatcher {
   }
 
   async findHighValueMatches() {
-    const programs = await this.awinClient.getHighValuePrograms();
+    const programs: AffiliateProgram[] = await this.awinClient.getHighValuePrograms();
 
     // Real intelligence here - match demand signals to programs
-    const matches = programs.map((program) => ({
+    const matches = programs.map((program: AffiliateProgram) => ({
       name: program.name,
       commission: program.commissionRate,
       potentialValue: this.calculateOpportunityValue(program),
@@ -22,7 +22,7 @@ export class OpportunityMatcher {
     return matches.sort((a, b) => b.potentialValue - a.potentialValue);
   }
 
-  private calculateOpportunityValue(program: any) {
+  private calculateOpportunityValue(program: AffiliateProgram) {
     // Sophisticated calculation considering:
     // - Commission rate
     // - Market demand
@@ -31,7 +31,7 @@ export class OpportunityMatcher {
     return program.commissionRate * this.getMarketDemandScore(program);
   }
 
-  private assessMatchQuality(program: any) {
+  private assessMatchQuality(program: AffiliateProgram) {
     // AI-driven assessment of:
     // - Product-market fit
     // - Implementation feasibility
@@ -39,7 +39,7 @@ export class OpportunityMatcher {
     return 0.8; // We'll make this real
   }
 
-  private getMarketDemandScore(program: any) {
+  private getMarketDemandScore(program: AffiliateProgram) {
     // Real market analysis using:
     // - Search trends
     // - Social signals
@@ -47,7 +47,7 @@ export class OpportunityMatcher {
     return 100; // Placeholder for now
   }
 
-  private generateQuickStartGuide(program: any) {
+  private generateQuickStartGuide(program: AffiliateProgram) {
     return {
       steps: [
         'Sign up through ValueEx tracking link',

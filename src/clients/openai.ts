@@ -1,12 +1,14 @@
 import OpenAI from 'openai';
 import { configService } from '../config/configService';
+import { logger } from '../utils/logger';
 
 export class OpenAIClient {
   private static instance: OpenAIClient;
   private client: OpenAI;
 
   private constructor() {
-    const apiKey = configService.getOpenAIKey();
+    const config = configService.get('openai');
+    const apiKey = config.apiKey;
 
     if (!apiKey || apiKey.trim() === '') {
       throw new Error(
@@ -16,9 +18,12 @@ export class OpenAIClient {
 
     this.client = new OpenAI({
       apiKey: apiKey,
+      organization: config.organization,
       maxRetries: 3,
       timeout: 30000,
     });
+
+    logger.info('OpenAI client initialized successfully');
   }
 
   public static getInstance(): OpenAIClient {
@@ -32,56 +37,34 @@ export class OpenAIClient {
     return this.client;
   }
 
-  // Helper method for common chat completion requests
-  public async createChatCompletion(
-    messages: OpenAI.Chat.ChatCompletionMessageParam[],
-    options: Partial<OpenAI.Chat.ChatCompletionCreateParams> = {}
-  ): Promise<OpenAI.Chat.ChatCompletion> {
+  public async generateText(prompt: string): Promise<string> {
     try {
+      const config = configService.get('openai');
       const completion = await this.client.chat.completions.create({
-        model: options.model || 'gpt-4-turbo-preview',
-        messages,
-        temperature: options.temperature ?? 0.7,
-        max_tokens: options.max_tokens,
-        ...options,
-        stream: false, // Ensure we get a ChatCompletion not a Stream
+        messages: [{ role: 'user', content: prompt }],
+        model: config.model,
+        max_tokens: config.maxTokens,
       });
 
-      return completion as OpenAI.Chat.ChatCompletion;
+      return completion.choices[0]?.message?.content || '';
     } catch (error) {
-      if (error instanceof OpenAI.APIError) {
-        // Handle rate limits
-        if (error.status === 429) {
-          console.warn('OpenAI rate limit reached. Implementing exponential backoff...');
-          // Could implement retry logic here
-        }
-
-        // Handle invalid API key
-        if (error.status === 401) {
-          console.error('Invalid OpenAI API key. Please check your configuration.');
-        }
-      }
+      logger.error('Error generating text with OpenAI:', error);
       throw error;
     }
   }
 
-  // Helper for JSON responses
-  public async createJSONCompletion<T>(
-    messages: OpenAI.Chat.ChatCompletionMessageParam[],
-    options: Partial<OpenAI.Chat.ChatCompletionCreateParams> = {}
-  ): Promise<T | null> {
+  public async generateEmbedding(text: string): Promise<number[]> {
     try {
-      const completion = await this.createChatCompletion(messages, {
-        ...options,
-        response_format: { type: 'json_object' },
-        temperature: options.temperature ?? 0, // Default to 0 for JSON
+      const response = await this.client.embeddings.create({
+        model: 'text-embedding-3-small',
+        input: text,
+        encoding_format: 'float',
       });
 
-      const content = completion.choices[0]?.message?.content;
-      return content ? JSON.parse(content) : null;
+      return response.data[0].embedding;
     } catch (error) {
-      console.error('Error creating JSON completion:', error);
-      return null;
+      logger.error('Error generating embedding with OpenAI:', error);
+      throw error;
     }
   }
 }

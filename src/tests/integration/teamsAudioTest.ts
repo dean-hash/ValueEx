@@ -53,70 +53,55 @@ class TeamsAudioTester {
   private async testAudioStreamSetup() {
     console.log('Testing Audio Stream Setup...');
     const stream = await this.audioService.startAudioStream();
-    
+
     // Verify stream properties
     if (!stream || !stream.active) {
-      throw new ServiceError(
-        'Audio stream not active',
-        'STREAM_INACTIVE',
-        'Audio',
-        true
-      );
+      throw new ServiceError('Audio stream not active', 'STREAM_INACTIVE', 'Audio', true);
     }
 
     // Test audio quality metrics
     const audioTracks = stream.getAudioTracks();
     console.log('Audio Tracks:', audioTracks.length);
     console.log('Track Settings:', audioTracks[0].getSettings());
-    
+
     console.log('✓ Audio Stream setup successful');
   }
 
   private async testSpeechServices() {
     console.log('Testing Speech Services...');
-    
+
     // Test text-to-speech
     const testText = 'Testing speech synthesis';
     const audioData = await this.speechService.textToSpeech(testText);
-    
+
     // Verify audio data
     if (!audioData || audioData.byteLength === 0) {
-      throw new ServiceError(
-        'Speech synthesis failed',
-        'SYNTHESIS_FAILED',
-        'Speech',
-        true
-      );
+      throw new ServiceError('Speech synthesis failed', 'SYNTHESIS_FAILED', 'Speech', true);
     }
 
     // Test speech-to-text
     const audioConfig = {} as any; // Mock audio config for testing
     const recognizedText = await this.speechService.speechToText(audioConfig);
-    
+
     console.log('✓ Speech Services test successful');
   }
 
   private async testMetricsProcessing() {
     console.log('Testing Real-time Metrics Processing...');
-    
+
     // Simulate real-time data
     const testData = {
       text: 'Test metric data',
       timestamp: new Date(),
-      audioQuality: 0.95
+      audioQuality: 0.95,
     };
 
     // Process metrics
     const metrics = await this.metricsService.processRealTimeMetrics(testData);
-    
+
     // Verify metrics
     if (!metrics || !metrics.realTimeMetrics) {
-      throw new ServiceError(
-        'Metrics processing failed',
-        'PROCESSING_FAILED',
-        'Metrics',
-        true
-      );
+      throw new ServiceError('Metrics processing failed', 'PROCESSING_FAILED', 'Metrics', true);
     }
 
     console.log('✓ Metrics Processing test successful');
@@ -139,12 +124,7 @@ class TeamsAudioTester {
 
   private async simulateAuthError() {
     try {
-      throw new ServiceError(
-        'Authentication failed',
-        'AUTH_FAILED',
-        'Teams',
-        true
-      );
+      throw new ServiceError('Authentication failed', 'AUTH_FAILED', 'Teams', true);
     } catch (error) {
       await ErrorHandler.handleError(error as Error);
     }
@@ -152,12 +132,7 @@ class TeamsAudioTester {
 
   private async simulateNetworkError() {
     try {
-      throw new ServiceError(
-        'Network connection lost',
-        'CONNECTION_LOST',
-        'Communication',
-        true
-      );
+      throw new ServiceError('Network connection lost', 'CONNECTION_LOST', 'Communication', true);
     } catch (error) {
       await ErrorHandler.handleError(error as Error);
     }
@@ -165,12 +140,7 @@ class TeamsAudioTester {
 
   private async simulateServiceError() {
     try {
-      throw new ServiceError(
-        'Service unavailable',
-        'SERVICE_DOWN',
-        'Speech',
-        true
-      );
+      throw new ServiceError('Service unavailable', 'SERVICE_DOWN', 'Speech', true);
     } catch (error) {
       await ErrorHandler.handleError(error as Error);
     }

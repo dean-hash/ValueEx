@@ -1,47 +1,30 @@
-import 'dotenv/config';
-import axios from 'axios';
+import { GoDaddyConnector } from '../services/domain/connectors/godaddyConnector';
+import { logger } from '../utils/logger';
 
-async function listDomains() {
-  const apiKey = process.env.GODADDY_API_KEY;
-  const apiSecret = process.env.GODADDY_API_SECRET;
-
-  if (!apiKey || !apiSecret) {
-    console.error('GoDaddy API credentials not found in environment variables');
-    process.exit(1);
-  }
-
-  const axiosInstance = axios.create({
-    baseURL: 'https://api.godaddy.com/v1',
-    headers: {
-      Authorization: `sso-key ${apiKey}:${apiSecret}`,
-      'Content-Type': 'application/json',
-    },
-  });
+async function listDomains(): Promise<void> {
+  const connector = GoDaddyConnector.getInstance();
 
   try {
-    console.log('Fetching domain list...');
-    const response = await axiosInstance.get('/domains');
-    const domains = response.data;
+    logger.info('Fetching domain list...');
+    const domains = await connector.listDomains();
 
-    console.log('\nDomain Analysis Report:');
-    console.log('=====================\n');
+    logger.info('\nDomain Analysis Report:');
+    logger.info('=====================\n');
 
-    domains.forEach((domain: any) => {
-      console.log(`Domain: ${domain.domain}`);
-      console.log(`Status: ${domain.status}`);
-      console.log(`Expires: ${domain.expires}`);
-      console.log('-------------------\n');
+    domains.forEach((domain) => {
+      logger.info(`Domain: ${domain.domain}`);
+      logger.info(`Status: ${domain.status}`);
+      logger.info(`Expires: ${domain.expires}`);
+      logger.info('-------------------\n');
     });
-
-    return domains;
   } catch (error) {
-    console.error('Error listing domains:', error);
-    if (axios.isAxiosError(error) && error.response) {
-      console.error('API Error:', error.response.data);
-    }
-    throw error;
+    logger.error('Error listing domains:', error);
+    process.exit(1);
   }
 }
 
 // Run it
-listDomains().catch(console.error);
+listDomains().catch((error) => {
+  logger.error('Fatal error:', error);
+  process.exit(1);
+});

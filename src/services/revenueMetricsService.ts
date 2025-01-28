@@ -52,18 +52,19 @@ export class ValueCreationService {
 
     try {
       const metrics = await this.resonanceField.measureValueCreation(product, pattern);
-      
+
       // Enrich with real-time metrics
       const [efficiencyMetrics, affiliateMetrics] = await Promise.all([
         this.bcService.getEfficiencyMetrics(),
-        this.awinService.getAffiliateMetrics()
+        this.awinService.getAffiliateMetrics(),
       ]);
 
       metrics.realTimeMetrics = {
         revenue: affiliateMetrics.revenue,
         costs: efficiencyMetrics.costPerLead * affiliateMetrics.conversions,
-        profitMargin: (affiliateMetrics.revenue - affiliateMetrics.commission) / affiliateMetrics.revenue,
-        customerEngagement: affiliateMetrics.conversions / affiliateMetrics.clicks
+        profitMargin:
+          (affiliateMetrics.revenue - affiliateMetrics.commission) / affiliateMetrics.revenue,
+        customerEngagement: affiliateMetrics.conversions / affiliateMetrics.clicks,
       };
 
       this.cache.set(cacheKey, { data: metrics, timestamp: new Date() });
@@ -89,13 +90,10 @@ export class ValueCreationService {
         signals
       );
 
-      const merchantValue = await this.resonanceField.calculateMerchantValue(
-        product,
-        signals
-      );
+      const merchantValue = await this.resonanceField.calculateMerchantValue(product, signals);
 
       // Weighted average of consumer and merchant value
-      return (consumerValue * 0.6 + merchantValue * 0.4);
+      return consumerValue * 0.6 + merchantValue * 0.4;
     } catch (error) {
       this.logger.error('Error calculating intent match value:', error);
       throw error;

@@ -44,6 +44,7 @@ export interface NetworkMetrics {
 }
 
 export class ResourceMonitor extends EventEmitter {
+  private static instance: ResourceMonitor;
   private metrics: MetricsCollector;
   private snapshots: ResourceSnapshot[] = [];
   private readonly MAX_SNAPSHOTS = 1000;
@@ -55,9 +56,16 @@ export class ResourceMonitor extends EventEmitter {
     latency: 1000, // 1 second
   };
 
-  constructor(metricsCollector?: MetricsCollector) {
+  private constructor(metricsCollector?: MetricsCollector) {
     super();
-    this.metrics = metricsCollector || new MetricsCollector();
+    this.metrics = metricsCollector || MetricsCollector.getInstance();
+  }
+
+  public static getInstance(): ResourceMonitor {
+    if (!ResourceMonitor.instance) {
+      ResourceMonitor.instance = new ResourceMonitor();
+    }
+    return ResourceMonitor.instance;
   }
 
   startMonitoring(interval: number = 5000): void {

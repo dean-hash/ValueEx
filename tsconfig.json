@@ -31,14 +31,16 @@
       {
         "name": "next"
       }
-    ]
+    ],
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "allowUnreachableCode": false,
+    "exactOptionalPropertyTypes": true
   },
   "include": [
-    "src/mvp/**/*",
-    "src/services/opportunities/**/*",
-    "src/services/revenue/**/*",
-    "src/services/integrations/**/*",
-    "src/services/monitoring/**/*",
+    "src/**/*",
     ".next/types/**/*.ts"
   ],
   "exclude": [

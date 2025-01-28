@@ -14,7 +14,7 @@ import {
   MeetingInfo,
   EfficiencyMetrics,
   AffiliateMetrics,
-  AudioStreamConfig
+  AudioStreamConfig,
 } from '../../types/serviceTypes';
 
 // Mock Audio Stream
@@ -60,7 +60,7 @@ class MockAudioTrack implements MediaStreamTrack {
   label = 'mock-audio-track';
   muted = false;
   readyState: MediaStreamTrackState = 'live';
-  
+
   getSettings(): MediaTrackSettings {
     return {
       channelCount: 2,
@@ -68,7 +68,7 @@ class MockAudioTrack implements MediaStreamTrack {
       sampleSize: 16,
       echoCancellation: true,
       autoGainControl: true,
-      noiseSuppression: true
+      noiseSuppression: true,
     };
   }
 
@@ -107,7 +107,7 @@ export class MockTeamsClient extends EventEmitter implements ITeamsIntegration {
     return {
       joinUrl: `https://teams.microsoft.com/l/meetup-join/test-${Date.now()}`,
       threadId: `thread-${Date.now()}`,
-      subject
+      subject,
     };
   }
 
@@ -119,7 +119,7 @@ export class MockTeamsClient extends EventEmitter implements ITeamsIntegration {
     this.emit('meetingJoined', { url });
     return {
       user: { id: 'test-user' },
-      recognizer: {}
+      recognizer: {},
     };
   }
 }
@@ -160,8 +160,8 @@ export class MockResonanceFieldService implements IResonanceFieldService {
         revenue: product.price * 0.1,
         costs: product.price * 0.05,
         profitMargin: 0.5,
-        customerEngagement: 0.85
-      }
+        customerEngagement: 0.85,
+      },
     };
   }
 
@@ -173,10 +173,7 @@ export class MockResonanceFieldService implements IResonanceFieldService {
     return 85.0;
   }
 
-  async calculateMerchantValue(
-    product: Product,
-    signals: DemandSignal[]
-  ): Promise<number> {
+  async calculateMerchantValue(product: Product, signals: DemandSignal[]): Promise<number> {
     return 90.0;
   }
 }
@@ -198,7 +195,7 @@ export class MockBusinessCentralService implements IBusinessCentralService {
     return {
       processingTime: 120,
       conversionRate: 0.15,
-      costPerLead: 25.0
+      costPerLead: 25.0,
     };
   }
 }
@@ -210,7 +207,7 @@ export class MockAwinService implements IAwinService {
       clicks: 1000,
       conversions: 50,
       revenue: 5000.0,
-      commission: 250.0
+      commission: 250.0,
     };
   }
 }

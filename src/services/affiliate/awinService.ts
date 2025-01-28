@@ -32,70 +32,43 @@ export class AwinService {
     private readonly cache: AwinCache,
     private readonly retry: RetryStrategy,
     private readonly analytics: CacheAnalytics
-  ) {}
+  ) {
+    // Verify getAwinApiKey exists in ConfigService
+    if (!('getAwinApiKey' in this.config)) {
+      throw new Error('ConfigService must have a getAwinApiKey method');
+    }
+  }
 
   async getMerchants(): Promise<Merchant[]> {
-    // Mock data for testing
-    return [
-      {
-        name: 'Digital Learning Hub',
-        networkId: 'edu_001',
-        merchantId: 'dlh_001',
-        categories: ['education', 'online_courses', 'professional_development'],
-        averageCommission: 45,
-        conversionRate: 0.08,
-        validationStatus: 'approved',
-        performance: { reliability: 0.92 },
-        services: [
-          { name: 'Technical Certification', value: 299 },
-          { name: 'Business Skills', value: 199 },
-          { name: 'Language Learning', value: 149 },
-        ],
-        commissionStructure: { base: 45, notes: 'Volume bonuses available' },
-        status: 'active',
-        notes: 'Strong in digital education sector',
-      },
-      {
-        name: 'Creative Market Pro',
-        networkId: 'creative_001',
-        merchantId: 'cmp_001',
-        categories: ['digital_assets', 'design_tools', 'creative'],
-        averageCommission: 35,
-        conversionRate: 0.12,
-        validationStatus: 'approved',
-        performance: { reliability: 0.88 },
-        services: [
-          { name: 'Stock Photos', value: 79 },
-          { name: 'Vector Graphics', value: 59 },
-          { name: 'Font Collections', value: 39 },
-        ],
-        commissionStructure: { base: 35, notes: 'Tiered commission structure' },
-        status: 'active',
-        notes: 'Leading digital asset marketplace',
-      },
-      {
-        name: 'Tech Gear Direct',
-        networkId: 'tech_001',
-        merchantId: 'tgd_001',
-        categories: ['electronics', 'gadgets', 'accessories'],
-        averageCommission: 25,
-        conversionRate: 0.06,
-        validationStatus: 'approved',
-        performance: { reliability: 0.85 },
-        services: [
-          { name: 'Smart Home Devices', value: 199 },
-          { name: 'Mobile Accessories', value: 49 },
-          { name: 'Gaming Peripherals', value: 129 },
-        ],
-        commissionStructure: { base: 25, notes: 'Fixed rate commission' },
-        status: 'active',
-        notes: 'Specialized in premium tech accessories',
-      },
-    ];
+    // Implement real data fetching logic here
+    const merchants: Merchant[] = await this.fetchMerchantsFromAPI();
+    return merchants;
   }
 
   async generateAffiliateLink(merchantId: string): Promise<string> {
     // In real implementation, this would call Awin's API
     return `https://www.awin1.com/cread.php?merchantId=${merchantId}&platform=dl`;
+  }
+
+  private async fetchMerchantsFromAPI(): Promise<Merchant[]> {
+    try {
+      const response = await fetch('https://api.awin.com/merchants', {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${this.config.getAwinApiKey()}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch merchants: ${response.statusText}`);
+      }
+
+      const merchants: Merchant[] = await response.json();
+      return merchants;
+    } catch (error) {
+      console.error('Error fetching merchants:', error);
+      return [];
+    }
   }
 }

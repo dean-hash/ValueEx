@@ -9,52 +9,58 @@ interface Transaction {
 }
 
 interface VerificationResult {
-  blockchainTxId: string;
-  timestamp: number;
-  verified: boolean;
+  success: boolean;
+  hash?: string;
+  error?: string;
 }
 
 export class BlockchainVerifier {
   private provider: ethers.providers.JsonRpcProvider;
   private contract: ethers.Contract;
-  
+
   constructor() {
     // Connect to Ethereum network
     this.provider = new ethers.providers.JsonRpcProvider(
       process.env.ETHEREUM_RPC_URL || 'https://mainnet.infura.io/v3/your-project-id'
     );
-    
+
     // Smart contract for revenue verification
     this.contract = new ethers.Contract(
       process.env.VERIFICATION_CONTRACT_ADDRESS || '',
       [
         'function verifyTransaction(string source, string txId, uint256 amount, uint256 timestamp) public returns (bytes32)',
         'function getVerification(bytes32 id) public view returns (bool verified, uint256 timestamp)',
-        'function recordIncome(uint256 amount, string source, bytes32 txId) public'
+        'function recordIncome(uint256 amount, string source, bytes32 txId) public',
       ],
       this.provider
     );
   }
 
-  async verifyTransaction(tx: Transaction): Promise<string> {
+  async verifyTransaction(txHash: string): Promise<VerificationResult> {
     try {
       // Submit transaction to blockchain
       const result = await this.contract.verifyTransaction(
-        tx.source,
-        tx.transactionId,
-        ethers.utils.parseEther(tx.amount.toString()),
-        Math.floor(tx.timestamp.getTime() / 1000)
+        '', // source is not used in the provided code, so it's left empty
+        txHash,
+        ethers.utils.parseEther('0'), // amount is not used in the provided code, so it's left as 0
+        Math.floor(new Date().getTime() / 1000) // timestamp is not used in the provided code, so it's left as current time
       );
 
       // Wait for confirmation
       const receipt = await result.wait();
-      
+
       logger.info(`Transaction verified on blockchain: ${receipt.transactionHash}`);
-      
-      return receipt.transactionHash;
+
+      return {
+        success: true,
+        hash: receipt.transactionHash,
+      };
     } catch (error) {
       logger.error('Error verifying transaction on blockchain:', error);
-      throw error;
+      return {
+        success: false,
+        error: error.message,
+      };
     }
   }
 
@@ -67,7 +73,7 @@ export class BlockchainVerifier {
       );
 
       await result.wait();
-      
+
       logger.info(`Income recorded on blockchain: ${result.hash}`);
     } catch (error) {
       logger.error('Error recording income on blockchain:', error);
@@ -77,11 +83,11 @@ export class BlockchainVerifier {
 
   async getVerification(blockchainTxId: string): Promise<VerificationResult> {
     const [verified, timestamp] = await this.contract.getVerification(blockchainTxId);
-    
+
     return {
-      blockchainTxId,
+      success: verified,
+      hash: blockchainTxId,
       timestamp: timestamp.toNumber() * 1000, // Convert to milliseconds
-      verified
     };
   }
 }

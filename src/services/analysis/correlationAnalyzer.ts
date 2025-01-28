@@ -119,21 +119,18 @@ export class CorrelationAnalyzer extends EventEmitter {
     }, 60000); // Run analysis every minute
   }
 
-  private analyzeCorrelations(): void {
+  public analyzeCorrelations(): void {
     try {
-      const metrics = [
-        'processing_time',
-        'error_rate',
-        'demand_pattern_strength',
-        'cpu_usage',
-        'memory_usage',
-        'api_rate',
-      ];
+      const metrics = this.getAvailableMetrics();
 
-      // Analyze all metric pairs
       for (let i = 0; i < metrics.length; i++) {
         for (let j = i + 1; j < metrics.length; j++) {
-          const result = this.calculateCorrelation(metrics[i], metrics[j]);
+          const values1 = this.getMetricValues(metrics[i]);
+          const values2 = this.getMetricValues(metrics[j]);
+
+          const result = this.calculateCorrelation(values1, values2);
+          result.metrics = [metrics[i], metrics[j]];
+
           if (result.coefficient > 0.7 || result.coefficient < -0.7) {
             this.correlations.set(`${metrics[i]}_${metrics[j]}`, [result]);
 
@@ -148,54 +145,7 @@ export class CorrelationAnalyzer extends EventEmitter {
     }
   }
 
-  private calculateCorrelation(metric1: string, metric2: string): CorrelationResult {
-    const values1 = this.getMetricValues(metric1);
-    const values2 = this.getMetricValues(metric2);
-
-    if (values1.length !== values2.length) {
-      throw new Error('Metric series must have same length');
-    }
-
-    const n = values1.length;
-    const mean1 = values1.reduce((a, b) => a + b) / n;
-    const mean2 = values2.reduce((a, b) => a + b) / n;
-
-    let sum = 0;
-    let sum1Sq = 0;
-    let sum2Sq = 0;
-
-    for (let i = 0; i < n; i++) {
-      const diff1 = values1[i] - mean1;
-      const diff2 = values2[i] - mean2;
-      sum += diff1 * diff2;
-      sum1Sq += diff1 * diff1;
-      sum2Sq += diff2 * diff2;
-    }
-
-    const coefficient = sum / Math.sqrt(sum1Sq * sum2Sq);
-    const significance = this.calculateSignificance(coefficient, n);
-
-    return {
-      metrics: [metric1, metric2],
-      coefficient,
-      confidence: Math.abs(coefficient) * (1 - significance),
-      timeWindow: n,
-      pattern: coefficient > 0 ? 'direct' : 'inverse',
-      significance,
-    };
-  }
-
-  private calculateSignificance(coefficient: number, n: number): number {
-    // Fisher transformation
-    const z = 0.5 * Math.log((1 + coefficient) / (1 - coefficient));
-    const se = 1 / Math.sqrt(n - 3);
-    const t = z / se;
-
-    // Simplified p-value calculation
-    return 1 / (1 + Math.exp(-Math.abs(t)));
-  }
-
-  private analyzeTrends(): void {
+  public analyzeTrends(): void {
     try {
       const metrics = this.getAvailableMetrics();
 
@@ -211,6 +161,58 @@ export class CorrelationAnalyzer extends EventEmitter {
     } catch (error) {
       logger.error('Error analyzing trends:', error);
     }
+  }
+
+  private calculateCorrelation(values1: number[], values2: number[]): CorrelationResult {
+    const n = Math.min(values1.length, values2.length);
+    if (n < 2) {
+      return {
+        metrics: ['metric1', 'metric2'],
+        coefficient: 0,
+        confidence: 0,
+        timeWindow: 0,
+        pattern: 'direct',
+        significance: 0,
+      };
+    }
+
+    // Calculate Pearson correlation coefficient
+    const mean1 = values1.reduce((a, b) => a + b, 0) / n;
+    const mean2 = values2.reduce((a, b) => a + b, 0) / n;
+
+    let num = 0;
+    let den1 = 0;
+    let den2 = 0;
+
+    for (let i = 0; i < n; i++) {
+      const x = values1[i] - mean1;
+      const y = values2[i] - mean2;
+      num += x * y;
+      den1 += x * x;
+      den2 += y * y;
+    }
+
+    const coefficient = num / Math.sqrt(den1 * den2);
+    const significance = this.calculateSignificance(coefficient, n);
+
+    return {
+      metrics: ['metric1', 'metric2'],
+      coefficient,
+      confidence: Math.abs(coefficient),
+      timeWindow: n,
+      pattern: coefficient > 0 ? 'direct' : 'inverse',
+      significance,
+    };
+  }
+
+  private calculateSignificance(coefficient: number, n: number): number {
+    // Fisher transformation
+    const z = 0.5 * Math.log((1 + coefficient) / (1 - coefficient));
+    const se = 1 / Math.sqrt(n - 3);
+    const t = z / se;
+
+    // Simplified p-value calculation
+    return 1 / (1 + Math.exp(-Math.abs(t)));
   }
 
   private detectTrend(values: number[]): TrendAnalysis {
@@ -486,35 +488,32 @@ export class CorrelationAnalyzer extends EventEmitter {
     values2: number[],
     weights: Map<string, number>
   ): WeightedCorrelation {
-    const factors1 = this.calculateEnhancedConfidence(values1);
-    const factors2 = this.calculateEnhancedConfidence(values2);
-
     // Calculate base correlation
-    const correlation = this.calculateCorrelation(values1, values2);
+    const result = this.calculateCorrelation(values1, values2);
 
     // Apply weights to confidence factors
     const weightedFactors = {
       sampleSize:
-        ((factors1.sampleSize + factors2.sampleSize) / 2) * (weights.get('sampleSize') || 1),
+        this.calculateEnhancedConfidence(values1).sampleSize * (weights.get('sampleSize') || 1),
       variability:
-        ((factors1.variability + factors2.variability) / 2) * (weights.get('variability') || 1),
+        this.calculateEnhancedConfidence(values1).variability * (weights.get('variability') || 1),
       outlierImpact:
-        ((factors1.outlierImpact + factors2.outlierImpact) / 2) *
+        this.calculateEnhancedConfidence(values1).outlierImpact *
         (weights.get('outlierImpact') || 1),
       signalStrength:
-        ((factors1.signalStrength + factors2.signalStrength) / 2) *
+        this.calculateEnhancedConfidence(values1).signalStrength *
         (weights.get('signalStrength') || 1),
       noiseLevel:
-        ((factors1.noiseLevel + factors2.noiseLevel) / 2) * (weights.get('noiseLevel') || 1),
+        this.calculateEnhancedConfidence(values1).noiseLevel * (weights.get('noiseLevel') || 1),
     };
 
     // Calculate adjusted confidence
-    const totalWeight = Array.from(weights.values()).reduce((a, b) => a + b, 0);
     const adjustedConfidence =
-      Object.values(weightedFactors).reduce((a, b) => a + b, 0) / totalWeight;
+      (result.confidence * Object.values(weightedFactors).reduce((a, b) => a + b, 0)) /
+      weights.size;
 
     return {
-      correlation,
+      correlation: result.coefficient,
       weights,
       adjustedConfidence,
       factors: weightedFactors,
@@ -681,6 +680,37 @@ export class CorrelationAnalyzer extends EventEmitter {
     ];
   }
 
+  public detectAnomalies(values: number[], timestamps: string[] = []): AnomalyContext[] {
+    if (values.length === 0) return [];
+
+    const stats = this.calculateExtendedStatistics(values);
+    const mad = this.calculateMAD(values, stats.median);
+    const anomalies: AnomalyContext[] = [];
+
+    values.forEach((value, index) => {
+      const zscore = Math.abs((value - stats.mean) / stats.stdDev);
+      const madScore = Math.abs(value - stats.median) / mad;
+      const timestamp = timestamps[index] || new Date().toISOString();
+
+      // Detect anomalies using both z-score and MAD
+      if (zscore > 3 || madScore > 3.5) {
+        const seasonalityScore = this.calculateSeasonalityScore(value, index, values);
+        const contextualScore = this.calculateContextualScore(value, index, values);
+
+        anomalies.push({
+          value,
+          timestamp,
+          zscore,
+          mad: madScore,
+          contextualScore,
+          seasonalityScore,
+        });
+      }
+    });
+
+    return anomalies;
+  }
+
   private calculateExtendedStatistics(values: number[]): ExtendedStatistics {
     if (values.length === 0) {
       throw new Error('Cannot calculate statistics for empty dataset');
@@ -730,67 +760,45 @@ export class CorrelationAnalyzer extends EventEmitter {
     return this.calculateExtendedStatistics(absoluteDeviations).median;
   }
 
-  private detectAnomalies(values: number[], timestamps: string[]): AnomalyContext[] {
-    const stats = this.calculateExtendedStatistics(values);
-    const mad = this.calculateMAD(values, stats.median);
-    const anomalies: AnomalyContext[] = [];
+  private calculateSeasonalityScore(value: number, index: number, values: number[]): number {
+    // Calculate seasonality by comparing with values at similar positions in previous periods
+    const period = 24; // Assume daily seasonality (24 hours)
+    const previousValues = [];
 
-    // Calculate seasonal components (assuming daily seasonality)
-    const hourlyAverages = new Array(24).fill(0).map(() => ({ sum: 0, count: 0 }));
-    timestamps.forEach((ts, i) => {
-      const hour = new Date(ts).getHours();
-      hourlyAverages[hour].sum += values[i];
-      hourlyAverages[hour].count++;
-    });
+    for (let i = index - period; i >= 0; i -= period) {
+      previousValues.push(values[i]);
+    }
 
-    const seasonalBaseline = hourlyAverages.map((h) => (h.count > 0 ? h.sum / h.count : 0));
+    if (previousValues.length === 0) return 0;
 
-    // Detect anomalies using multiple methods
-    values.forEach((value, i) => {
-      const hour = new Date(timestamps[i]).getHours();
-      const seasonalExpected = seasonalBaseline[hour];
+    const mean = previousValues.reduce((a, b) => a + b) / previousValues.length;
+    const stdDev = Math.sqrt(
+      previousValues.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / previousValues.length
+    );
 
-      // Z-score
-      const zscore = Math.abs((value - stats.mean) / stats.stdDev);
+    return Math.abs((value - mean) / (stdDev || 1));
+  }
 
-      // MAD score
-      const madScore = Math.abs(value - stats.median) / mad;
+  private calculateContextualScore(value: number, index: number, values: number[]): number {
+    // Calculate contextual score by comparing with neighboring values
+    const windowSize = 5;
+    const start = Math.max(0, index - windowSize);
+    const end = Math.min(values.length, index + windowSize + 1);
+    const window = values.slice(start, end);
 
-      // Contextual score based on local window
-      const windowSize = 12; // 12-hour window
-      const start = Math.max(0, i - windowSize);
-      const end = Math.min(values.length, i + windowSize);
-      const localValues = values.slice(start, end);
-      const localStats = this.calculateExtendedStatistics(localValues);
-      const contextualScore = Math.abs((value - localStats.mean) / localStats.stdDev);
+    const mean = window.reduce((a, b) => a + b) / window.length;
+    const stdDev = Math.sqrt(window.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / window.length);
 
-      // Seasonal deviation score
-      const seasonalityScore = Math.abs((value - seasonalExpected) / stats.stdDev);
-
-      if (zscore > 3 || madScore > 3.5 || contextualScore > 3 || seasonalityScore > 3) {
-        anomalies.push({
-          value,
-          timestamp: timestamps[i],
-          zscore,
-          mad: madScore,
-          contextualScore,
-          seasonalityScore,
-        });
-      }
-    });
-
-    return anomalies;
+    return Math.abs((value - mean) / (stdDev || 1));
   }
 
   private spearmanCorrelation(values1: number[], values2: number[]): number {
-    const n = Math.min(values1.length, values2.length);
-
-    // Calculate ranks
-    const ranks1 = this.calculateRanks([...values1].slice(0, n));
-    const ranks2 = this.calculateRanks([...values2].slice(0, n));
+    // Convert values to ranks
+    const ranks1 = this.calculateRanks(values1);
+    const ranks2 = this.calculateRanks(values2);
 
     // Calculate correlation of ranks
-    return this.calculateCorrelation(ranks1, ranks2);
+    return this.calculateCorrelation(ranks1, ranks2).coefficient;
   }
 
   private calculateRanks(values: number[]): number[] {

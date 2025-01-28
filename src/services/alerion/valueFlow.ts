@@ -34,7 +34,7 @@ export class ValueFlow {
       {
         baseFrequency: 432,
         harmonicSeries: [1, 1.5, 2, 2.5, 3], // Extended harmonics
-        phaseAlignment: true
+        phaseAlignment: true,
       }
     );
 
@@ -54,8 +54,8 @@ export class ValueFlow {
         attributes: {
           type: service.type,
           category: service.category,
-          valueMultiplier: service.revenueModel.multiplier || 1
-        }
+          valueMultiplier: service.revenueModel.multiplier || 1,
+        },
       });
     });
 
@@ -66,14 +66,12 @@ export class ValueFlow {
         const patterns = this.resonance.detectValuePatterns(field, {
           depthLevel: 3,
           includeHarmonics: true,
-          patternRecognition: 'advanced'
+          patternRecognition: 'advanced',
         });
 
         // Filter high-probability patterns with value potential
-        const actionablePatterns = patterns.filter(p => 
-          p.probability > 0.8 && 
-          p.estimatedValue > 1000 &&
-          p.harmonicAlignment > 0.7
+        const actionablePatterns = patterns.filter(
+          (p) => p.probability > 0.8 && p.estimatedValue > 1000 && p.harmonicAlignment > 0.7
         );
 
         for (const pattern of actionablePatterns) {
@@ -88,9 +86,9 @@ export class ValueFlow {
               optimizations: {
                 caching: true,
                 edgeComputing: true,
-                aiAcceleration: pattern.complexity > 0.7
-              }
-            }
+                aiAcceleration: pattern.complexity > 0.7,
+              },
+            },
           };
 
           // Setup infrastructure with enhanced monitoring
@@ -107,18 +105,18 @@ export class ValueFlow {
                 commissionRate: 0.05,
                 demandStrength: 0.7,
                 marketTrends: ['growing', 'stable'],
-                competitiveAdvantage: true
-              }
+                competitiveAdvantage: true,
+              },
             });
 
             // Track and optimize revenue streams
-            opportunities.forEach(opp => {
+            opportunities.forEach((opp) => {
               this.revenue.trackRevenue({
                 source: 'value_flow',
                 amount: this.calculateOptimizedValue(opp, pattern),
                 probability: opp.confidence * pattern.probability,
                 timeline: this.predictTimeline(opp),
-                optimizations: this.identifyOptimizations(opp)
+                optimizations: this.identifyOptimizations(opp),
               });
             });
 
@@ -127,9 +125,10 @@ export class ValueFlow {
               patternStrength: pattern.strength,
               harmonicAlignment: pattern.harmonicAlignment,
               opportunities: opportunities.length,
-              potentialValue: opportunities.reduce((sum, opp) => 
-                sum + this.calculateOptimizedValue(opp, pattern), 0
-              )
+              potentialValue: opportunities.reduce(
+                (sum, opp) => sum + this.calculateOptimizedValue(opp, pattern),
+                0
+              ),
             });
           }
         }
@@ -145,14 +144,14 @@ export class ValueFlow {
         baseScore: 0.7,
         categoryFit: pattern.category === 'electronics' ? 0.9 : 0.6,
         pricePoint: pattern.estimatedValue > 50 ? 0.8 : 0.6,
-        competition: pattern.competitionLevel < 0.7 ? 0.9 : 0.5
+        competition: pattern.competitionLevel < 0.7 ? 0.9 : 0.5,
       },
       ebay: {
         baseScore: 0.6,
         categoryFit: pattern.category === 'collectibles' ? 0.9 : 0.6,
         pricePoint: pattern.estimatedValue < 50 ? 0.8 : 0.5,
-        competition: pattern.competitionLevel < 0.5 ? 0.9 : 0.6
-      }
+        competition: pattern.competitionLevel < 0.5 ? 0.9 : 0.6,
+      },
     };
 
     const amazonScore = Object.values(factors.amazon).reduce((a, b) => a + b, 0);
@@ -170,11 +169,11 @@ export class ValueFlow {
     value *= marketMultiplier;
 
     // Adjust for competition
-    const competitionFactor = Math.max(0.6, 1 - (pattern.competitionLevel * 0.4));
+    const competitionFactor = Math.max(0.6, 1 - pattern.competitionLevel * 0.4);
     value *= competitionFactor;
 
     // Adjust for resonance strength
-    const resonanceFactor = 1 + (pattern.harmonicAlignment * 0.3);
+    const resonanceFactor = 1 + pattern.harmonicAlignment * 0.3;
     value *= resonanceFactor;
 
     // Risk adjustment
@@ -184,12 +183,14 @@ export class ValueFlow {
     return Math.round(value * 100) / 100; // Round to 2 decimal places
   }
 
-  private predictTimeline(opportunity: any): 'immediate' | 'short_term' | 'medium_term' | 'long_term' {
+  private predictTimeline(
+    opportunity: any
+  ): 'immediate' | 'short_term' | 'medium_term' | 'long_term' {
     const factors = {
       marketReadiness: opportunity.marketReadiness || 0.5,
       demandUrgency: opportunity.demandUrgency || 0.5,
       setupComplexity: opportunity.setupComplexity || 0.5,
-      competitionLevel: opportunity.competitionLevel || 0.5
+      competitionLevel: opportunity.competitionLevel || 0.5,
     };
 
     const score = Object.values(factors).reduce((a, b) => a + b, 0) / 4;

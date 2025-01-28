@@ -69,24 +69,35 @@ export class AwinService {
   /**
    * Starts the heartbeat interval for checking Awin API health
    */
-  private startHeartbeat(): NodeJS.Timeout {
+  private startHeartbeat(): void {
     if (this.heartbeatInterval) {
       clearInterval(this.heartbeatInterval);
     }
-    return setInterval(() => this.checkApiHealth(), 300000);
+
+    this.heartbeatInterval = setInterval(
+      async () => {
+        const isHealthy = await this.checkApiHealth();
+        if (!isHealthy) {
+          this.logger.warn('Awin API health check failed, service may be degraded');
+        }
+      },
+      5 * 60 * 1000
+    ); // Check every 5 minutes
   }
 
   /**
    * Checks the health of the Awin API
    */
-  private async checkApiHealth(): Promise<void> {
+  public async checkApiHealth(): Promise<boolean> {
     try {
-      return axios.get(`${this.baseUrl}/health`, {
+      const publisherId = this.config.get('awin').publisherId;
+      await axios.get(`${this.baseUrl}/publishers/${publisherId}/profile`, {
         headers: this.getHeaders(),
       });
+      return true;
     } catch (error) {
       this.logger.error('Awin API health check failed:', error);
-      throw error;
+      return false;
     }
   }
 
@@ -109,6 +120,7 @@ export class AwinService {
    */
   public async searchProducts(pattern: DemandPattern): Promise<Product[]> {
     const cacheKey = this.generateCacheKey(pattern);
+    const publisherId = this.config.get('awin').publisherId;
 
     try {
       const cachedProducts = await this.cache.get(cacheKey);
@@ -119,10 +131,13 @@ export class AwinService {
 
       this.analytics.recordMiss();
       const products = await this.retryStrategy.execute(async () => {
-        const response = await axios.get<AwinProductResponse>(`${this.baseUrl}/products`, {
-          headers: this.getHeaders(),
-          params: this.buildSearchParams(pattern),
-        });
+        const response = await axios.get<AwinProductResponse>(
+          `${this.baseUrl}/publishers/${publisherId}/product-search`,
+          {
+            headers: this.getHeaders(),
+            params: this.buildSearchParams(pattern),
+          }
+        );
 
         return response.data.products ? this.transformProducts(response.data.products) : [];
       });
@@ -130,6 +145,7 @@ export class AwinService {
       await this.cache.set(cacheKey, products);
       return products;
     } catch (error) {
+      this.logger.error('Product search failed:', error);
       throw new Error(`Failed to search products: ${(error as Error).message}`);
     }
   }
@@ -207,13 +223,16 @@ export class AwinService {
 
     try {
       const merchants = await this.retryStrategy.execute(async () => {
-        const response = await axios.get(`${this.baseUrl}/publishers/${this.config.get('awin', 'publisherId')}/programmes`, {
-          headers: this.getHeaders(),
-          params: {
-            relationship: 'joined',
-            region: this.US_REGION,
-          },
-        });
+        const response = await axios.get(
+          `${this.baseUrl}/publishers/${this.config.get('awin', 'publisherId')}/programmes`,
+          {
+            headers: this.getHeaders(),
+            params: {
+              relationship: 'joined',
+              region: this.US_REGION,
+            },
+          }
+        );
 
         return this.filterAndRankMerchants(response.data, domain);
       });
@@ -228,10 +247,8 @@ export class AwinService {
 
   private async filterAndRankMerchants(merchants: any[], domain: string): Promise<MerchantMatch[]> {
     // Filter for active US merchants with good commission rates
-    const validMerchants = merchants.filter((m) =>
-      m.isActive &&
-      m.regions.includes(this.US_REGION) &&
-      m.commissionRate >= 5
+    const validMerchants = merchants.filter(
+      (m) => m.isActive && m.regions.includes(this.US_REGION) && m.commissionRate >= 5
     );
 
     // Rank by commission rate and relevance
@@ -252,9 +269,7 @@ export class AwinService {
     );
 
     return rankedMerchants
-      .sort((a, b) =>
-        (b.commissionRate * b.relevanceScore) - (a.commissionRate * a.relevanceScore)
-      )
+      .sort((a, b) => b.commissionRate * b.relevanceScore - a.commissionRate * a.relevanceScore)
       .slice(0, 10); // Top 10 matches
   }
 

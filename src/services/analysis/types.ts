@@ -3,29 +3,32 @@
  */
 
 export interface DemandContext {
+  // Required fields
   market: string;
   category: string;
-  priceRange: {
-    min: number;
-    max: number;
-  };
+  priceRange: string;
   intent: string;
-  topics: string[];
-  keywords: string[];
-  sentiment: number;
   urgency: number;
-  matches: any[];
-  marketTrends: {
+  volume: number;
+  sentiment: number;
+  categories: string[];
+
+  // Optional fields for enhanced analysis
+  keywords?: string[];
+  relatedCategories?: string[];
+  topics?: string[];
+  matches?: any[];
+  marketTrends?: {
     growth: number;
     volume: number;
     seasonality: number;
   };
-  userPreferences: {
+  userPreferences?: {
     brands: string[];
     pricePoints: string[];
     features: string[];
   };
-  competitiveAnalysis: {
+  competitiveAnalysis?: {
     marketShare: number;
     competitors: string[];
     positioning: string;
@@ -49,7 +52,6 @@ export interface DemandSignal {
   confidence: number;
   context: DemandContext;
   requirements?: DemandRequirements;
-  category?: string;
 }
 
 export interface ValuePattern {

@@ -16,7 +16,7 @@ export class RealtimeAnalyzer {
       timestamp: Date.now(),
       cpu: Math.random() * 100,
       memory: Math.random() * 100,
-      activeConnections: Math.floor(Math.random() * 1000)
+      activeConnections: Math.floor(Math.random() * 1000),
     });
   }
 
@@ -32,23 +32,23 @@ export class RealtimeAnalyzer {
       metrics: {
         cpu: Math.random() * 100,
         memory: Math.random() * 100,
-        latency: Math.random() * 1000
-      }
+        latency: Math.random() * 1000,
+      },
     };
   }
 
   async getResourceSnapshots(seconds: number): Promise<any[]> {
     const now = Date.now();
-    const threshold = now - (seconds * 1000);
-    
+    const threshold = now - seconds * 1000;
+
     // Generate some mock snapshots
     const snapshots = [];
-    for (let i = 0; i < Math.floor(seconds/10); i++) {
+    for (let i = 0; i < Math.floor(seconds / 10); i++) {
       snapshots.push({
-        timestamp: now - (i * 10000),
+        timestamp: now - i * 10000,
         cpu: Math.random() * 100,
         memory: Math.random() * 100,
-        activeConnections: Math.floor(Math.random() * 1000)
+        activeConnections: Math.floor(Math.random() * 1000),
       });
     }
 
@@ -60,7 +60,7 @@ export class RealtimeAnalyzer {
       averageCpu: Math.random() * 100,
       averageMemory: Math.random() * 100,
       averageLatency: Math.random() * 1000,
-      throughput: Math.floor(Math.random() * 10000)
+      throughput: Math.floor(Math.random() * 10000),
     };
   }
 }

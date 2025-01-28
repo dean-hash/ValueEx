@@ -4,15 +4,15 @@ export interface PricePoint {
   currency: string;
   context: string;
   confidence: number;
-  sensitivity: number;    // How price-sensitive is this demand
-  elasticity: number;     // How demand changes with price
-  fairValue: number;      // What they consider fair value
+  sensitivity: number; // How price-sensitive is this demand
+  elasticity: number; // How demand changes with price
+  fairValue: number; // What they consider fair value
 }
 
 export interface MarketTrends {
   trend: string;
-  strength: number;
-  direction: 'up' | 'down' | 'stable';
+  impact: number;
+  confidence: number;
 }
 
 export interface UserPreferences {
@@ -23,12 +23,12 @@ export interface UserPreferences {
 export interface PriceRange {
   min: number;
   max: number;
-  currency?: string;
 }
 
 export interface CompetitiveAnalysis {
   competitors: string[];
   marketShare: number;
+  pricePoints: PriceRange[];
   strengths: string[];
   weaknesses: string[];
 }
@@ -67,21 +67,18 @@ export interface ResonanceFactors {
 
 export interface DemandPattern {
   query: string;
+  strength?: number;
   category?: string;
-  context?: {
-    market?: string;
-    category?: string;
-    keywords?: string[];
-    intent?: string;
-    priceRange?: PriceRange;
-    spatialFactors?: {
-      geographic?: string[];
-      temporal?: string[];
-    };
-    marketTrends?: MarketTrends[];
-    userPreferences?: UserPreferences[];
-    competitiveAnalysis?: CompetitiveAnalysis;
+  keywords?: string[];
+  intent?: string;
+  priceRange?: PriceRange;
+  spatialFactors?: {
+    location: string;
+    radius: number;
   };
+  marketTrends?: MarketTrends[];
+  userPreferences?: UserPreferences[];
+  competitiveAnalysis?: CompetitiveAnalysis;
 }
 
 export interface DemandSignal {
@@ -110,4 +107,18 @@ export interface DemandSignal {
   strength: number;
   confidence: number;
   metadata?: Record<string, unknown>;
+}
+
+export interface ContextualSignal {
+  pattern: DemandPattern;
+  confidence: number;
+  timestamp: number;
+  source: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface ScrapedDemandSignal extends ContextualSignal {
+  rawContent: string;
+  processedContent: string;
+  extractionMethod: string;
 }

@@ -37,7 +37,7 @@ export class UnifiedWorkspace {
     if (config.domainManagementEnabled) {
       this.domainManager = new DomainPortfolioManager();
     }
-    
+
     // Always initialize business services
     this.dynamicsService = new DynamicsService();
     this.bcService = new BusinessCentralService();
@@ -46,11 +46,11 @@ export class UnifiedWorkspace {
   async createWorkspace(name: string) {
     // Create Teams channel
     const channel = await this.teams.createChannel(name);
-    
+
     // Create Planner plan
     const plan = await this.planner.createPlan({
       name,
-      channelId: channel.id
+      channelId: channel.id,
     });
 
     // Initialize business tracking
@@ -58,7 +58,7 @@ export class UnifiedWorkspace {
 
     return {
       channelId: channel.id,
-      planId: plan.id
+      planId: plan.id,
     };
   }
 
@@ -67,14 +67,14 @@ export class UnifiedWorkspace {
     await this.dynamicsService.createProject({
       name: workspaceName,
       type: 'ValueEx Workspace',
-      status: 'Active'
+      status: 'Active',
     });
 
     // Set up Business Central tracking
     await this.bcService.createProjectAccount({
       name: workspaceName,
       type: 'Workspace',
-      category: 'Development'
+      category: 'Development',
     });
   }
 
@@ -88,7 +88,7 @@ export class UnifiedWorkspace {
         opportunities.push({
           domain,
           potentialValue: analysis.potentialValue,
-          strategy: analysis.recommendedStrategy
+          strategy: analysis.recommendedStrategy,
         });
       }
     }
@@ -98,7 +98,7 @@ export class UnifiedWorkspace {
       await this.planner.createTask({
         title: `Domain Opportunity: ${opportunity.domain}`,
         description: `Potential value: ${opportunity.potentialValue}\nStrategy: ${opportunity.strategy}`,
-        priority: 'High'
+        priority: 'High',
       });
     }
 
@@ -113,7 +113,7 @@ export class UnifiedWorkspace {
       progress: metrics.progress,
       revenue: financials.revenue,
       costs: financials.costs,
-      opportunities: metrics.opportunities
+      opportunities: metrics.opportunities,
     };
   }
 }

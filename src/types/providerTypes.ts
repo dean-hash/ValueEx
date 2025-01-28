@@ -1,4 +1,4 @@
-import { DemandSignal, ProcessedSignal } from './demandTypes';
+import { DemandSignal } from './mvp/demand';
 
 export type ProviderStatus = 'ready' | 'processing' | 'error' | 'offline';
 
@@ -16,6 +16,11 @@ export interface ProviderConfig {
   cacheEnabled: boolean;
 }
 
+export interface ProcessedSignal {
+  signal: DemandSignal;
+  context: any;
+}
+
 export interface IntelligenceProvider {
   name: string;
   type: 'processing' | 'analysis' | 'validation';
@@ -23,6 +28,7 @@ export interface IntelligenceProvider {
   metrics?: ProviderMetrics;
   config?: ProviderConfig;
   processSignal(signal: DemandSignal): Promise<ProcessedSignal>;
-  processSignalBatch(signals: DemandSignal[]): Promise<ProcessedSignal[]>;
+  processSignalBatch?(signals: DemandSignal[]): Promise<ProcessedSignal[]>;
   getStatus(): ProviderStatus;
+  validateAlignment(): Promise<boolean>;
 }

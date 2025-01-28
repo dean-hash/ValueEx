@@ -16,7 +16,7 @@ describe('Google Trends Scraper', () => {
       source: 'google-trends',
       timestamp: new Date().toISOString(),
       confidence: 0.8,
-      metadata: {}
+      metadata: {},
     };
 
     // Listen for intelligence events

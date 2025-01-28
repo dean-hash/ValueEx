@@ -2,114 +2,119 @@ import { BotFrameworkAdapter, TurnContext, ActivityTypes } from 'botbuilder';
 import { teamsConfig } from '../../config/teams.config';
 import { Logger } from '../logging/Logger';
 import { MetricsCollector } from '../monitoring/Metrics';
+import { AffiliateManager } from '../affiliateManager';
 
 export class TeamsBotService {
-    private adapter: BotFrameworkAdapter;
-    private logger: Logger;
-    private metrics: MetricsCollector;
+  private adapter: BotFrameworkAdapter;
+  private logger: Logger;
+  private metrics: MetricsCollector;
+  private affiliateManager: AffiliateManager;
 
-    constructor() {
-        this.adapter = new BotFrameworkAdapter({
-            appId: teamsConfig.botId,
-            appPassword: teamsConfig.botPassword
-        });
+  constructor() {
+    this.adapter = new BotFrameworkAdapter({
+      appId: teamsConfig.botId,
+      appPassword: teamsConfig.botPassword,
+    });
 
-        this.logger = new Logger('TeamsBotService');
-        this.metrics = MetricsCollector.getInstance();
+    this.logger = new Logger('TeamsBotService');
+    this.metrics = MetricsCollector.getInstance();
+    this.affiliateManager = AffiliateManager.getInstance();
 
-        this.setupErrorHandler();
-        this.adapter.onTurn(async (context) => {
-            await this.processMessage(context);
-        });
-    }
+    this.setupErrorHandler();
+    this.adapter.onTurn(async (context) => {
+      await this.processMessage(context);
+    });
+  }
 
-    private setupErrorHandler(): void {
-        this.adapter.onTurnError = async (context, error) => {
-            this.logger.error('Bot error:', error);
-            this.metrics.trackError('bot_error');
+  private setupErrorHandler(): void {
+    this.adapter.onTurnError = async (context, error) => {
+      this.logger.error('Bot error:', error);
+      this.metrics.trackError('bot_error');
+      await context.sendActivity('I encountered an error. Please try asking about AI tools again.');
+    };
+  }
 
-            await context.sendActivity('The bot encountered an error. Please try again later.');
-        };
-    }
+  public async processMessage(context: TurnContext): Promise<void> {
+    const startTime = Date.now();
 
-    public async processMessage(context: TurnContext): Promise<void> {
-        const startTime = Date.now();
-        
-        try {
-            if (context.activity.type === ActivityTypes.Message) {
-                const message = context.activity.text.toLowerCase();
+    try {
+      if (context.activity.type === ActivityTypes.Message) {
+        const message = context.activity.text.toLowerCase();
+        const userId = context.activity.from.id;
 
-                // Command handling
-                if (message.startsWith('!help')) {
-                    await this.sendHelpMessage(context);
-                } else if (message.startsWith('!status')) {
-                    await this.sendStatusMessage(context);
-                } else if (message.startsWith('!metrics')) {
-                    await this.sendMetricsMessage(context);
-                } else {
-                    // Default response
-                    await context.sendActivity('Type !help to see available commands');
-                }
-            }
-
-            this.metrics.trackApiMetrics('bot_message', {
-                latency: Date.now() - startTime,
-                success: true
-            });
-        } catch (error) {
-            this.metrics.trackError('message_processing_error');
-            this.logger.error('Error processing message:', error);
-            await context.sendActivity('Error processing your message. Please try again.');
+        if (message.includes('help')) {
+          await this.sendHelpMessage(context);
+        } else {
+          await this.handleProductRecommendation(context, message, userId);
         }
+      }
+
+      this.metrics.trackMetric('bot_response_time', Date.now() - startTime);
+    } catch (error) {
+      this.logger.error('Error processing message:', error);
+      await context.sendActivity('I encountered an error. Please try asking about AI tools again.');
     }
+  }
 
-    private async sendHelpMessage(context: TurnContext): Promise<void> {
-        const helpMessage = `
-Available commands:
-- !help: Show this help message
-- !status: Check system status
-- !metrics: View current metrics
-        `;
-        await context.sendActivity(helpMessage);
+  private async handleProductRecommendation(
+    context: TurnContext,
+    message: string,
+    userId: string
+  ): Promise<void> {
+    try {
+      // Determine product category
+      const category = message.includes('image') ? 'ai_image' : 'ai_writing';
+
+      // Get relevant products
+      const products = await this.affiliateManager.getRelevantProducts(category);
+
+      if (products.length === 0) {
+        await context.sendActivity(
+          "I couldn't find any relevant AI tools for your needs. Try asking about AI writing or image generation tools."
+        );
+        return;
+      }
+
+      // Format response with affiliate links
+      const response = products
+        .map(
+          (product) => `
+📌 ${product.name}
+${product.description}
+💰 Special Offer: Up to ${product.commission * 100}% discount through our partnership
+🔗 Get Started: ${this.affiliateManager.generateAffiliateLink(product.name, userId)}
+            `
+        )
+        .join('\n');
+
+      await context.sendActivity(response);
+
+      // Track potential revenue opportunity
+      this.metrics.trackMetric('product_recommendation', 1, {
+        category,
+        products: products.map((p) => p.name).join(','),
+        potential_commission: products.reduce((sum, p) => sum + p.commission, 0),
+      });
+    } catch (error) {
+      this.logger.error('Error handling product recommendation:', error);
+      await context.sendActivity(
+        'I encountered an error finding the right tools. Please try again.'
+      );
     }
+  }
 
-    private async sendStatusMessage(context: TurnContext): Promise<void> {
-        const resourceMetrics = this.metrics.getResourceMetrics();
-        const status = {
-            uptime: process.uptime(),
-            ...resourceMetrics,
-            timestamp: new Date().toISOString()
-        };
-        await context.sendActivity(`System Status:\n${JSON.stringify(status, null, 2)}`);
-    }
+  private async sendHelpMessage(context: TurnContext): Promise<void> {
+    await context.sendActivity(`
+🤖 ValueEx - Your AI Tool Assistant
 
-    private async sendMetricsMessage(context: TurnContext): Promise<void> {
-        const apiMetrics = this.metrics.getApiMetrics();
-        await context.sendActivity(`Current Metrics:\n${JSON.stringify(apiMetrics, null, 2)}`);
-    }
+I can help you find the perfect AI tools for your needs:
 
-    public async sendNotification(channelId: string, message: string): Promise<void> {
-        const startTime = Date.now();
-        
-        try {
-            const reference = {
-                channelId: channelId,
-                serviceUrl: 'https://smba.trafficmanager.net/amer/',
-                conversation: { id: channelId }
-            };
+Just tell me what you're looking for:
+- "I need an AI writing tool"
+- "Looking for AI image generation"
+- "Need help with content creation"
 
-            await this.adapter.continueConversation(reference, async (context) => {
-                await context.sendActivity(message);
-            });
-
-            this.metrics.trackApiMetrics('bot_notification', {
-                latency: Date.now() - startTime,
-                success: true
-            });
-        } catch (error) {
-            this.metrics.trackError('notification_error');
-            this.logger.error('Failed to send notification:', error);
-            throw error;
-        }
-    }
+I'll recommend the best tools with exclusive partnership discounts! 
+        `);
+  }
 }

@@ -33,7 +33,7 @@ export class TeamsService {
 
     for (let i = 0; i < maxRetries; i++) {
       try {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
         return data; // Mock successful response
       } catch (error) {
         lastError = error as Error;
@@ -46,7 +46,7 @@ export class TeamsService {
 
   protected async authenticate(): Promise<void> {
     // Mock authentication
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
   }
 
   async initialize(): Promise<void> {
@@ -62,7 +62,7 @@ export class TeamsService {
     const meeting = await this.makeApiCall('/meetings/create', {
       joinUrl: `https://teams.microsoft.com/l/meetup-join/test-${Date.now()}`,
       threadId: `thread-${Date.now()}`,
-      subject
+      subject,
     });
 
     this.activeMeetings.add(meeting.threadId);
@@ -76,7 +76,7 @@ export class TeamsService {
 
     const stream: AudioStream = {
       status: 'active',
-      sampleRate: 48000
+      sampleRate: 48000,
     };
 
     this.activeStreams.set(threadId, stream);
@@ -88,7 +88,7 @@ export class TeamsService {
       return {
         text: '',
         confidence: 0,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     }
 
@@ -96,7 +96,7 @@ export class TeamsService {
     return {
       text: 'Mock transcription text',
       confidence: Math.random(),
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
   }
 
@@ -124,7 +124,7 @@ export class ValueService {
     return {
       consumerValue: Math.random() * 100,
       merchantValue: Math.random() * 100,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
   }
 }

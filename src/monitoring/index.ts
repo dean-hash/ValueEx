@@ -5,20 +5,19 @@ import { performance } from 'perf_hooks';
 // Configure Winston logger
 const logger = winston.createLogger({
   level: 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
-  ),
+  format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
   transports: [
     new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'logs/combined.log' })
-  ]
+    new winston.transports.File({ filename: 'logs/combined.log' }),
+  ],
 });
 
 if (process.env.NODE_ENV !== 'production') {
-  logger.add(new winston.transports.Console({
-    format: winston.format.simple()
-  }));
+  logger.add(
+    new winston.transports.Console({
+      format: winston.format.simple(),
+    })
+  );
 }
 
 // Performance metrics
@@ -26,7 +25,7 @@ const metrics = {
   requestCount: 0,
   avgResponseTime: 0,
   errors: 0,
-  lastError: null as Error | null
+  lastError: null as Error | null,
 };
 
 // Middleware for request logging and metrics
@@ -40,7 +39,7 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction) =
     method: req.method,
     path: req.path,
     query: req.query,
-    body: req.body
+    body: req.body,
   });
 
   // Track response
@@ -53,7 +52,7 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction) =
       method: req.method,
       path: req.path,
       statusCode: res.statusCode,
-      duration
+      duration,
     });
   });
 
@@ -70,7 +69,7 @@ export const errorLogger = (err: Error, req: Request, res: Response, next: NextF
     message: err.message,
     stack: err.stack,
     method: req.method,
-    path: req.path
+    path: req.path,
   });
 
   next(err);
@@ -84,6 +83,6 @@ export const getHealthMetrics = () => ({
     requestCount: metrics.requestCount,
     avgResponseTime: metrics.avgResponseTime.toFixed(2) + 'ms',
     errorCount: metrics.errors,
-    lastError: metrics.lastError?.message
-  }
+    lastError: metrics.lastError?.message,
+  },
 });

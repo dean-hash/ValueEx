@@ -68,7 +68,7 @@ export class ProviderCoordinator extends EventEmitter {
       status: 'idle',
       lastUpdate: Date.now(),
       currentLoad: 0,
-      errorCount: 0
+      errorCount: 0,
     });
   }
 
@@ -91,7 +91,7 @@ export class ProviderCoordinator extends EventEmitter {
           this.emit('providerOverload', {
             providerId,
             load,
-            timestamp: Date.now()
+            timestamp: Date.now(),
           });
         }
 
@@ -99,14 +99,14 @@ export class ProviderCoordinator extends EventEmitter {
           this.emit('providerError', {
             providerId,
             errorCount: state.errorCount,
-            timestamp: Date.now()
+            timestamp: Date.now(),
           });
         }
 
         this.providerStates.set(providerId, {
           ...state,
           currentLoad: load,
-          lastUpdate: Date.now()
+          lastUpdate: Date.now(),
         });
       } catch (error) {
         logger.error(`Error monitoring provider ${providerId}:`, error);
@@ -120,13 +120,13 @@ export class ProviderCoordinator extends EventEmitter {
       return {
         success: true,
         data: result,
-        error: null
+        error: null,
       };
     } catch (error) {
       return {
         success: false,
         data: null,
-        error: error instanceof Error ? error : new Error('Unknown error occurred')
+        error: error instanceof Error ? error : new Error('Unknown error occurred'),
       };
     }
   }
@@ -141,7 +141,7 @@ export class ProviderCoordinator extends EventEmitter {
     if (!provider || !state) {
       return {
         success: false,
-        error: new Error(`Provider ${providerId} not found`)
+        error: new Error(`Provider ${providerId} not found`),
       };
     }
 
@@ -151,7 +151,7 @@ export class ProviderCoordinator extends EventEmitter {
       this.providerStates.set(providerId, {
         ...state,
         errorCount: 0,
-        status: 'idle'
+        status: 'idle',
       });
 
       return result;
@@ -159,25 +159,28 @@ export class ProviderCoordinator extends EventEmitter {
       this.providerStates.set(providerId, {
         ...state,
         errorCount: state.errorCount + 1,
-        status: 'error'
+        status: 'error',
       });
 
       logger.error(`Error processing with provider ${providerId}:`, error);
       return {
         success: false,
-        error: error instanceof Error ? error : new Error('Unknown error occurred')
+        error: error instanceof Error ? error : new Error('Unknown error occurred'),
       };
     }
   }
 
   private mergeResults(results: ProcessedSignal[]): ProcessedSignal {
-    return results.reduce((merged, result) => ({
-      ...merged,
-      ...result,
-      confidence: Math.max(merged.confidence || 0, result.confidence || 0),
-      relevance: Math.max(merged.relevance || 0, result.relevance || 0),
-      priority: Math.max(merged.priority || 0, result.priority || 0)
-    }), {} as ProcessedSignal);
+    return results.reduce(
+      (merged, result) => ({
+        ...merged,
+        ...result,
+        confidence: Math.max(merged.confidence || 0, result.confidence || 0),
+        relevance: Math.max(merged.relevance || 0, result.relevance || 0),
+        priority: Math.max(merged.priority || 0, result.priority || 0),
+      }),
+      {} as ProcessedSignal
+    );
   }
 
   public dispose(): void {

@@ -23,11 +23,37 @@ export interface ResonanceFieldUpdate {
   confidenceDelta?: number;
 }
 
+export interface ResonanceField {
+  id: string;
+  strength: number;
+  direction: 'positive' | 'negative' | 'neutral';
+  confidence: number;
+  impact: number;
+  source: string;
+  timestamp: number;
+  metadata?: Record<string, unknown>;
+}
+
+export interface ResonanceMetrics {
+  harmony: number;
+  impact: number;
+  sustainability: number;
+  innovation: number;
+  localRelevance: number;
+}
+
 export enum ResonanceEvents {
   PATTERN_DETECTED = 'pattern_detected',
   FIELD_UPDATED = 'field_updated',
   STRENGTH_CHANGED = 'strength_changed',
-  CONFIDENCE_UPDATED = 'confidence_updated'
+  CONFIDENCE_UPDATED = 'confidence_updated',
+}
+
+export interface ResonanceUpdate {
+  fieldId: string;
+  strengthDelta?: number;
+  confidenceDelta?: number;
+  metadata?: Record<string, unknown>;
 }
 
 // Type alias for backward compatibility

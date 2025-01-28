@@ -1,110 +1,100 @@
 import { AwinService } from '../services/awinService';
-import { Logger } from '../utils/logger';
-import { DemandPattern } from '../types/demandTypes';
 import { ConfigService } from '../config/configService';
 import { AwinCache } from '../cache/awinCache';
 import { RetryStrategy } from '../utils/retryStrategy';
 import { CacheAnalytics } from '../analytics/cacheAnalytics';
+import { DemandPattern } from '../types/demandTypes';
 
-describe('AwinService', () => {
+describe('AwinService Integration', () => {
   let awinService: AwinService;
-  let mockConfig: jest.Mocked<ConfigService>;
-  let mockCache: jest.Mocked<AwinCache>;
-  let mockRetry: jest.Mocked<RetryStrategy>;
-  let mockAnalytics: jest.Mocked<CacheAnalytics>;
+  let config: ConfigService;
+  let cache: AwinCache;
+  let retryStrategy: RetryStrategy;
+  let analytics: CacheAnalytics;
 
   beforeEach(() => {
-    mockConfig = {
-      get: jest.fn().mockReturnValue('test-api-key'),
-    } as unknown as jest.Mocked<ConfigService>;
-
-    mockCache = {
-      get: jest.fn(),
-      set: jest.fn(),
-      delete: jest.fn(),
-      clear: jest.fn(),
-    } as unknown as jest.Mocked<AwinCache>;
-
-    mockRetry = {
-      execute: jest.fn(),
-    } as unknown as jest.Mocked<RetryStrategy>;
-
-    mockAnalytics = {
-      recordHit: jest.fn(),
-      recordMiss: jest.fn(),
-      getStats: jest.fn(),
-    } as unknown as jest.Mocked<CacheAnalytics>;
-
-    awinService = new AwinService(mockConfig, mockCache, mockRetry, mockAnalytics);
+    config = ConfigService.getInstance();
+    cache = AwinCache.getInstance();
+    retryStrategy = new RetryStrategy();
+    analytics = CacheAnalytics.getInstance();
+    awinService = new AwinService(config, cache, retryStrategy, analytics);
   });
 
-  describe('searchProducts', () => {
-    it('should return products matching the search pattern', async () => {
-      const searchPattern: DemandPattern = {
-        query: 'test',
-        category: 'Electronics',
-        context: {
-          market: 'UK',
-          keywords: ['gadget', 'tech'],
-          priceRange: { min: 0, max: 100 },
-        },
-      };
+  describe('API Health', () => {
+    it('should check API health successfully', async () => {
+      const isHealthy = await awinService.checkApiHealth();
+      expect(isHealthy).toBe(true);
+    });
 
-      const mockProduct = {
-        id: '1',
-        name: 'Test Product',
-        description: 'A test product',
-        price: {
-          amount: 50,
-          currency: 'GBP',
-        },
-        merchant: {
-          id: 'merchant1',
-          name: 'Test Merchant',
-          category: 'Electronics',
-        },
-        url: 'https://test.com/product',
-        imageUrl: 'https://test.com/image.jpg',
-        specifications: [],
-        resonanceScore: 0.8,
-        resonanceMetrics: {
-          harmony: 0.8,
-          impact: 0.7,
-          sustainability: 0.9,
-          innovation: 0.6,
-          localRelevance: 0.7,
-        },
-      };
+    it('should handle API health check failures gracefully', async () => {
+      // Temporarily invalidate API key
+      const originalConfig = config.get('awin');
+      config.get('awin').apiKey = 'invalid-key';
 
-      mockCache.get.mockResolvedValue(null);
-      mockRetry.execute.mockResolvedValue([mockProduct]);
+      const isHealthy = await awinService.checkApiHealth();
+      expect(isHealthy).toBe(false);
 
-      const products = await awinService.searchProducts(searchPattern);
-      expect(products).toHaveLength(1);
-      expect(products[0]).toEqual(mockProduct);
+      // Restore config
+      config.get('awin').apiKey = originalConfig.apiKey;
     });
   });
 
-  describe('connect to Awin API', () => {
-    it('should connect to Awin API', async () => {
-      try {
-        const pattern: DemandPattern = {
-          query: 'test',
-          context: {
-            priceRange: {
-              min: 0,
-              max: 100,
-            },
-          },
-        };
-        const products = await awinService.searchProducts(pattern);
-        expect(products).toBeDefined();
-        console.log('Successfully connected to Awin');
-        console.log(`Found ${products.length} products`);
-      } catch (error) {
-        console.error('Failed to connect to Awin:', error);
-        throw error;
+  describe('Product Search', () => {
+    it('should search products with valid pattern', async () => {
+      const pattern: DemandPattern = {
+        query: 'laptop',
+        context: {
+          priceRange: { min: 500, max: 1500 },
+          market: 'electronics',
+          category: 'computers',
+        },
+      };
+
+      const products = await awinService.searchProducts(pattern);
+      expect(Array.isArray(products)).toBe(true);
+
+      if (products.length > 0) {
+        const product = products[0];
+        expect(product).toHaveProperty('id');
+        expect(product).toHaveProperty('name');
+        expect(product).toHaveProperty('price');
+        expect(product.price).toBeGreaterThanOrEqual(500);
+        expect(product.price).toBeLessThanOrEqual(1500);
       }
+    });
+
+    it('should handle empty search results', async () => {
+      const pattern: DemandPattern = {
+        query: 'xyznonexistentproduct123',
+        context: {
+          market: 'none',
+          category: 'none',
+        },
+      };
+
+      const products = await awinService.searchProducts(pattern);
+      expect(Array.isArray(products)).toBe(true);
+      expect(products.length).toBe(0);
+    });
+
+    it('should use cache for repeated searches', async () => {
+      const pattern: DemandPattern = {
+        query: 'monitor',
+        context: {
+          priceRange: { min: 100, max: 1000 },
+          market: 'electronics',
+        },
+      };
+
+      // First search should miss cache
+      const spy = jest.spyOn(analytics, 'recordMiss');
+      await awinService.searchProducts(pattern);
+      expect(spy).toHaveBeenCalled();
+
+      // Second search should hit cache
+      const hitSpy = jest.spyOn(analytics, 'recordHit');
+      await awinService.searchProducts(pattern);
+      expect(hitSpy).toHaveBeenCalled();
     });
   });
 });

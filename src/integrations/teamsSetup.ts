@@ -18,21 +18,21 @@ export class TeamsSetup {
       credentials: {
         clientId: process.env.TEAMS_CLIENT_ID,
         clientSecret: process.env.TEAMS_CLIENT_SECRET,
-        tenantId: process.env.TENANT_ID
-      }
+        tenantId: process.env.TENANT_ID,
+      },
     });
 
     this.graphClient = GraphServiceClient.init({
       authProvider: (done) => {
         done(null, process.env.GRAPH_TOKEN);
-      }
+      },
     });
   }
 
   async cleanupEnvironment() {
     // List all teams
     const teams = await this.graphClient.teams.get();
-    
+
     for (const team of teams.value) {
       // Archive inactive teams except essential ones
       if (!this.isEssentialTeam(team.displayName)) {
@@ -56,7 +56,11 @@ export class TeamsSetup {
 
   private async cleanupLicenses() {
     const users = await this.graphClient.users.get();
-    const essentialUsers = ['dean@valueex.ai', 'clark.johnson@divvytech.com', 'cascade@divvytech.com'];
+    const essentialUsers = [
+      'dean@valueex.ai',
+      'clark.johnson@divvytech.com',
+      'cascade@divvytech.com',
+    ];
 
     for (const user of users.value) {
       if (!essentialUsers.includes(user.userPrincipalName.toLowerCase())) {
@@ -70,7 +74,7 @@ export class TeamsSetup {
     const licenses = await this.graphClient.users[userId].assignedLicenses.get();
     await this.graphClient.users[userId].assignedLicenses.delete({
       addLicenses: [],
-      removeLicenses: licenses.value.map(l => l.skuId)
+      removeLicenses: licenses.value.map((l) => l.skuId),
     });
   }
 
@@ -79,27 +83,27 @@ export class TeamsSetup {
     const team = await this.teamsClient.createTeam({
       displayName: 'ValueEx Command Center',
       description: 'Central hub for ValueEx development and operations',
-      visibility: 'private'
+      visibility: 'private',
     });
 
     // Create essential channels
     const channels = [
       {
         displayName: 'Strategy & Planning',
-        description: 'High-level strategy discussions and planning'
+        description: 'High-level strategy discussions and planning',
       },
       {
         displayName: 'Development',
-        description: 'Technical development and implementation'
+        description: 'Technical development and implementation',
       },
       {
         displayName: 'Business Operations',
-        description: 'Business operations and administration'
+        description: 'Business operations and administration',
       },
       {
         displayName: 'Voice Collaboration',
-        description: 'Direct voice communication channel'
-      }
+        description: 'Direct voice communication channel',
+      },
     ];
 
     for (const channel of channels) {
@@ -113,9 +117,6 @@ export class TeamsSetup {
 
 // Execute setup
 const setup = new TeamsSetup();
-Promise.all([
-  setup.cleanupEnvironment(),
-  setup.setupNewEnvironment()
-]).then(() => {
+Promise.all([setup.cleanupEnvironment(), setup.setupNewEnvironment()]).then(() => {
   console.log('Teams environment setup complete');
 });

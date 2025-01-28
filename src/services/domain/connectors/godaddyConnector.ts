@@ -303,10 +303,7 @@ export class GoDaddyConnector {
       await page.type('input[name="zip"]', paymentInfo.zip);
 
       // Submit form
-      await Promise.all([
-        page.waitForNavigation(),
-        page.click('button[type="submit"]')
-      ]);
+      await Promise.all([page.waitForNavigation(), page.click('button[type="submit"]')]);
 
       // Check for success message
       const success = await page.evaluate(() => {

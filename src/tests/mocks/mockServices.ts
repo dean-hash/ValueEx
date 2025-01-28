@@ -11,7 +11,7 @@ import {
   MeetingInfo,
   EfficiencyMetrics,
   AffiliateMetrics,
-  AudioStreamConfig
+  AudioStreamConfig,
 } from '../../types/serviceTypes';
 
 export class MockTeamsService implements ITeamsIntegration {
@@ -23,7 +23,7 @@ export class MockTeamsService implements ITeamsIntegration {
     return {
       joinUrl: `https://teams.mock.com/meeting/${Date.now()}`,
       threadId: `thread-${Date.now()}`,
-      subject
+      subject,
     };
   }
 
@@ -35,7 +35,7 @@ export class MockTeamsService implements ITeamsIntegration {
     this.emitter.emit('meetingJoined', { url });
     return {
       user: { id: 'mock-user' },
-      recognizer: {}
+      recognizer: {},
     };
   }
 }
@@ -70,8 +70,8 @@ export class MockResonanceService implements IResonanceFieldService {
         revenue: 100,
         costs: 50,
         profitMargin: 0.5,
-        customerEngagement: 0.85
-      }
+        customerEngagement: 0.85,
+      },
     };
   }
 
@@ -99,7 +99,7 @@ export class MockBusinessCentralService implements IBusinessCentralService {
     return {
       processingTime: 120,
       conversionRate: 0.15,
-      costPerLead: 25.0
+      costPerLead: 25.0,
     };
   }
 }
@@ -110,7 +110,7 @@ export class MockAwinService implements IAwinService {
       clicks: 1000,
       conversions: 50,
       revenue: 5000.0,
-      commission: 250.0
+      commission: 250.0,
     };
   }
 }

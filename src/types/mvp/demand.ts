@@ -8,6 +8,7 @@ export interface DemandSignal {
   vertical: MarketVertical;
   insights: DemandInsights;
   context: DemandContext;
+  timestamp: string; // ISO date string
 }
 
 export interface DemandInsights {
@@ -37,11 +38,19 @@ export interface DemandInsights {
 }
 
 export interface DemandContext {
-  authenticityScore: number;
-  manipulationIndicators: string[];
-  realWorldContext: string[];
-  confidence: number;
-  valueValidation: {
+  market: string;
+  category: string;
+  priceRange: string;
+  intent: string;
+  urgency: number;
+  volume: number;
+  sentiment: number;
+  categories: string[];
+  authenticityScore?: number;
+  manipulationIndicators?: string[];
+  realWorldContext?: string[];
+  confidence?: number;
+  valueValidation?: {
     evidenceStrength: number;
     practicalApplication: string[];
     sustainableValue: boolean;

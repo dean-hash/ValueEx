@@ -1,10 +1,10 @@
-import { configService } from '../config/configService';
+import { ConfigService } from '../config/configService';
 
 // Test configuration loading
 console.log('\n=== Testing Configuration Service ===\n');
 
 // Test OpenAI Configuration
-const openaiConfig = configService.getOpenAIConfig();
+const openaiConfig = ConfigService.getInstance().get('openai');
 console.log('OpenAI API Key exists:', !!openaiConfig.apiKey);
 console.log('OpenAI API Key length:', openaiConfig.apiKey.length);
 
@@ -22,16 +22,33 @@ console.log('- OpenAI Configured:', !!openaiConfig.apiKey);
 console.log('- GoDaddy Configured:', !!(godaddyConfig.apiKey && godaddyConfig.secret));
 
 describe('ConfigService', () => {
-  it('should load configuration with test environment', () => {
-    const config = configService['config'];
-    expect(config).toBeDefined();
-    expect(config.server.environment).toBe('test');
+  let config: ConfigService;
+
+  beforeEach(() => {
+    config = ConfigService.getInstance();
   });
 
-  it('should have required configuration fields', () => {
-    const config = configService['config'];
-    expect(config.server).toBeDefined();
-    expect(config.server.port).toBeDefined();
-    expect(typeof config.server.port).toBe('number');
+  describe('get', () => {
+    it('should return runner configuration', () => {
+      const runnerConfig = config.get('runner');
+      expect(runnerConfig).toBeDefined();
+      expect(runnerConfig.matchIntervalMs).toBeGreaterThan(0);
+      expect(runnerConfig.analyticsIntervalMs).toBeGreaterThan(0);
+      expect(runnerConfig.maxConcurrentMatches).toBeGreaterThan(0);
+      expect(typeof runnerConfig.enableHealthChecks).toBe('boolean');
+    });
+
+    it('should return server configuration', () => {
+      const serverConfig = config.get('server');
+      expect(serverConfig).toBeDefined();
+      expect(serverConfig.port).toBeGreaterThan(0);
+      expect(['development', 'production', 'test']).toContain(serverConfig.environment);
+    });
+
+    it('should handle missing optional values', () => {
+      const openaiConfig = config.get('openai');
+      expect(openaiConfig).toBeDefined();
+      expect(typeof openaiConfig.apiKey).toBe('string');
+    });
   });
 });

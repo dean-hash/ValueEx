@@ -42,39 +42,39 @@ export interface AffiliateRequirements {
 
 // Network-specific requirements based on our experience and rejections
 export const NETWORK_REQUIREMENTS: Record<string, AffiliateRequirements> = {
-  'ShareASale': {
+  ShareASale: {
     network: 'ShareASale',
     requirements: {
       websiteAge: {
         min: 3,
-        recommended: 6
+        recommended: 6,
       },
       traffic: {
         monthly: {
           min: 500,
-          recommended: 2000
+          recommended: 2000,
         },
         unique: {
           min: 300,
-          recommended: 1500
-        }
+          recommended: 1500,
+        },
       },
       content: {
         minArticles: 10,
         minWordsPerArticle: 1000,
         requiredPolicies: ['privacy', 'terms', 'affiliate-disclosure'],
-        qualityScore: 0.7
+        qualityScore: 0.7,
       },
       technical: {
         requiredTags: ['shareASale-tracking', 'conversion-pixel'],
         trackingSetup: ['global-tracking', 'product-tracking'],
-        ssl: true
+        ssl: true,
       },
       business: {
         registrationRequired: true,
         taxInfoRequired: true,
-        paymentThreshold: 50
-      }
+        paymentThreshold: 50,
+      },
     },
     applicationProcess: {
       steps: [
@@ -82,51 +82,51 @@ export const NETWORK_REQUIREMENTS: Record<string, AffiliateRequirements> = {
         'Content Quality Check',
         'Technical Integration Verification',
         'Business Documentation',
-        'Final Approval'
+        'Final Approval',
       ],
       averageApprovalTime: 7, // days
       commonRejectionReasons: [
         'Insufficient traffic',
         'Low content quality',
         'Missing required policies',
-        'Incomplete business information'
+        'Incomplete business information',
       ],
-      appealProcess: 'Submit appeal with improvements after 30 days'
-    }
+      appealProcess: 'Submit appeal with improvements after 30 days',
+    },
   },
-  'ImpactRadius': {
+  ImpactRadius: {
     network: 'ImpactRadius',
     requirements: {
       websiteAge: {
         min: 6,
-        recommended: 12
+        recommended: 12,
       },
       traffic: {
         monthly: {
           min: 1000,
-          recommended: 5000
+          recommended: 5000,
         },
         unique: {
           min: 800,
-          recommended: 4000
-        }
+          recommended: 4000,
+        },
       },
       content: {
         minArticles: 15,
         minWordsPerArticle: 1200,
         requiredPolicies: ['privacy', 'terms', 'affiliate-disclosure', 'cookie-policy'],
-        qualityScore: 0.8
+        qualityScore: 0.8,
       },
       technical: {
         requiredTags: ['impact-pixel', 'conversion-tracking'],
         trackingSetup: ['global-tracking', 'product-tracking', 'event-tracking'],
-        ssl: true
+        ssl: true,
       },
       business: {
         registrationRequired: true,
         taxInfoRequired: true,
-        paymentThreshold: 100
-      }
+        paymentThreshold: 100,
+      },
     },
     applicationProcess: {
       steps: [
@@ -134,15 +134,15 @@ export const NETWORK_REQUIREMENTS: Record<string, AffiliateRequirements> = {
         'Website Audit',
         'Technical Review',
         'Business Verification',
-        'Final Review'
+        'Final Review',
       ],
       averageApprovalTime: 14, // days
       commonRejectionReasons: [
         'Website not established enough',
         'Insufficient organic traffic',
         'Poor content quality',
-        'Missing technical requirements'
-      ]
-    }
-  }
+        'Missing technical requirements',
+      ],
+    },
+  },
 };

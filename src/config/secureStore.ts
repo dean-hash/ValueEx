@@ -45,7 +45,7 @@ export class SecureStore {
 
     return {
       iv: iv.toString('hex'),
-      encryptedData: encrypted.toString('hex') + ':' + authTag.toString('hex')
+      encryptedData: encrypted.toString('hex') + ':' + authTag.toString('hex'),
     };
   }
 
@@ -53,20 +53,19 @@ export class SecureStore {
     const [data, authTag] = encryptedData.split(':');
     const decipher = createDecipheriv('aes-256-gcm', this.masterKey, Buffer.from(iv, 'hex'));
     decipher.setAuthTag(Buffer.from(authTag, 'hex'));
-    
-    return decipher.update(Buffer.from(data, 'hex'), 'hex', 'utf8') + 
-           decipher.final('utf8');
+
+    return decipher.update(Buffer.from(data, 'hex'), 'hex', 'utf8') + decipher.final('utf8');
   }
 
   async storeCredential(credential: SecureCredential): Promise<void> {
     try {
       let credentials = await this.getAllCredentials();
-      credentials = credentials.filter(c => c.service !== credential.service);
+      credentials = credentials.filter((c) => c.service !== credential.service);
       credentials.push(credential);
 
       const encrypted = this.encrypt(JSON.stringify(credentials));
       const data = JSON.stringify(encrypted);
-      
+
       fs.writeFileSync(this.storePath, data, { mode: 0o600 }); // Restricted permissions
       logger.info(`Stored credentials for ${credential.service}`);
     } catch (error) {
@@ -78,7 +77,7 @@ export class SecureStore {
   async getCredential(service: string): Promise<SecureCredential | null> {
     try {
       const credentials = await this.getAllCredentials();
-      return credentials.find(c => c.service === service) || null;
+      return credentials.find((c) => c.service === service) || null;
     } catch (error) {
       logger.error('Failed to get credentials:', error);
       throw error;
@@ -105,15 +104,15 @@ export class SecureStore {
     try {
       // Get all credentials with old key
       const credentials = await this.getAllCredentials();
-      
+
       // Update master key
       const salt = 'ValueEx_Salt';
       this.masterKey = scryptSync(newMasterKey, salt, 32);
-      
+
       // Re-encrypt all credentials with new key
       const encrypted = this.encrypt(JSON.stringify(credentials));
       const data = JSON.stringify(encrypted);
-      
+
       fs.writeFileSync(this.storePath, data, { mode: 0o600 });
       logger.info('Master key updated successfully');
     } catch (error) {

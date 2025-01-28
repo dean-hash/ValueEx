@@ -92,7 +92,7 @@ describe('DemandMatcher', () => {
       source: 'test',
       timestamp: new Date().toISOString(),
       confidence: 0.8,
-      metadata: {}
+      metadata: {},
     };
 
     mockSupplySignal = {
@@ -101,7 +101,7 @@ describe('DemandMatcher', () => {
       source: 'test',
       timestamp: new Date().toISOString(),
       confidence: 0.8,
-      metadata: {}
+      metadata: {},
     };
   });
 

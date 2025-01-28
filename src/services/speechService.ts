@@ -1,8 +1,8 @@
-import { 
-  SpeechConfig, 
-  AudioConfig, 
+import {
+  SpeechConfig,
+  AudioConfig,
   SpeechRecognizer,
-  SpeechSynthesizer 
+  SpeechSynthesizer,
 } from 'microsoft-cognitiveservices-speech-sdk';
 import { credentials } from '../../scripts/getGraphToken';
 
@@ -14,7 +14,7 @@ interface SpeechOptions {
 
 export class SpeechService {
   private speechConfig: SpeechConfig;
-  
+
   constructor() {
     this.speechConfig = SpeechConfig.fromSubscription(
       process.env.SPEECH_KEY!,
@@ -31,14 +31,14 @@ export class SpeechService {
   async textToSpeech(text: string): Promise<ArrayBuffer> {
     return new Promise((resolve, reject) => {
       const synthesizer = new SpeechSynthesizer(this.speechConfig);
-      
+
       synthesizer.speakTextAsync(
         text,
-        result => {
+        (result) => {
           synthesizer.close();
           resolve(result.audioData);
         },
-        error => {
+        (error) => {
           synthesizer.close();
           reject(error);
         }
@@ -49,13 +49,13 @@ export class SpeechService {
   async speechToText(audioStream: AudioConfig): Promise<string> {
     return new Promise((resolve, reject) => {
       const recognizer = new SpeechRecognizer(this.speechConfig, audioStream);
-      
+
       recognizer.recognizeOnceAsync(
-        result => {
+        (result) => {
           recognizer.close();
           resolve(result.text);
         },
-        error => {
+        (error) => {
           recognizer.close();
           reject(error);
         }
@@ -68,7 +68,7 @@ export class SpeechService {
     onResult: (text: string) => void
   ): Promise<SpeechRecognizer> {
     const recognizer = new SpeechRecognizer(this.speechConfig, audioStream);
-    
+
     recognizer.recognized = (_, event) => {
       if (event.result.text) {
         onResult(event.result.text);
