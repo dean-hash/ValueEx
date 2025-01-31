@@ -43,17 +43,17 @@ TEAMS_APP_PASSWORD=your_app_password_here
 
 The repository uses the following branch structure:
 
-- `main`: Main development branch
-- `production`: Production-ready code
-- `feature/mvp-health-monitoring`: Health monitoring features
-- `cleanup-and-simplify`: Code cleanup and simplification
-- `gh-pages`: Documentation site
+* `main`: Main development branch
+* `production`: Production-ready code
+* `feature/mvp-health-monitoring`: Health monitoring features
+* `cleanup-and-simplify`: Code cleanup and simplification
+* `gh-pages`: Documentation site
 
 For MVP development, most work should be committed to `cleanup-and-simplify` and merged into `main` when stable.
 
 ## Security Notes
 
-- Never commit `.env` file
-- Use `scripts/setupSecureCredentials.ts` for secure credential storage
-- API keys are rotated automatically every 90 days
-- Credentials are stored securely using Azure Key Vault
+* Never commit `.env` file
+* Use `scripts/setupSecureCredentials.ts` for secure credential storage
+* API keys are rotated automatically every 90 days
+* Credentials are stored securely using Azure Key Vault

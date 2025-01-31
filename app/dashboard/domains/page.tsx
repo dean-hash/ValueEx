@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Bar, Pie } from 'react-chartjs-2';
-import styles from '../../styles/DomainDashboard.module.css';
+import styles from '@/styles/DomainDashboard.module.css';
 
 interface DomainMetrics {
   domain: string;
