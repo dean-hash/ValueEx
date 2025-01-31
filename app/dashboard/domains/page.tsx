@@ -1,9 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Chart as ChartJS } from 'chart.js/auto';
 import { Bar, Pie } from 'react-chartjs-2';
-import styles from '../../../styles/DomainDashboard.module.css';
+import styles from '../../styles/DomainDashboard.module.css';
 
 interface DomainMetrics {
   domain: string;
@@ -22,7 +21,7 @@ interface AffiliateRecommendation {
   products: string[];
 }
 
-export default function DomainDashboard() {
+export default function DomainDashboard(): React.ReactElement {
   const [domains, setDomains] = useState<string[]>([]);
   const [metrics, setMetrics] = useState<DomainMetrics[]>([]);
   const [affiliateRecs, setAffiliateRecs] = useState<{ [key: string]: AffiliateRecommendation[] }>(
@@ -34,7 +33,7 @@ export default function DomainDashboard() {
     fetchDomainData();
   }, []);
 
-  const fetchDomainData = async () => {
+  const fetchDomainData = async (): Promise<void> => {
     try {
       const response = await fetch('/api/domains');
       const domainList = await response.json();
