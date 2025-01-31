@@ -4,16 +4,11 @@ import { configService } from '../src/config/configService';
 
 async function setup() {
   console.log('Starting ValueEx setup...');
-  
+
   try {
     // 1. Check environment variables
-    const requiredEnvVars = [
-      'DATABASE_URL',
-      'STRIPE_SECRET_KEY',
-      'EMAIL_HOST',
-      'REDIS_URL'
-    ];
-    
+    const requiredEnvVars = ['DATABASE_URL', 'STRIPE_SECRET_KEY', 'EMAIL_HOST', 'REDIS_URL'];
+
     for (const envVar of requiredEnvVars) {
       if (!configService.get(envVar)) {
         throw new Error(`Missing required environment variable: ${envVar}`);

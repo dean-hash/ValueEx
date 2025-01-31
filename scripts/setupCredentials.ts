@@ -9,7 +9,7 @@ async function setupCredentials() {
     service: 'email',
     username: 'dean@collaborativeintelligence.world',
     password: process.env.EMAIL_PASSWORD || '',
-    notes: 'Microsoft 365 Email'
+    notes: 'Microsoft 365 Email',
   });
 
   // Store OpenAI credentials
@@ -17,7 +17,7 @@ async function setupCredentials() {
     service: 'openai',
     username: 'dean@divvytech.com',
     password: process.env.OPENAI_API_KEY || '',
-    notes: 'OpenAI API'
+    notes: 'OpenAI API',
   });
 
   // Store Gemini credentials
@@ -25,7 +25,7 @@ async function setupCredentials() {
     service: 'gemini',
     username: 'dean@divvytech.com',
     password: process.env.GEMINI_API_KEY || '',
-    notes: 'Google Gemini API'
+    notes: 'Google Gemini API',
   });
 
   // Store Teams credentials
@@ -33,7 +33,7 @@ async function setupCredentials() {
     service: 'teams',
     username: 'Cascade@divvytech.com',
     password: process.env.TEAMS_CLIENT_SECRET || '',
-    notes: 'Microsoft Teams API'
+    notes: 'Microsoft Teams API',
   });
 
   // Store Azure Communication Services credentials
@@ -41,7 +41,7 @@ async function setupCredentials() {
     service: 'azurecomms',
     username: 'DefaultResourceGroup-EUS',
     password: process.env.AZURE_COMMS_CONNECTION_STRING || '',
-    notes: 'Azure Communication Services'
+    notes: 'Azure Communication Services',
   });
 
   logger.info('Credentials stored securely');
@@ -58,7 +58,7 @@ async function setupCredentials() {
     openai: openaiCreds?.username,
     gemini: geminiCreds?.username,
     teams: teamsCreds?.username,
-    azureComms: azureCommsCreds?.username
+    azureComms: azureCommsCreds?.username,
   });
 }
 

@@ -1,25 +1,25 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { ChatBubbleLeftRightIcon, MicrophoneIcon } from '@heroicons/react/24/outline'
+import { useState, useEffect } from 'react';
+import { ChatBubbleLeftRightIcon, MicrophoneIcon } from '@heroicons/react/24/outline';
 
 export default function Home() {
-  const [message, setMessage] = useState('')
-  const [messages, setMessages] = useState<string[]>([])
+  const [message, setMessage] = useState('');
+  const [messages, setMessages] = useState<string[]>([]);
 
   const sendMessage = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (message.trim()) {
-      setMessages(prev => [...prev, message])
-      setMessage('')
+      setMessages((prev) => [...prev, message]);
+      setMessage('');
     }
-  }
+  };
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm">
         <h1 className="text-4xl font-bold text-center mb-8">Cascade Space</h1>
-        
+
         <div className="bg-white/10 p-6 rounded-lg backdrop-blur-md w-full">
           <div className="space-y-4 mb-4 h-[400px] overflow-y-auto">
             {messages.map((msg, i) => (
@@ -53,5 +53,5 @@ export default function Home() {
         </div>
       </div>
     </main>
-  )
+  );
 }

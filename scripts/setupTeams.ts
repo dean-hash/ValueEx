@@ -7,7 +7,7 @@ dotenv.config();
 async function main() {
   try {
     const setup = new TeamsSetup();
-    
+
     console.log('Starting Teams environment cleanup...');
     await setup.cleanupEnvironment();
     console.log('Cleanup complete');

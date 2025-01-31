@@ -1,5 +1,8 @@
+import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
 import { ResourceMonitor } from '../../services/monitoring/resourceMonitor';
 import { MetricsCollector } from '../../services/monitoring/metrics';
+import { EventEmitter } from 'events';
+import type { UnknownData } from '../../types/common';
 
 jest.mock('os');
 jest.mock('fs');
@@ -34,7 +37,7 @@ describe('ResourceMonitor Tests', () => {
     process.memoryUsage = mockMemoryUsage;
 
     // Mock os module
-    const os = require('os');
+    import * as os from 'os';
     os.cpus = jest.fn().mockReturnValue([
       {
         model: 'Intel(R) Core(TM) i7',
@@ -69,8 +72,8 @@ describe('ResourceMonitor Tests', () => {
     });
 
     // Mock fs module
-    const fs = require('fs');
-    fs.statfs = (path: string, callback: (error: Error | null, stats: any) => void) => {
+    import * as fs from 'fs';
+    fs.statfs = (path: string, callback: (error: Error | null, stats: any) => void): void => {
       callback(null, {
         type: 0x65735546,
         bsize: 4096,
@@ -159,7 +162,7 @@ describe('ResourceMonitor Tests', () => {
     });
 
     it('should handle network errors gracefully', async () => {
-      const os = require('os');
+      import * as os from 'os';
       os.networkInterfaces = jest.fn().mockImplementation(() => {
         throw new Error('Network error');
       });

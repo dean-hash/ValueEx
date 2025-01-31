@@ -8,7 +8,7 @@ async function testEmailForward() {
       authProvider: async (done) => {
         // Use the existing Office 365 connection
         done(null, process.env.OFFICE365_TOKEN || '');
-      }
+      },
     });
 
     // Send a test email
@@ -17,20 +17,19 @@ async function testEmailForward() {
         subject: 'Test Email Forward',
         body: {
           contentType: 'Text',
-          content: 'This is a test email to verify forwarding functionality.'
+          content: 'This is a test email to verify forwarding functionality.',
         },
         toRecipients: [
           {
             emailAddress: {
-              address: 'dean@divvytech.com'
-            }
-          }
-        ]
-      }
+              address: 'dean@divvytech.com',
+            },
+          },
+        ],
+      },
     });
 
     logger.info('Test email sent successfully');
-
   } catch (error) {
     logger.error('Failed to send test email:', error);
     console.error('Error details:', error);

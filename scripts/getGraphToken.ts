@@ -15,7 +15,7 @@ interface TeamsConfig {
 const credentials = {
   tenantId: process.env.AZURE_TENANT_ID,
   clientId: process.env.AZURE_CLIENT_ID,
-  clientSecret: process.env.AZURE_CLIENT_SECRET
+  clientSecret: process.env.AZURE_CLIENT_SECRET,
 };
 
 async function getGraphToken(): Promise<TeamsConfig> {
@@ -31,20 +31,20 @@ async function getGraphToken(): Promise<TeamsConfig> {
       'Calls.JoinGroupCall.All',
       'Calls.InitiateGroupCall.All',
       'OnlineMeetings.ReadWrite.All',
-      'User.Read.All'
+      'User.Read.All',
     ];
 
     const authProvider = new TokenCredentialAuthenticationProvider(credential, {
-      scopes: scopes
+      scopes: scopes,
     });
 
     const client = Client.initWithMiddleware({
-      authProvider: authProvider
+      authProvider: authProvider,
     });
 
     // Get current user info
     const me = await client.api('/me').get();
-    
+
     // Get communication token for real-time features
     const commToken = await getCommunicationToken(credential);
 
@@ -53,7 +53,7 @@ async function getGraphToken(): Promise<TeamsConfig> {
       userId: me.id,
       displayName: me.displayName,
       tenantId: credentials.tenantId!,
-      communicationToken: commToken
+      communicationToken: commToken,
     };
 
     return config;
@@ -66,7 +66,7 @@ async function getGraphToken(): Promise<TeamsConfig> {
 async function getCommunicationToken(credential: ClientSecretCredential): Promise<string> {
   // Implementation will connect to Azure Communication Services
   // This will be used for speech services integration
-  return "placeholder-for-comm-token";
+  return 'placeholder-for-comm-token';
 }
 
 export { getGraphToken, TeamsConfig, credentials };
@@ -74,12 +74,12 @@ export { getGraphToken, TeamsConfig, credentials };
 // Only run if called directly
 if (require.main === module) {
   getGraphToken()
-    .then(config => {
+    .then((config) => {
       console.log('\nTeams configuration ready!');
       console.log(`Connected as: ${config.displayName}`);
       console.log(`User ID: ${config.userId}`);
     })
-    .catch(error => {
+    .catch((error) => {
       console.error('Failed to initialize Teams:', error);
       process.exit(1);
     });

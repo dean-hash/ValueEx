@@ -1,8 +1,8 @@
 import axios, { AxiosInstance } from 'axios';
-import { configService } from '../../../config/configService';
+import { configService } from '../../../services/config/configService';
 import { logger } from '../../../utils/logger';
 import { CredentialsManager } from '../../../config/credentialsManager';
-import puppeteer, { Page } from 'puppeteer';
+import puppeteer from 'puppeteer';
 import { RetryableError } from '../../../types/errors';
 import { sleep } from '../../../utils/async';
 

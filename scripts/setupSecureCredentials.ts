@@ -8,7 +8,9 @@ async function setupSecureCredentials() {
 
     // Generate a secure master key
     const masterKey = randomBytes(32).toString('hex');
-    console.log('\nIMPORTANT: Save this master key securely. You will need it to access your credentials.');
+    console.log(
+      '\nIMPORTANT: Save this master key securely. You will need it to access your credentials.'
+    );
     console.log(`Master Key: ${masterKey}\n`);
 
     // Update the master key
@@ -56,7 +58,7 @@ GEMINI_API_KEY=your_key
       'chatgptaihub.com',
       'getrewardful.com',
       'awin.com',
-      'ed-data.com'
+      'ed-data.com',
     ];
 
     console.log('Security Migration Checklist:');
@@ -69,11 +71,10 @@ GEMINI_API_KEY=your_key
       service: 'service_urls',
       username: 'reference',
       password: 'reference',
-      notes: JSON.stringify(services)
+      notes: JSON.stringify(services),
     });
 
     logger.info('Secure credential setup complete');
-
   } catch (error) {
     logger.error('Failed to setup secure credentials:', error);
     throw error;

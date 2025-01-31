@@ -10,11 +10,7 @@
         {
           "name": "Environmental Impact",
           "weight": 0.4,
-          "evidence": [
-            "reduced carbon footprint",
-            "biodegradable materials",
-            "waste reduction"
-          ],
+          "evidence": ["reduced carbon footprint", "biodegradable materials", "waste reduction"],
           "validation": {
             "empirical": true,
             "market": true,
@@ -24,11 +20,7 @@
         {
           "name": "Economic Efficiency",
           "weight": 0.35,
-          "evidence": [
-            "cost reduction",
-            "operational efficiency",
-            "market premium"
-          ],
+          "evidence": ["cost reduction", "operational efficiency", "market premium"],
           "validation": {
             "empirical": true,
             "market": true,
@@ -38,11 +30,7 @@
         {
           "name": "Social Impact",
           "weight": 0.25,
-          "evidence": [
-            "consumer satisfaction",
-            "brand loyalty",
-            "community benefit"
-          ],
+          "evidence": ["consumer satisfaction", "brand loyalty", "community benefit"],
           "validation": {
             "empirical": true,
             "market": true,
@@ -82,11 +70,7 @@
         {
           "name": "Operational Excellence",
           "weight": 0.45,
-          "evidence": [
-            "process automation",
-            "resource optimization",
-            "error reduction"
-          ],
+          "evidence": ["process automation", "resource optimization", "error reduction"],
           "validation": {
             "empirical": true,
             "market": true,
@@ -96,11 +80,7 @@
         {
           "name": "Strategic Advantage",
           "weight": 0.35,
-          "evidence": [
-            "competitive positioning",
-            "market intelligence",
-            "innovation capacity"
-          ],
+          "evidence": ["competitive positioning", "market intelligence", "innovation capacity"],
           "validation": {
             "empirical": true,
             "market": true,
@@ -109,12 +89,8 @@
         },
         {
           "name": "Customer Value",
-          "weight": 0.20,
-          "evidence": [
-            "service quality",
-            "personalization",
-            "response time"
-          ],
+          "weight": 0.2,
+          "evidence": ["service quality", "personalization", "response time"],
           "validation": {
             "empirical": true,
             "market": true,

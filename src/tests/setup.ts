@@ -1,48 +1,50 @@
 import { config } from 'dotenv';
-import { ContextService } from '../services/contextService';
+import { RedisConfig } from '../services/cache/redisConfig';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 // Load environment variables
 config();
 
+// Mock environment variables for testing
+process.env.REDIS_CONNECTION_STRING = 'redis://localhost:6379';
+process.env.AWIN_API_KEY = 'test_awin_key';
+process.env.AWIN_PUBLISHER_ID = 'test_publisher_id';
+process.env.JASPER_API_KEY = 'test_jasper_key';
+process.env.JASPER_AFFILIATE_ID = 'test_affiliate_id';
+process.env.TEAMS_APP_ID = 'test_teams_id';
+process.env.TEAMS_APP_PASSWORD = 'test_teams_password';
+process.env.DYNAMICS_TENANT_ID = 'test_tenant_id';
+process.env.DYNAMICS_CLIENT_ID = 'test_client_id';
+process.env.DYNAMICS_CLIENT_SECRET = 'test_client_secret';
+process.env.DYNAMICS_RESOURCE_URL = 'https://test.crm.dynamics.com';
+
 // Increase timeout for all tests
 jest.setTimeout(30000);
 
-let contextService: ContextService;
-
-// Global setup
-beforeAll(async () => {
-  contextService = ContextService.getInstance();
-  await contextService.updateProjectContext(
-    'Running Tests',
-    ['Initializing test environment'],
-    ['Maintain test isolation', 'Clean up after each test']
-  );
+// Mock Redis for testing
+jest.mock('ioredis', () => {
+  return jest.fn().mockImplementation(() => ({
+    ping: jest.fn().mockResolvedValue('PONG'),
+    on: jest.fn(),
+    quit: jest.fn().mockResolvedValue(undefined),
+    get: jest.fn(),
+    set: jest.fn(),
+    del: jest.fn(),
+  }));
 });
 
-// Before each test
-beforeEach(async () => {
-  const monitor = contextService.getMonitor();
-  monitor.updateMetric('contextContinuity', 1.0); // Reset context continuity
-});
+jest.mock('../utils/logger', () => ({
+  logger: {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+  },
+}));
 
-// After each test
-afterEach(async () => {
-  // Verify context is maintained
-  const monitor = contextService.getMonitor();
-  const metrics = monitor.getMetrics();
-  if (metrics.contextContinuity < 0.8) {
-    console.warn('Context continuity degraded during test:', metrics.contextContinuity);
-  }
-});
-
-// Global teardown
+// Clean up after all tests
 afterAll(async () => {
-  if (contextService) {
-    await contextService.updateProjectContext(
-      'Tests Completed',
-      ['Cleaning up test environment'],
-      []
-    );
-    contextService.dispose();
-  }
+  await RedisConfig.disconnect();
 });

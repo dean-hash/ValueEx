@@ -1,48 +1,44 @@
-import 'dotenv/config';
-import axios from 'axios';
+import fetch from 'node-fetch';
+import dotenv from 'dotenv';
 
-async function listDomains() {
-    const apiKey = process.env.GODADDY_API_KEY;
-    const apiSecret = process.env.GODADDY_API_SECRET;
+dotenv.config();
 
-    if (!apiKey || !apiSecret) {
-        console.error('GoDaddy API credentials not found in environment variables');
-        process.exit(1);
-    }
+const API_KEY = process.env.GODADDY_API_KEY;
+const API_SECRET = process.env.GODADDY_API_SECRET;
 
-    const axiosInstance = axios.create({
-        baseURL: 'https://api.godaddy.com/v1',
-        headers: {
-            Authorization: `sso-key ${apiKey}:${apiSecret}`,
-            'Content-Type': 'application/json'
-        }
-    });
-    
-    try {
-        console.log('Fetching domain list...');
-        const response = await axiosInstance.get('/domains');
-        const domains = response.data;
-        
-        console.log('\nDomain Analysis Report:');
-        console.log('=====================\n');
-        
-        domains.forEach(domain => {
-            console.log(`Domain: ${domain.domain}`);
-            console.log(`Status: ${domain.status}`);
-            console.log(`Expires: ${domain.expires}`);
-            console.log('-------------------\n');
-        });
-
-        return domains;
-
-    } catch (error) {
-        console.error('Error listing domains:', error);
-        if (axios.isAxiosError(error) && error.response) {
-            console.error('API Error:', error.response.data);
-        }
-        throw error;
-    }
+if (!API_KEY || !API_SECRET) {
+  console.error('Missing GoDaddy API credentials');
+  process.exit(1);
 }
 
-// Run it
-listDomains().catch(console.error);
+const headers = {
+  Authorization: `sso-key ${API_KEY}:${API_SECRET}`,
+  Accept: 'application/json',
+};
+
+/**
+ * List all domains in the GoDaddy account
+ */
+async function listDomains() {
+  try {
+    const response = await fetch('https://api.godaddy.com/v1/domains', {
+      method: 'GET',
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const domains = await response.json();
+    console.log('Your domains:');
+    domains.forEach((domain) => {
+      console.log(`- ${domain.domain} (Expires: ${domain.expires})`);
+    });
+  } catch (error) {
+    console.error('Failed to list domains:', error);
+    process.exit(1);
+  }
+}
+
+listDomains();

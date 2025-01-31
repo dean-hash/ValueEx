@@ -13,7 +13,7 @@ async function testExistingConnection() {
           return;
         }
         done(null, connectionString);
-      }
+      },
     });
 
     // Test sending an email
@@ -22,20 +22,19 @@ async function testExistingConnection() {
         subject: 'Test Connection',
         body: {
           contentType: 'Text',
-          content: 'Testing Office 365 connection'
+          content: 'Testing Office 365 connection',
         },
         toRecipients: [
           {
             emailAddress: {
-              address: 'dean@divvytech.com'
-            }
-          }
-        ]
-      }
+              address: 'dean@divvytech.com',
+            },
+          },
+        ],
+      },
     });
 
     console.log('Email sent successfully!');
-
   } catch (error) {
     logger.error('Failed to send email:', error);
     console.error('Error details:', error);

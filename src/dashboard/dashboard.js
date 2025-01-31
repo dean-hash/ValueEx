@@ -181,7 +181,7 @@ class DashboardManager {
       // Fetch and analyze domains
       const domains = await this.connector.listDomains();
       const analysisResults = await Promise.all(
-        domains.map(domain => this.analyzer.analyzeDomain(domain))
+        domains.map((domain) => this.analyzer.analyzeDomain(domain))
       );
 
       // Update domain portfolio metrics
@@ -192,17 +192,18 @@ class DashboardManager {
       // Update affiliate metrics
       const affiliateMetrics = await this.getAffiliateMetrics();
       document.getElementById('activePrograms').textContent = affiliateMetrics.activePrograms;
-      document.getElementById('monthlyRevenue').textContent = `$${affiliateMetrics.monthlyRevenue.toLocaleString()}`;
+      document.getElementById('monthlyRevenue').textContent =
+        `$${affiliateMetrics.monthlyRevenue.toLocaleString()}`;
 
       // Update growth metrics
       const growthMetrics = this.calculateGrowthMetrics(analysisResults);
-      document.getElementById('growthScore').textContent = `${(growthMetrics.score * 100).toFixed(0)}%`;
+      document.getElementById('growthScore').textContent =
+        `${(growthMetrics.score * 100).toFixed(0)}%`;
       document.getElementById('opportunities').textContent = growthMetrics.opportunities;
 
       // Update charts
       this.visualizer.updateDomainMetrics(domains[0]);
       this.visualizer.updateAffiliatePerformance(domains);
-
     } catch (error) {
       console.error('Error updating monetization metrics:', error);
     }
@@ -212,17 +213,21 @@ class DashboardManager {
     // This would normally come from your affiliate tracking system
     return {
       activePrograms: 5,
-      monthlyRevenue: 2500
+      monthlyRevenue: 2500,
     };
   }
 
   calculateGrowthMetrics(analysisResults) {
-    const averageResonance = analysisResults.reduce((sum, result) => sum + result.resonanceScore, 0) / analysisResults.length;
-    const highPotentialCount = analysisResults.filter(result => result.resonanceScore > 0.8).length;
+    const averageResonance =
+      analysisResults.reduce((sum, result) => sum + result.resonanceScore, 0) /
+      analysisResults.length;
+    const highPotentialCount = analysisResults.filter(
+      (result) => result.resonanceScore > 0.8
+    ).length;
 
     return {
       score: averageResonance,
-      opportunities: highPotentialCount
+      opportunities: highPotentialCount,
     };
   }
 
@@ -250,7 +255,7 @@ class DashboardManager {
         'divvytech.com',
         'aoa.associates',
         'because.farm',
-        'divvy.earth'
+        'divvy.earth',
       ];
     }
   }
@@ -259,7 +264,7 @@ class DashboardManager {
     // Domain Value Chart
     const valueCtx = document.getElementById('domainValueChart').getContext('2d');
     const domainValues = await Promise.all(
-      this.activeDomains.map(async domain => {
+      this.activeDomains.map(async (domain) => {
         const metrics = await this.portfolioAnalyzer.analyzeDomainMetrics(domain);
         return metrics.estimatedValue;
       })
@@ -269,22 +274,24 @@ class DashboardManager {
       type: 'bar',
       data: {
         labels: this.activeDomains,
-        datasets: [{
-          label: 'Estimated Domain Value ($)',
-          data: domainValues,
-          backgroundColor: 'rgba(54, 162, 235, 0.5)',
-          borderColor: 'rgba(54, 162, 235, 1)',
-          borderWidth: 1
-        }]
+        datasets: [
+          {
+            label: 'Estimated Domain Value ($)',
+            data: domainValues,
+            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1,
+          },
+        ],
       },
       options: {
         responsive: true,
         scales: {
           y: {
-            beginAtZero: true
-          }
-        }
-      }
+            beginAtZero: true,
+          },
+        },
+      },
     });
 
     // Niche Distribution Chart
@@ -295,29 +302,31 @@ class DashboardManager {
       type: 'pie',
       data: {
         labels: Object.keys(nicheData),
-        datasets: [{
-          data: Object.values(nicheData),
-          backgroundColor: [
-            'rgba(255, 99, 132, 0.5)',
-            'rgba(54, 162, 235, 0.5)',
-            'rgba(255, 206, 86, 0.5)',
-            'rgba(75, 192, 192, 0.5)',
-            'rgba(153, 102, 255, 0.5)'
-          ]
-        }]
+        datasets: [
+          {
+            data: Object.values(nicheData),
+            backgroundColor: [
+              'rgba(255, 99, 132, 0.5)',
+              'rgba(54, 162, 235, 0.5)',
+              'rgba(255, 206, 86, 0.5)',
+              'rgba(75, 192, 192, 0.5)',
+              'rgba(153, 102, 255, 0.5)',
+            ],
+          },
+        ],
       },
       options: {
         responsive: true,
         plugins: {
           legend: {
-            position: 'right'
+            position: 'right',
           },
           title: {
             display: true,
-            text: 'Domain Portfolio by Niche'
-          }
-        }
-      }
+            text: 'Domain Portfolio by Niche',
+          },
+        },
+      },
     });
   }
 
@@ -360,7 +369,9 @@ class DashboardManager {
       domainSection.innerHTML = `
         <h6>${domain}</h6>
         <div class="row">
-          ${recommendations.map(rec => `
+          ${recommendations
+            .map(
+              (rec) => `
             <div class="col-md-4">
               <div class="card">
                 <div class="card-body">
@@ -373,7 +384,9 @@ class DashboardManager {
                 </div>
               </div>
             </div>
-          `).join('')}
+          `
+            )
+            .join('')}
         </div>
       `;
       container.appendChild(domainSection);

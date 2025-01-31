@@ -109,7 +109,7 @@
       "analysis": {
         "trend": "increasing",
         "seasonality": false,
-        "confidence": 0.90,
+        "confidence": 0.9,
         "drivers": [
           {
             "name": "Digital Transformation",

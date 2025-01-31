@@ -16,14 +16,13 @@ async function getOfficeToken() {
 
     if (result && result.properties) {
       console.log('Connection found!');
-      
+
       // Store the token in .env
       console.log('\nAdd this to your .env file:');
       console.log(`OFFICE365_TOKEN=${result.properties.api?.id || ''}`);
     } else {
       console.log('No connection properties found');
     }
-
   } catch (error) {
     logger.error('Failed to get Office 365 token:', error);
     console.error('Error details:', error);

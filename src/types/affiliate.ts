@@ -34,3 +34,51 @@ export interface ResponseRules {
   minAccountAge: number; // in days
   minKarma: number;
 }
+
+export interface BusinessNeed {
+  id: string;
+  source: string;
+  description: string;
+  keywords: string[];
+  timestamp: string;
+  contactInfo?: {
+    name?: string;
+    platform?: string;
+    profileUrl?: string;
+  };
+}
+
+export interface FiverrService {
+  type: 'marketplace' | 'pro' | 'logomaker' | 'subaffiliate';
+  name: string;
+  description: string;
+  url: string;
+  keywords: string[];
+  averageRating?: number;
+  minimumPrice?: number;
+}
+
+export interface SocialPost {
+  id: string;
+  platform: string;
+  content: string;
+  author: {
+    name: string;
+    profileUrl?: string;
+  };
+  timestamp: string;
+}
+
+export interface JobPosting {
+  id: string;
+  platform: string;
+  title: string;
+  description: string;
+  company: string;
+  contactInfo?: {
+    name?: string;
+    email?: string;
+    phone?: string;
+  };
+  postedAt: string;
+}

@@ -22,6 +22,10 @@ class ConfigService {
     });
     this.config.set('RETRY_ATTEMPTS', { value: parseInt(process.env.RETRY_ATTEMPTS || '3', 10) });
     this.config.set('CACHE_ENABLED', { value: process.env.CACHE_ENABLED !== 'false' });
+
+    // GoDaddy config
+    this.config.set('GODADDY_API_KEY', { value: process.env.GODADDY_API_KEY || '' });
+    this.config.set('GODADDY_API_SECRET', { value: process.env.GODADDY_API_SECRET || '' });
   }
 
   get(key: string): ConfigValue | undefined {
@@ -39,6 +43,13 @@ class ConfigService {
     } else {
       this.config.set(key, value as ConfigValue);
     }
+  }
+
+  getGodaddyConfig() {
+    return {
+      apiKey: this.get('GODADDY_API_KEY')?.value as string,
+      apiSecret: this.get('GODADDY_API_SECRET')?.value as string,
+    };
   }
 }
 

@@ -4,3 +4,13 @@ export class ResonanceError extends Error {
     this.name = 'ResonanceError';
   }
 }
+
+export class RetryableError extends Error {
+  originalError: Error;
+
+  constructor(message: string, originalError?: Error) {
+    super(message);
+    this.name = 'RetryableError';
+    this.originalError = originalError || new Error('Unknown error');
+  }
+}

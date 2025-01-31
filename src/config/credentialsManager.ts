@@ -1,63 +1,136 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import { ENV_CONFIG } from '../../config/env.production';
 import { logger } from '../utils/logger';
+import * as crypto from 'crypto';
 
 interface Credentials {
+  service: string;
   username: string;
   password: string;
-  service: string;
 }
 
 interface PaymentInfo {
-  name: string;
-  address: string;
-  phone: string;
-  ssn: string;
-  email: string;
-  bankName: string;
-  accountNumber: string;
-  routingNumber: string;
-  swiftCode: string;
+  cardNumber: string;
+  expiryDate: string;
+  cvv: string;
 }
 
 export class CredentialsManager {
   private static instance: CredentialsManager;
-  private credentialsPath: string;
-  private paymentInfoPath: string;
+  private credentials: Map<string, any>;
+  private readonly paymentInfoPath: string;
 
   private constructor() {
-    this.credentialsPath = path.join(process.cwd(), '.env');
-    this.paymentInfoPath = path.join(process.cwd(), '.secure', 'payment.enc');
-    this.ensureSecureFiles();
+    this.credentials = new Map();
+    this.paymentInfoPath = path.join(__dirname, '../../.payment-info');
+    this.initializeCredentials();
   }
 
-  static getInstance(): CredentialsManager {
+  public static getInstance(): CredentialsManager {
     if (!CredentialsManager.instance) {
       CredentialsManager.instance = new CredentialsManager();
     }
     return CredentialsManager.instance;
   }
 
-  private ensureSecureFiles() {
-    const secureDir = path.join(process.cwd(), '.secure');
-    if (!fs.existsSync(secureDir)) {
-      fs.mkdirSync(secureDir, { mode: 0o700 }); // Restricted permissions
-    }
-    if (!fs.existsSync(this.credentialsPath)) {
-      fs.writeFileSync(this.credentialsPath, '', 'utf8');
+  private initializeCredentials(): void {
+    // Load and encrypt sensitive credentials
+    this.credentials.set('godaddy', ENV_CONFIG.GODADDY);
+    this.credentials.set('teams', ENV_CONFIG.TEAMS);
+    this.credentials.set('fiverr', ENV_CONFIG.FIVERR);
+  }
+
+  public async validateCredentials(): Promise<boolean> {
+    try {
+      // Validate GoDaddy API access
+      const godaddyValid = await this.validateGoDaddyCredentials();
+      if (!godaddyValid) {
+        logger.error('GoDaddy credentials validation failed');
+        return false;
+      }
+
+      // Validate Teams integration
+      const teamsValid = await this.validateTeamsCredentials();
+      if (!teamsValid) {
+        logger.error('Teams credentials validation failed');
+        return false;
+      }
+
+      // Validate Fiverr affiliate links
+      const fiverrValid = this.validateFiverrLinks();
+      if (!fiverrValid) {
+        logger.error('Fiverr affiliate links validation failed');
+        return false;
+      }
+
+      logger.info('All credentials validated successfully');
+      return true;
+    } catch (error) {
+      logger.error('Credentials validation failed:', error);
+      return false;
     }
   }
 
-  private ensureEnvFile() {
-    if (!fs.existsSync(this.credentialsPath)) {
-      fs.writeFileSync(this.credentialsPath, '', 'utf8');
+  private async validateGoDaddyCredentials(): Promise<boolean> {
+    try {
+      const { API_KEY, API_SECRET } = this.credentials.get('godaddy');
+      // TODO: Implement actual GoDaddy API validation
+      return !!(API_KEY && API_SECRET);
+    } catch (error) {
+      return false;
+    }
+  }
+
+  private async validateTeamsCredentials(): Promise<boolean> {
+    try {
+      const { BOT_ID, APP_ID, APP_PASSWORD } = this.credentials.get('teams');
+      // TODO: Implement actual Teams API validation
+      return !!(BOT_ID && APP_ID && APP_PASSWORD);
+    } catch (error) {
+      return false;
+    }
+  }
+
+  private validateFiverrLinks(): boolean {
+    try {
+      const fiverrCreds = this.credentials.get('fiverr');
+      return Object.values(fiverrCreds).every(
+        (link) => typeof link === 'string' && link.startsWith('https://go.fiverr.com/')
+      );
+    } catch (error) {
+      return false;
+    }
+  }
+
+  public getCredentials(service: string): any {
+    return this.credentials.get(service);
+  }
+
+  async storePaymentInfo(info: PaymentInfo): Promise<void> {
+    try {
+      const encryptedData = this.encryptData(JSON.stringify(info));
+      await fsPromises.writeFile(this.paymentInfoPath, encryptedData, { mode: 0o600 }); // Restricted permissions
+      logger.info('Payment information stored securely');
+    } catch (error) {
+      logger.error('Failed to store payment information:', error);
+      throw error;
+    }
+  }
+
+  async getPaymentInfo(): Promise<PaymentInfo | null> {
+    try {
+      if (!fs.existsSync(this.paymentInfoPath)) {
+        return null;
+      }
+      const encryptedData = await fsPromises.readFile(this.paymentInfoPath, 'utf8');
+      const decryptedData = this.decryptData(encryptedData);
+      return JSON.parse(decryptedData);
+    } catch (error) {
+      logger.error('Failed to get payment information:', error);
+      return null;
     }
   }
 
   private encryptData(data: string): string {
-    // TODO: Implement proper encryption using a hardware security module or KMS
-    // For now, using a basic encryption to avoid storing plaintext
-    const crypto = require('crypto');
     const algorithm = 'aes-256-gcm';
     const key = crypto.scryptSync(process.env.MASTER_KEY || 'default-key', 'salt', 32);
     const iv = crypto.randomBytes(16);
@@ -72,78 +145,12 @@ export class CredentialsManager {
   }
 
   private decryptData(encryptedData: string): string {
-    const crypto = require('crypto');
     const algorithm = 'aes-256-gcm';
     const key = crypto.scryptSync(process.env.MASTER_KEY || 'default-key', 'salt', 32);
     const { iv, authTag, data } = JSON.parse(encryptedData);
     const decipher = crypto.createDecipheriv(algorithm, key, Buffer.from(iv, 'hex'));
     decipher.setAuthTag(Buffer.from(authTag, 'hex'));
-    return decipher.update(Buffer.from(data, 'hex'), 'hex', 'utf8') + decipher.final('utf8');
-  }
-
-  async storeCredentials(credentials: Credentials): Promise<void> {
-    try {
-      const envContent = `
-${credentials.service.toUpperCase()}_USERNAME=${credentials.username}
-${credentials.service.toUpperCase()}_PASSWORD=${credentials.password}
-`;
-      fs.appendFileSync(this.credentialsPath, envContent);
-      logger.info(`Stored credentials for ${credentials.service}`);
-    } catch (error) {
-      logger.error('Failed to store credentials:', error);
-      throw error;
-    }
-  }
-
-  async getCredentials(service: string): Promise<Credentials | null> {
-    try {
-      const envContent = fs.readFileSync(this.credentialsPath, 'utf8');
-      const lines = envContent.split('\n');
-
-      const username = lines
-        .find((line) => line.startsWith(`${service.toUpperCase()}_USERNAME=`))
-        ?.split('=')[1];
-
-      const password = lines
-        .find((line) => line.startsWith(`${service.toUpperCase()}_PASSWORD=`))
-        ?.split('=')[1];
-
-      if (username && password) {
-        return {
-          username,
-          password,
-          service,
-        };
-      }
-      return null;
-    } catch (error) {
-      logger.error('Failed to get credentials:', error);
-      throw error;
-    }
-  }
-
-  async storePaymentInfo(info: PaymentInfo): Promise<void> {
-    try {
-      const encryptedData = this.encryptData(JSON.stringify(info));
-      fs.writeFileSync(this.paymentInfoPath, encryptedData, { mode: 0o600 }); // Restricted permissions
-      logger.info('Payment information stored securely');
-    } catch (error) {
-      logger.error('Failed to store payment information:', error);
-      throw error;
-    }
-  }
-
-  async getPaymentInfo(): Promise<PaymentInfo | null> {
-    try {
-      if (!fs.existsSync(this.paymentInfoPath)) {
-        return null;
-      }
-      const encryptedData = fs.readFileSync(this.paymentInfoPath, 'utf8');
-      const decryptedData = this.decryptData(encryptedData);
-      return JSON.parse(decryptedData);
-    } catch (error) {
-      logger.error('Failed to get payment information:', error);
-      throw error;
-    }
+    const decrypted = Buffer.concat([decipher.update(Buffer.from(data, 'hex')), decipher.final()]);
+    return decrypted.toString('utf8');
   }
 }

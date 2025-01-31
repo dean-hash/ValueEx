@@ -18,6 +18,11 @@ interface GeminiResponse {
   }>;
 }
 
+interface AnalyzeOptions {
+  prompt: string;
+  temperature?: number;
+}
+
 export class GeminiService {
   private static instance: GeminiService;
   private config: GeminiConfig;
@@ -37,7 +42,11 @@ export class GeminiService {
     return GeminiService.instance;
   }
 
-  async generateContent(prompt: string): Promise<string> {
+  async analyze(options: AnalyzeOptions): Promise<string> {
+    return this.generateContent(options.prompt, options.temperature);
+  }
+
+  async generateContent(prompt: string, temperature: number = 0.7): Promise<string> {
     try {
       const response = await axios.post<GeminiResponse>(
         `${this.config.endpoint}/models/${this.config.model}:generateContent?key=${this.config.apiKey}`,
@@ -51,55 +60,44 @@ export class GeminiService {
               ],
             },
           ],
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
+          generationConfig: {
+            temperature,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 1024,
           },
         }
       );
 
-      if (response.data.candidates && response.data.candidates[0]?.content?.parts[0]?.text) {
-        return response.data.candidates[0].content.parts[0].text;
+      if (!response.data.candidates?.[0]?.content?.parts?.[0]?.text) {
+        throw new Error('Invalid response format from Gemini API');
       }
 
-      throw new Error('No valid response from Gemini API');
+      return response.data.candidates[0].content.parts[0].text;
     } catch (error) {
-      logger.error('Error calling Gemini API:', error);
+      logger.error('Error generating content with Gemini:', error);
       throw error;
     }
   }
 
   async analyzeMarketTrends(niche: string): Promise<string> {
-    const prompt = `Analyze current market trends and opportunities in the ${niche} niche. 
-    Focus on:
-    1. Market size and growth potential
-    2. Key competitors and their strategies
-    3. Emerging opportunities and gaps
-    4. Revenue potential and monetization strategies`;
+    const prompt = `Analyze current market trends for the ${niche} niche, focusing on:
+1. Growth potential
+2. Market size
+3. Competition level
+4. Target audience
+5. Monetization opportunities`;
 
     return this.generateContent(prompt);
   }
 
   async optimizeDomainValue(domain: string): Promise<string> {
-    const prompt = `Analyze the domain name "${domain}" for value optimization.
-    Consider:
-    1. SEO potential and keyword value
-    2. Brand potential and memorability
-    3. Industry relevance and market fit
-    4. Monetization strategies and revenue potential`;
-
-    return this.generateContent(prompt);
-  }
-
-  async generateListingDescription(domain: string, marketData: any): Promise<string> {
-    const prompt = `Create a compelling domain listing description for "${domain}".
-    Market Data: ${JSON.stringify(marketData)}
-    Include:
-    1. Unique value propositions
-    2. Industry relevance
-    3. Growth potential
-    4. Monetization opportunities`;
+    const prompt = `Suggest value optimization strategies for the domain ${domain}, considering:
+1. Best use cases
+2. Target industries
+3. Development potential
+4. Monetization methods
+5. Estimated market value`;
 
     return this.generateContent(prompt);
   }

@@ -16,6 +16,16 @@ import {
   AffiliateMetrics,
   AudioStreamConfig,
 } from '../../types/serviceTypes';
+import type {
+  MediaStream,
+  MediaStreamTrack,
+  MediaStreamTrackState,
+  MediaTrackSettings,
+  MediaTrackCapabilities,
+  MediaTrackConstraints,
+  EventListener,
+  Event,
+} from '../../types/common';
 
 // Mock Audio Stream
 export class MockMediaStream implements MediaStream {
@@ -36,78 +46,97 @@ export class MockMediaStream implements MediaStream {
     return [];
   }
 
-  getTrackById(): MediaStreamTrack | null {
-    return null;
+  getTrackById(id: string): MediaStreamTrack | null {
+    return (this.tracks.find((track) => track.id === id) as unknown as MediaStreamTrack) || null;
   }
 
-  addTrack(): void {}
-  removeTrack(): void {}
+  addTrack(track: MediaStreamTrack): void {
+    this.tracks.push(track as unknown as MockAudioTrack);
+  }
+
+  removeTrack(track: MediaStreamTrack): void {
+    const index = this.tracks.findIndex((t) => t.id === track.id);
+    if (index !== -1) {
+      this.tracks.splice(index, 1);
+    }
+  }
+
   clone(): MediaStream {
     return new MockMediaStream();
   }
 
-  addEventListener(): void {}
-  removeEventListener(): void {}
-  dispatchEvent(): boolean {
+  addEventListener(type: string, listener: EventListener): void {}
+  removeEventListener(type: string, listener: EventListener): void {}
+  dispatchEvent(event: Event): boolean {
     return true;
   }
 }
 
-class MockAudioTrack implements MediaStreamTrack {
+// Mock Audio Track
+export class MockAudioTrack implements MediaStreamTrack {
   enabled = true;
   id = `mock-track-${Date.now()}`;
   kind = 'audio' as const;
   label = 'mock-audio-track';
   muted = false;
   readyState: MediaStreamTrackState = 'live';
+  isolated = false;
+  contentHint = '';
 
   getSettings(): MediaTrackSettings {
     return {
-      channelCount: 2,
+      deviceId: this.id,
+      groupId: 'mock-group',
       sampleRate: 48000,
       sampleSize: 16,
-      echoCancellation: true,
-      autoGainControl: true,
-      noiseSuppression: true,
+      channelCount: 2,
     };
   }
 
-  applyConstraints(): Promise<void> {
-    return Promise.resolve();
-  }
-
-  clone(): MediaStreamTrack {
-    return new MockAudioTrack();
-  }
-
   getCapabilities(): MediaTrackCapabilities {
-    return {};
+    return {
+      deviceId: this.id,
+      groupId: 'mock-group',
+      sampleRate: { min: 44100, max: 48000 },
+      sampleSize: { min: 16, max: 24 },
+      channelCount: { min: 1, max: 2 },
+    };
   }
 
   getConstraints(): MediaTrackConstraints {
     return {};
   }
 
+  async applyConstraints(): Promise<void> {}
+
+  clone(): MediaStreamTrack {
+    return new MockAudioTrack();
+  }
+
   stop(): void {
     this.readyState = 'ended';
   }
 
-  addEventListener(): void {}
-  removeEventListener(): void {}
-  dispatchEvent(): boolean {
+  addEventListener(type: string, listener: EventListener): void {}
+  removeEventListener(type: string, listener: EventListener): void {}
+  dispatchEvent(event: Event): boolean {
     return true;
   }
 }
 
 // Mock Teams Client
-export class MockTeamsClient extends EventEmitter implements ITeamsIntegration {
+export class MockTeamsClient implements ITeamsIntegration {
+  private emitter = new EventEmitter();
+
   async initialize(): Promise<void> {}
 
   async createMeeting(subject: string): Promise<MeetingInfo> {
     return {
-      joinUrl: `https://teams.microsoft.com/l/meetup-join/test-${Date.now()}`,
-      threadId: `thread-${Date.now()}`,
+      id: `mock-meeting-${Date.now()}`,
       subject,
+      startTime: new Date(),
+      endTime: new Date(Date.now() + 3600000),
+      url: 'https://mock-teams-meeting.com',
     };
   }
 
@@ -115,17 +144,17 @@ export class MockTeamsClient extends EventEmitter implements ITeamsIntegration {
     return this.createMeeting(subject);
   }
 
-  async joinMeeting(url: string) {
-    this.emit('meetingJoined', { url });
-    return {
-      user: { id: 'test-user' },
-      recognizer: {},
-    };
-  }
+  async joinMeeting(url: string): Promise<void> {}
 }
 
 // Mock Audio Service
 export class MockAudioService implements IAudioStreamService {
+  private config: AudioStreamConfig = {
+    sampleRate: 48000,
+    channelCount: 2,
+    sampleSize: 16,
+  };
+
   async startAudioStream(): Promise<MediaStream> {
     return new MockMediaStream();
   }
@@ -136,11 +165,11 @@ export class MockAudioService implements IAudioStreamService {
 // Mock Speech Service
 export class MockSpeechService implements ISpeechService {
   async textToSpeech(text: string): Promise<ArrayBuffer> {
-    return new ArrayBuffer(text.length * 2);
+    return new ArrayBuffer(0);
   }
 
   async speechToText(): Promise<string> {
-    return 'Mock transcribed text';
+    return 'mock transcription';
   }
 }
 
@@ -151,17 +180,10 @@ export class MockResonanceFieldService implements IResonanceFieldService {
     pattern: DemandPattern
   ): Promise<ValueCreationMetrics> {
     return {
-      consumerValue: 85.0,
-      merchantValue: 90.0,
-      valueExValue: 25.0,
-      matchQuality: 0.92,
-      timestamp: new Date(),
-      realTimeMetrics: {
-        revenue: product.price * 0.1,
-        costs: product.price * 0.05,
-        profitMargin: 0.5,
-        customerEngagement: 0.85,
-      },
+      consumerValue: 100,
+      merchantValue: 50,
+      networkValue: 25,
+      totalValue: 175,
     };
   }
 
@@ -170,22 +192,22 @@ export class MockResonanceFieldService implements IResonanceFieldService {
     pattern: DemandPattern,
     signals: DemandSignal[]
   ): Promise<number> {
-    return 85.0;
+    return 100;
   }
 
   async calculateMerchantValue(product: Product, signals: DemandSignal[]): Promise<number> {
-    return 90.0;
+    return 50;
   }
 }
 
 // Mock Dynamics Service
 export class MockDynamicsService implements IDynamicsService {
   async getMarketPrice(product: Product): Promise<number> {
-    return product.price;
+    return 99.99;
   }
 
   async getTraditionalCAC(category: string): Promise<number> {
-    return 50.0;
+    return 50;
   }
 }
 
@@ -193,9 +215,9 @@ export class MockDynamicsService implements IDynamicsService {
 export class MockBusinessCentralService implements IBusinessCentralService {
   async getEfficiencyMetrics(): Promise<EfficiencyMetrics> {
     return {
-      processingTime: 120,
-      conversionRate: 0.15,
-      costPerLead: 25.0,
+      processingTime: 100,
+      resourceUtilization: 0.8,
+      costPerTransaction: 1.5,
     };
   }
 }
@@ -206,8 +228,8 @@ export class MockAwinService implements IAwinService {
     return {
       clicks: 1000,
       conversions: 50,
-      revenue: 5000.0,
-      commission: 250.0,
+      revenue: 5000,
+      commission: 250,
     };
   }
 }

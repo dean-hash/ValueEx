@@ -124,7 +124,7 @@ export class GoogleServicesManager {
   }> {
     const analysis = await this.getCostAnalysis();
     const recommendations: string[] = [];
-    let potentialSavings = 0;
+    const potentialSavings = 0;
 
     // Analyze usage patterns and suggest optimizations
     // This would integrate with actual usage data from GCP

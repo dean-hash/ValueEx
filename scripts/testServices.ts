@@ -11,12 +11,7 @@ async function main() {
 
     // Test domain analysis
     const domainAnalyzer = DomainAnalyzer.getInstance();
-    const testDomains = [
-      'aimarkets.tech',
-      'smartfinance.com',
-      'cryptotrends.io',
-      'healthtech.ai'
-    ];
+    const testDomains = ['aimarkets.tech', 'smartfinance.com', 'cryptotrends.io', 'healthtech.ai'];
 
     for (const domain of testDomains) {
       const analysis = await domainAnalyzer.analyzeDomain({ domain });
@@ -24,14 +19,13 @@ async function main() {
         quickFlipValue: analysis.quickFlipValue,
         affiliateValue: analysis.affiliateValue,
         aiInsights: analysis.aiInsights,
-        recommendations: analysis.recommendations
+        recommendations: analysis.recommendations,
       });
     }
 
     // Test email search
     const recentEmails = await emailMonitor.searchEmails('domain', 1);
     logger.info('Recent domain-related emails:', recentEmails.length);
-
   } catch (error) {
     logger.error('Error running tests:', error);
   }
