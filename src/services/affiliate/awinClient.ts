@@ -16,54 +16,120 @@ export interface AffiliateProgram {
   };
 }
 
+export interface Transaction {
+  id: string;
+  programId: string;
+  amount: number;
+  status: 'pending' | 'approved' | 'declined';
+  clickRef?: string;
+  timestamp: string;
+}
+
 export class AwinClient {
   private readonly baseUrl = 'https://api.awin.com';
   private readonly apiKey: string;
   private readonly publisherId: string;
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string, publisherId: string) {
     this.apiKey = apiKey;
-    this.publisherId = process.env.AWIN_PUBLISHER_ID || '';
+    this.publisherId = publisherId;
   }
 
-  async getHighValuePrograms() {
-    const response = await axios.get(`${this.baseUrl}/publishers/${this.publisherId}/programmes`, {
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-      },
-      params: {
-        relationship: 'joined',
-        orderBy: 'commissionRate',
-        orderDirection: 'desc',
-      },
-    });
+  async getHighValuePrograms(): Promise<AffiliateProgram[]> {
+    try {
+      const response = await axios.get(
+        `${this.baseUrl}/publishers/${this.publisherId}/programmes`,
+        {
+          headers: {
+            Authorization: `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
-    // Filter for AI/Tech products with high commission
-    return response.data.filter((program: any) => {
-      const isAITech =
-        program.category.toLowerCase().includes('tech') ||
-        program.description.toLowerCase().includes('ai') ||
-        program.description.toLowerCase().includes('intelligence');
-
-      const hasGoodCommission = program.commissionRate > 20; // 20% or higher
-
-      return isAITech && hasGoodCommission;
-    });
+      // Transform response to AffiliateProgram format
+      return response.data.map((program: any) => ({
+        id: program.id,
+        name: program.name,
+        description: program.description || '',
+        commissionRate: program.commissionRate || 0,
+        category: program.category || 'General',
+        requirements: program.requirements || [],
+        status: program.status || 'inactive',
+        lastUpdated: program.lastUpdated || new Date().toISOString(),
+        metrics: {
+          conversionRate: program.metrics?.conversionRate || 0,
+          averageOrderValue: program.metrics?.averageOrderValue || 0,
+          clickThroughRate: program.metrics?.clickThroughRate || 0,
+        },
+      }));
+    } catch (error) {
+      console.error('Failed to fetch high value programs:', error);
+      throw error;
+    }
   }
 
-  async getCommissionDetails(programId: number) {
-    return axios.get(`${this.baseUrl}/publishers/${this.publisherId}/commissiongroups`, {
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-      },
-      params: {
-        programmeId: programId,
-      },
-    });
+  async getTransactions(startDate?: Date): Promise<Transaction[]> {
+    try {
+      const date = startDate || new Date(Date.now() - 24 * 60 * 60 * 1000); // Last 24 hours by default
+      const response = await axios.get(
+        `${this.baseUrl}/publishers/${this.publisherId}/transactions`,
+        {
+          headers: {
+            Authorization: `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          params: {
+            startDate: date.toISOString(),
+            timezone: 'UTC',
+          },
+        }
+      );
+
+      return response.data.map((tx: any) => ({
+        id: tx.id,
+        programId: tx.programId,
+        amount: tx.amount,
+        status: tx.status,
+        clickRef: tx.clickRef,
+        timestamp: tx.transactionDate,
+      }));
+    } catch (error) {
+      console.error('Failed to fetch transactions:', error);
+      return [];
+    }
   }
 
-  async trackOpportunity(programId: number, metadata: any) {
-    // Store opportunity tracking info for ValueEx
-    // We'll expand this as we build out the matching system
+  async getProgramLinks(): Promise<string[]> {
+    try {
+      const programs = await this.getHighValuePrograms();
+      return programs
+        .filter((p) => p.status === 'active' && p.commissionRate > 0)
+        .map((p) => `${this.baseUrl}/publisher/${this.publisherId}/program/${p.id}`);
+    } catch (error) {
+      console.error('Failed to generate program links:', error);
+      return [];
+    }
+  }
+
+  async trackOpportunity(program: AffiliateProgram): Promise<void> {
+    try {
+      await axios.post(
+        `${this.baseUrl}/publishers/${this.publisherId}/opportunities`,
+        {
+          programId: program.id,
+          timestamp: new Date().toISOString(),
+          metrics: program.metrics,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+    } catch (error) {
+      console.error(`Failed to track opportunity for program ${program.name}:`, error);
+    }
   }
 }
