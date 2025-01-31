@@ -68,7 +68,7 @@ export class MetricsCollector extends EventEmitter {
   }
 
   public trackApiMetrics(endpoint: string, data: ApiMetricsData): void {
-    let metrics = this.apiMetrics.get(endpoint) || {
+    const metrics = this.apiMetrics.get(endpoint) || {
       requests: 0,
       errors: 0,
       latency: 0,
