@@ -5,6 +5,6 @@ import { DemandPattern } from '../types/demandTypes';
  * Simulates product data with resonance patterns
  */
 export declare class MockProductDataSource {
-    private products;
-    getProducts(pattern: DemandPattern): Promise<Product[]>;
+  private products;
+  getProducts(pattern: DemandPattern): Promise<Product[]>;
 }

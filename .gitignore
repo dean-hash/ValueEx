@@ -9,6 +9,7 @@ dist/
 build/
 .next/
 out/
+docs/
 
 # Environment variables
 .env

@@ -1,45 +1,68 @@
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { NetworkGraph } from './NetworkGraph';
+import { DemandNode, DemandLink } from '../types';
 
-export default function DemandNetwork() {
+interface DemandNetworkProps {
+  nodes: DemandNode[];
+  links: DemandLink[];
+  onNodeClick?: (node: DemandNode) => void;
+  onLinkClick?: (link: DemandLink) => void;
+  width?: number;
+  height?: number;
+}
+
+export const DemandNetwork: React.FC<DemandNetworkProps> = ({
+  nodes,
+  links,
+  onNodeClick,
+  onLinkClick,
+  width = 800,
+  height = 600
+}) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const networkRef = useRef<NetworkGraph | null>(null);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (containerRef.current && !networkRef.current) {
+      networkRef.current = new NetworkGraph(containerRef.current, width, height);
 
-    const graph = new NetworkGraph(containerRef.current, {
-      width: 800,
-      height: 600,
-      animate: true,
-      theme: 'light',
-    });
+      if (onNodeClick) {
+        networkRef.current.onNodeClick(onNodeClick);
+      }
 
-    // Add some sample data
-    graph.addNode({
-      id: 'demand1',
-      label: 'Cloud Storage',
-      size: 30,
-      color: '#4CAF50',
-    });
-
-    graph.addNode({
-      id: 'demand2',
-      label: 'Data Analytics',
-      size: 25,
-      color: '#2196F3',
-    });
-
-    graph.addEdge({
-      from: 'demand1',
-      to: 'demand2',
-      width: 2,
-      color: '#999',
-    });
+      if (onLinkClick) {
+        networkRef.current.onEdgeClick(onLinkClick);
+      }
+    }
 
     return () => {
-      // Cleanup if needed
+      if (networkRef.current) {
+        networkRef.current.clear();
+      }
     };
-  }, []);
+  }, [width, height, onNodeClick, onLinkClick]);
 
-  return <div ref={containerRef} className="network-container" />;
-}
+  useEffect(() => {
+    if (networkRef.current) {
+      // Clear existing nodes and links
+      networkRef.current.clear();
+
+      // Add new nodes and links
+      nodes.forEach(node => networkRef.current?.addNode(node));
+      links.forEach(link => networkRef.current?.addEdge(link));
+    }
+  }, [nodes, links]);
+
+  return (
+    <div 
+      ref={containerRef} 
+      style={{ 
+        width: width, 
+        height: height, 
+        border: '1px solid #ddd',
+        borderRadius: '4px',
+        overflow: 'hidden'
+      }} 
+    />
+  );
+};

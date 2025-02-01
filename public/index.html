@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Development Services | Best Rates</title>
+    <meta name="description" content="Find top-rated developers, designers, and digital experts. Premium services at competitive rates.">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .hero {
+            text-align: center;
+            padding: 40px 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 40px;
+        }
+        .cta-button {
+            display: inline-block;
+            padding: 15px 30px;
+            background: #0d6efd;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 10px;
+        }
+        .services {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        .service-card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+        .price {
+            font-size: 1.5em;
+            color: #198754;
+            font-weight: bold;
+        }
+        .main-content {
+            margin-top: 40px;
+        }
+        .domain-listings {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        .domain-item {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+        .domain-item.premium {
+            background-color: #f8f9fa;
+        }
+        .service-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .service-item {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #333;
+        }
+        .service-item h3 {
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <h1>Premium Development Services at Competitive Rates</h1>
+        <p>Access top-rated developers, designers, and digital experts instantly</p>
+        <a href="https://go.fiverr.com/visit/?bta=1064652&brand=fiverrmktplace" class="cta-button">Find Your Expert Now</a>
+    </div>
+
+    <div class="main-content">
+        <div class="domain-listings">
+            <div class="domain-item premium">
+                <h2>Premium AI Domain</h2>
+                <h3>alerion.ai</h3>
+                <p>Perfect for AI/ML startups and innovative tech companies. Combines 'Alerion' (a mythical bird of prey) with .ai for a powerful brand in artificial intelligence.</p>
+                <div class="price">$3,500</div>
+                <a href="https://dcc.godaddy.com/domain-manager" class="cta-button">View Domain</a>
+            </div>
+        </div>
+        
+        <div class="services">
+            <h2>Need Development Help?</h2>
+            <div class="service-grid">
+                <a href="https://go.fiverr.com/visit/?bta=1064652&brand=fiverrmktplace" class="service-item">
+                    <h3>Find Developers</h3>
+                    <p>Connect with top developers on Fiverr</p>
+                </a>
+                <a href="https://go.fiverr.com/visit/?bta=1064652&brand=fp" class="service-item">
+                    <h3>Premium Services</h3>
+                    <p>Access vetted professional services</p>
+                </a>
+                <a href="https://go.fiverr.com/visit/?bta=1064652&brand=logomaker" class="service-item">
+                    <h3>Logo Design</h3>
+                    <p>Create your brand identity</p>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Track clicks
+        document.querySelectorAll('.cta-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const destination = this.href;
+                // Log click for analytics
+                console.log('Click:', destination);
+                // Don't block the navigation
+                return true;
+            });
+        });
+    </script>
+</body>
+</html>

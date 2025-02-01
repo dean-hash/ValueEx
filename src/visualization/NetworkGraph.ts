@@ -1,195 +1,220 @@
 import * as d3 from 'd3';
-import { NetworkNode, NetworkLink } from '../services/analysis/types';
+import { NetworkNode, NetworkEdge } from '../types';
 
-interface D3NetworkNode extends NetworkNode {
-  x?: number;
-  y?: number;
-  vx?: number;
-  vy?: number;
-  fx?: number | null;
-  fy?: number | null;
-  revenue?: number;
-}
-
-interface D3NetworkLink extends NetworkLink {
-  source: D3NetworkNode;
-  target: D3NetworkNode;
-  value: number;
+interface NetworkGraphOptions {
+  width?: number;
+  height?: number;
+  physics?: {
+    enabled: boolean;
+    stabilization: boolean;
+  };
+  nodes?: {
+    shape?: string;
+    size?: number;
+    font?: {
+      size?: number;
+      color?: string;
+    };
+  };
+  edges?: {
+    smooth?: boolean;
+    arrows?: {
+      to?: boolean;
+    };
+  };
 }
 
 export class NetworkGraph {
-  private simulation: d3.Simulation<D3NetworkNode, D3NetworkLink>;
-  private svg: d3.Selection<SVGSVGElement, unknown, HTMLElement, any>;
-  private container: HTMLElement;
-  private nodes: D3NetworkNode[] = [];
-  private links: D3NetworkLink[] = [];
+  private svg: d3.Selection<SVGSVGElement, unknown, null, undefined>;
+  private simulation: d3.Simulation<NetworkNode, NetworkEdge>;
+  private nodes: NetworkNode[] = [];
+  private edges: NetworkEdge[] = [];
+  private nodeClickHandler: ((node: NetworkNode) => void) | null = null;
+  private edgeClickHandler: ((edge: NetworkEdge) => void) | null = null;
+  private options: NetworkGraphOptions;
 
-  constructor(containerId: string, width: number, height: number) {
-    // Ensure container exists
-    this.container = document.getElementById(containerId);
-    if (!this.container) {
-      throw new Error(`Container #${containerId} not found`);
+  constructor(container: HTMLElement, options: NetworkGraphOptions = {}) {
+    this.options = {
+      width: options.width || 800,
+      height: options.height || 600,
+      physics: {
+        enabled: options.physics?.enabled ?? true,
+        stabilization: options.physics?.stabilization ?? true
+      },
+      nodes: {
+        shape: options.nodes?.shape || 'circle',
+        size: options.nodes?.size || 25,
+        font: {
+          size: options.nodes?.font?.size || 14,
+          color: options.nodes?.font?.color || '#000000'
+        }
+      },
+      edges: {
+        smooth: options.edges?.smooth ?? true,
+        arrows: {
+          to: options.edges?.arrows?.to ?? true
+        }
+      }
+    };
+
+    this.svg = d3.select(container)
+      .append('svg')
+      .attr('width', this.options.width)
+      .attr('height', this.options.height)
+      .attr('viewBox', [0, 0, this.options.width, this.options.height]);
+
+    this.simulation = d3.forceSimulation<NetworkNode>()
+      .force('charge', d3.forceManyBody().strength(-100))
+      .force('center', d3.forceCenter(this.options.width / 2, this.options.height / 2))
+      .force('link', d3.forceLink<NetworkNode, NetworkEdge>().id(d => d.id));
+  }
+
+  public addNode(nodeData: Partial<NetworkNode>): void {
+    const node: NetworkNode = {
+      id: nodeData.id!,
+      label: nodeData.label || nodeData.id!,
+      size: nodeData.size || this.options.nodes.size,
+      color: nodeData.color || '#1f77b4',
+      value: nodeData.value,
+      x: nodeData.x || this.options.width / 2,
+      y: nodeData.y || this.options.height / 2,
+      fx: null,
+      fy: null
+    };
+
+    if (!this.nodes.find(n => n.id === node.id)) {
+      this.nodes.push(node);
+      this.updateVisualization();
     }
-
-    // Clear any existing content
-    this.container.innerHTML = '';
-
-    // Create SVG
-    this.svg = d3.select(this.container).append('svg').attr('width', width).attr('height', height);
-
-    // Add zoom behavior
-    const zoom = d3
-      .zoom()
-      .scaleExtent([0.1, 4])
-      .on('zoom', (event) => {
-        this.svg.selectAll('g').attr('transform', event.transform);
-      });
-
-    this.svg.call(zoom);
-
-    // Initialize simulation
-    this.simulation = d3
-      .forceSimulation<D3NetworkNode>()
-      .force(
-        'link',
-        d3
-          .forceLink<D3NetworkNode, D3NetworkLink>()
-          .id((d) => d.id)
-          .distance(100)
-      )
-      .force('charge', d3.forceManyBody().strength(-300))
-      .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collision', d3.forceCollide().radius(30));
-
-    // Create arrow marker for links
-    this.svg
-      .append('defs')
-      .append('marker')
-      .attr('id', 'arrowhead')
-      .attr('viewBox', '-0 -5 10 10')
-      .attr('refX', 20)
-      .attr('refY', 0)
-      .attr('orient', 'auto')
-      .attr('markerWidth', 6)
-      .attr('markerHeight', 6)
-      .append('path')
-      .attr('d', 'M 0,-5 L 10,0 L 0,5')
-      .attr('fill', '#999');
   }
 
-  public updateData(nodes: NetworkNode[], links: NetworkLink[]) {
-    // Convert to D3 compatible format
-    this.nodes = nodes.map((node) => ({
-      ...node,
-      revenue: Math.random() * 1000, // Replace with actual revenue data
-    }));
+  public addEdge(edgeData: Partial<NetworkEdge>): void {
+    const edge: NetworkEdge = {
+      source: edgeData.source!,
+      target: edgeData.target!,
+      value: edgeData.value || 1,
+      label: edgeData.label
+    };
 
-    this.links = links.map((link) => ({
-      ...link,
-      source: this.nodes.find((n) => n.id === link.source) as D3NetworkNode,
-      target: this.nodes.find((n) => n.id === link.target) as D3NetworkNode,
-      value: Math.random() * 100, // Replace with actual flow value
-    }));
-
-    this.render();
+    if (!this.edges.find(e => 
+      (e.source === edge.source && e.target === edge.target) ||
+      (e.source === edge.target && e.target === edge.source)
+    )) {
+      this.edges.push(edge);
+      this.updateVisualization();
+    }
   }
 
-  private render() {
-    // Remove existing elements
-    this.svg.selectAll('.link').remove();
-    this.svg.selectAll('.node').remove();
+  public onNodeClick(handler: (node: NetworkNode) => void): void {
+    this.nodeClickHandler = handler;
+  }
 
-    // Create links
-    const links = this.svg
-      .append('g')
-      .selectAll('.link')
-      .data(this.links)
-      .enter()
-      .append('path')
-      .attr('class', 'link')
+  public onEdgeClick(handler: (edge: NetworkEdge) => void): void {
+    this.edgeClickHandler = handler;
+  }
+
+  private updateVisualization(): void {
+    // Update links
+    const link = this.svg
+      .selectAll<SVGLineElement, NetworkEdge>('line')
+      .data(this.edges)
+      .join('line')
       .attr('stroke', '#999')
       .attr('stroke-opacity', 0.6)
-      .attr('stroke-width', (d) => Math.sqrt(d.value))
-      .attr('marker-end', 'url(#arrowhead)');
+      .attr('stroke-width', d => Math.sqrt(d.value));
 
-    // Create nodes
-    const nodes = this.svg
-      .append('g')
-      .selectAll('.node')
+    // Update nodes
+    const node = this.svg
+      .selectAll<SVGGElement, NetworkNode>('g.node')
       .data(this.nodes)
-      .enter()
-      .append('g')
-      .attr('class', 'node')
-      .call(
-        d3
-          .drag<SVGGElement, D3NetworkNode>()
-          .on('start', this.dragStarted.bind(this))
-          .on('drag', this.dragged.bind(this))
-          .on('end', this.dragEnded.bind(this))
+      .join(
+        enter => {
+          const nodeEnter = enter.append('g')
+            .attr('class', 'node');
+          
+          // Initialize the drag behavior
+          nodeEnter.call(this.drag());
+          
+          return nodeEnter;
+        },
+        update => update,
+        exit => exit.remove()
       );
 
     // Add circles to nodes
-    nodes
-      .append('circle')
-      .attr('r', (d) => Math.sqrt(d.revenue || 10) / 2)
-      .attr('fill', (d) => this.getNodeColor(d))
+    node.selectAll('circle')
+      .data(d => [d])
+      .join('circle')
+      .attr('r', d => d.size)
+      .attr('fill', d => d.color)
       .attr('stroke', '#fff')
       .attr('stroke-width', 1.5);
 
     // Add labels to nodes
-    nodes
-      .append('text')
+    node.selectAll('text')
+      .data(d => [d])
+      .join('text')
       .attr('dx', 12)
       .attr('dy', '.35em')
-      .text((d) => d.label || d.id)
-      .attr('font-size', '10px');
+      .text(d => d.label)
+      .style('font-size', `${this.options.nodes.font.size}px`)
+      .style('fill', this.options.nodes.font.color);
 
-    // Add hover tooltips
-    nodes
-      .append('title')
-      .text((d) => `${d.label || d.id}\nRevenue: $${(d.revenue || 0).toFixed(2)}`);
+    // Add click handlers
+    node.on('click', (event, d) => {
+      if (this.nodeClickHandler) {
+        this.nodeClickHandler(d);
+      }
+    });
+
+    link.on('click', (event, d) => {
+      if (this.edgeClickHandler) {
+        this.edgeClickHandler(d);
+      }
+    });
 
     // Update simulation
     this.simulation
       .nodes(this.nodes)
-      .force(
-        'link',
-        d3.forceLink(this.links).id((d: any) => d.id)
-      )
-      .on('tick', () => {
-        links.attr('d', (d) => {
-          const dx = d.target.x! - d.source.x!;
-          const dy = d.target.y! - d.source.y!;
-          const dr = Math.sqrt(dx * dx + dy * dy);
-          return `M${d.source.x},${d.source.y}A${dr},${dr} 0 0,1 ${d.target.x},${d.target.y}`;
-        });
+      .force('link', d3.forceLink<NetworkNode, NetworkEdge>(this.edges).id(d => d.id));
 
-        nodes.attr('transform', (d) => `translate(${d.x},${d.y})`);
+    this.simulation.on('tick', () => {
+      link
+        .attr('x1', d => (d.source as NetworkNode).x!)
+        .attr('y1', d => (d.source as NetworkNode).y!)
+        .attr('x2', d => (d.target as NetworkNode).x!)
+        .attr('y2', d => (d.target as NetworkNode).y!);
+
+      node.attr('transform', d => `translate(${d.x},${d.y})`);
+    });
+
+    this.simulation.alpha(1).restart();
+  }
+
+  private drag() {
+    return d3.drag<SVGGElement, NetworkNode>()
+      .on('start', (event: d3.D3DragEvent<SVGGElement, NetworkNode, NetworkNode>) => {
+        const d = event.subject;
+        if (!event.active) this.simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+      })
+      .on('drag', (event: d3.D3DragEvent<SVGGElement, NetworkNode, NetworkNode>) => {
+        const d = event.subject;
+        d.fx = event.x;
+        d.fy = event.y;
+      })
+      .on('end', (event: d3.D3DragEvent<SVGGElement, NetworkNode, NetworkNode>) => {
+        const d = event.subject;
+        if (!event.active) this.simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
       });
   }
 
-  private getNodeColor(node: D3NetworkNode): string {
-    // Color based on revenue
-    const revenue = node.revenue || 0;
-    if (revenue > 500) return '#2ecc71';
-    if (revenue > 100) return '#3498db';
-    return '#95a5a6';
-  }
-
-  private dragStarted(event: d3.D3DragEvent<SVGGElement, D3NetworkNode, unknown>) {
-    if (!event.active) this.simulation.alphaTarget(0.3).restart();
-    event.subject.fx = event.subject.x;
-    event.subject.fy = event.subject.y;
-  }
-
-  private dragged(event: d3.D3DragEvent<SVGGElement, D3NetworkNode, unknown>) {
-    event.subject.fx = event.x;
-    event.subject.fy = event.y;
-  }
-
-  private dragEnded(event: d3.D3DragEvent<SVGGElement, D3NetworkNode, unknown>) {
-    if (!event.active) this.simulation.alphaTarget(0);
-    event.subject.fx = null;
-    event.subject.fy = null;
+  public clear(): void {
+    this.nodes = [];
+    this.edges = [];
+    this.updateVisualization();
   }
 }

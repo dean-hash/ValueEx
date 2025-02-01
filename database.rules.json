@@ -1,0 +1,32 @@
+{
+  "rules": {
+    ".read": "auth != null",
+    ".write": "auth != null",
+    "transactions": {
+      ".indexOn": ["timestamp", "status"],
+      "$transactionId": {
+        ".validate": "newData.hasChildren(['transactionId', 'timestamp'])",
+        "transactionId": {
+          ".validate": "newData.isString()"
+        },
+        "timestamp": {
+          ".validate": "newData.isNumber()"
+        },
+        "status": {
+          ".validate": "newData.isString() && newData.val().matches(/^(pending|completed|failed)$/)"
+        }
+      }
+    },
+    "transaction-analysis": {
+      "$transactionId": {
+        ".validate": "root.child('transactions').child($transactionId).exists()",
+        "analysis": {
+          ".validate": "newData.isString()"
+        },
+        "timestamp": {
+          ".validate": "newData.isNumber()"
+        }
+      }
+    }
+  }
+}

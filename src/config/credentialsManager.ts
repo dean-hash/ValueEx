@@ -1,11 +1,27 @@
 import { ENV_CONFIG } from '../../config/env.production';
 import { logger } from '../utils/logger';
 import * as crypto from 'crypto';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as fsPromises from 'fs/promises';
 
 interface Credentials {
-  service: string;
-  username: string;
-  password: string;
+  godaddy?: {
+    apiKey: string;
+    apiSecret: string;
+  };
+  teams?: {
+    appId: string;
+    appPassword: string;
+  };
+  fiverr?: {
+    affiliateLinks: {
+      marketplace: string;
+      pro: string;
+      logoMaker: string;
+      subAffiliates: string;
+    };
+  };
 }
 
 interface PaymentInfo {
@@ -16,7 +32,7 @@ interface PaymentInfo {
 
 export class CredentialsManager {
   private static instance: CredentialsManager;
-  private credentials: Map<string, any>;
+  private credentials: Map<string, Credentials[keyof Credentials]>;
   private readonly paymentInfoPath: string;
 
   private constructor() {
@@ -72,9 +88,9 @@ export class CredentialsManager {
 
   private async validateGoDaddyCredentials(): Promise<boolean> {
     try {
-      const { API_KEY, API_SECRET } = this.credentials.get('godaddy');
+      const { apiKey, apiSecret } = this.credentials.get('godaddy');
       // TODO: Implement actual GoDaddy API validation
-      return !!(API_KEY && API_SECRET);
+      return !!(apiKey && apiSecret);
     } catch (error) {
       return false;
     }
@@ -82,9 +98,9 @@ export class CredentialsManager {
 
   private async validateTeamsCredentials(): Promise<boolean> {
     try {
-      const { BOT_ID, APP_ID, APP_PASSWORD } = this.credentials.get('teams');
+      const { appId, appPassword } = this.credentials.get('teams');
       // TODO: Implement actual Teams API validation
-      return !!(BOT_ID && APP_ID && APP_PASSWORD);
+      return !!(appId && appPassword);
     } catch (error) {
       return false;
     }
@@ -93,7 +109,7 @@ export class CredentialsManager {
   private validateFiverrLinks(): boolean {
     try {
       const fiverrCreds = this.credentials.get('fiverr');
-      return Object.values(fiverrCreds).every(
+      return Object.values(fiverrCreds.affiliateLinks).every(
         (link) => typeof link === 'string' && link.startsWith('https://go.fiverr.com/')
       );
     } catch (error) {
@@ -101,8 +117,8 @@ export class CredentialsManager {
     }
   }
 
-  public getCredentials(service: string): any {
-    return this.credentials.get(service);
+  public getCredentials(service: keyof Credentials): Credentials[typeof service] | null {
+    return this.credentials.get(service) || null;
   }
 
   async storePaymentInfo(info: PaymentInfo): Promise<void> {

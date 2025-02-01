@@ -51,7 +51,19 @@ class EnvSetup {
   }
 
   private validateEnvVariables(): void {
-    const requiredVars = ['OPENAI_API_KEY', 'EMAIL_HOST', 'EMAIL_USER', 'DATABASE_URL'];
+    const requiredVars = [
+      'OPENAI_API_KEY', 
+      'EMAIL_HOST', 
+      'EMAIL_USER', 
+      'DATABASE_URL',
+      // Firebase Configuration
+      'FIREBASE_PROJECT_ID',
+      'FIREBASE_PRIVATE_KEY',
+      'FIREBASE_CLIENT_EMAIL',
+      'FIREBASE_DATABASE_URL',
+      // Gemini Configuration
+      'GEMINI_API_KEY'
+    ];
 
     const missingRequired = requiredVars.filter((varName) => !process.env[varName]);
 

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPointStrategy": "expand",
+  "entryPoints": ["./src"],
+  "out": "docs/api",
+  "name": "ValueEx API Documentation",
+  "includeVersion": true,
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "excludeExternals": true,
+  "readme": "ARCHITECTURE.md",
+  "plugin": ["typedoc-plugin-markdown"],
+  "theme": "default",
+  "categorizeByGroup": true,
+  "searchInComments": true,
+  "navigationLinks": {
+    "GitHub": "https://github.com/dean-hash/ValueEx",
+    "Architecture": "ARCHITECTURE.md",
+    "Environment Setup": "ENV_SETUP.md"
+  }
+}

@@ -1,1 +1,1 @@
-export default function DemandNetwork(): import("react").JSX.Element;
+export default function DemandNetwork(): import('react').JSX.Element;

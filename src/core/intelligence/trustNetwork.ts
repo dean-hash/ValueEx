@@ -3,6 +3,13 @@ import { map, mergeMap, filter } from 'rxjs/operators';
 import { ValueFlow } from './valueFlow';
 import { FlowEngine } from './flowEngine';
 
+interface TrustMetrics {
+  trustScore: number;
+  reliability: number;
+  engagement: number;
+  lastUpdate: Date;
+}
+
 interface TrustSignal {
   source: string;
   intent: string;
@@ -15,12 +22,22 @@ interface TrustSignal {
   };
 }
 
+interface NetworkNode {
+  value: {
+    immediate: number;
+    sustainable: number;
+    growth: number;
+  };
+  confidence: number;
+  timestamp: number;
+}
+
 export class TrustNetwork {
   private static instance: TrustNetwork;
   private valueFlow: ValueFlow;
   private flowEngine: FlowEngine;
   private trustStream: Subject<TrustSignal> = new Subject();
-  private networkState: BehaviorSubject<Map<string, any>> = new BehaviorSubject(new Map());
+  private networkState: BehaviorSubject<Map<string, NetworkNode>> = new BehaviorSubject(new Map());
 
   private constructor() {
     this.valueFlow = ValueFlow.getInstance();
@@ -88,7 +105,7 @@ export class TrustNetwork {
     return 1 + connections * 0.1; // 10% boost per connection
   }
 
-  private async processTrust(signal: TrustSignal): Promise<any> {
+  private async processTrust(signal: TrustSignal): Promise<NetworkNode> {
     // Convert trust into value
     this.valueFlow.injectValue({
       source: signal.source,
@@ -113,19 +130,15 @@ export class TrustNetwork {
     });
 
     return {
-      source: signal.source,
       value: signal.impact,
       confidence: signal.confidence,
+      timestamp: Date.now(),
     };
   }
 
-  private updateNetwork(result: any) {
+  private updateNetwork(result: NetworkNode) {
     const network = this.networkState.value;
-    network.set(result.source, {
-      value: result.value,
-      confidence: result.confidence,
-      timestamp: Date.now(),
-    });
+    network.set(result.value.immediate.toString(), result);
     this.networkState.next(network);
   }
 
@@ -133,7 +146,7 @@ export class TrustNetwork {
     this.trustStream.next(signal);
   }
 
-  observeTrust(): Observable<Map<string, any>> {
+  observeTrust(): Observable<Map<string, NetworkNode>> {
     return this.networkState.asObservable();
   }
 

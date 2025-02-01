@@ -2,10 +2,29 @@ import { EventEmitter } from 'events';
 import { MetricsCollector } from './metricsCollector';
 import type { ResonanceField } from '../../types/resonanceField';
 
+interface OptimizationMetrics {
+  performance: {
+    responseTime: number;
+    throughput: number;
+    errorRate: number;
+  };
+  revenue: {
+    current: number;
+    projected: number;
+    growth: number;
+  };
+  engagement: {
+    activeUsers: number;
+    retention: number;
+    satisfaction: number;
+  };
+}
+
 interface OptimizationStrategy {
   name: string;
-  condition: (metrics: Map<string, any>) => boolean;
+  condition: (metrics: OptimizationMetrics) => boolean;
   action: () => Promise<void>;
+  priority: number;
   cooldown: number;
   lastRun?: number;
 }
@@ -37,34 +56,37 @@ export class OptimizationEngine extends EventEmitter {
       {
         name: 'Memory Optimization',
         condition: (metrics) => {
-          const memoryMetrics = metrics.get('memoryUsage');
-          return memoryMetrics && memoryMetrics[memoryMetrics.length - 1].value > 0.8;
+          const memoryMetrics = metrics.performance.responseTime;
+          return memoryMetrics > 500;
         },
         action: async () => {
           await this.optimizeMemory();
         },
+        priority: 1,
         cooldown: 300000, // 5 minutes
       },
       {
         name: 'API Response Optimization',
         condition: (metrics) => {
-          const apiMetrics = metrics.get('apiResponseTime');
-          return apiMetrics && apiMetrics[apiMetrics.length - 1].value > 500;
+          const apiMetrics = metrics.performance.responseTime;
+          return apiMetrics > 500;
         },
         action: async () => {
           await this.optimizeApiResponse();
         },
+        priority: 2,
         cooldown: 60000, // 1 minute
       },
       {
         name: 'Error Rate Optimization',
         condition: (metrics) => {
-          const errorMetrics = metrics.get('errorRate');
-          return errorMetrics && errorMetrics[errorMetrics.length - 1].value > 0.05;
+          const errorMetrics = metrics.performance.errorRate;
+          return errorMetrics > 0.05;
         },
         action: async () => {
           await this.optimizeErrorHandling();
         },
+        priority: 3,
         cooldown: 120000, // 2 minutes
       },
     ];
@@ -83,33 +105,39 @@ export class OptimizationEngine extends EventEmitter {
     });
   }
 
-  private async checkAndOptimize(metrics: Map<string, any>) {
-    for (const strategy of this.strategies) {
-      const now = Date.now();
-      if (strategy.lastRun && now - strategy.lastRun < strategy.cooldown) {
-        continue;
-      }
+  private async checkAndOptimize(metrics: OptimizationMetrics): Promise<void> {
+    if (this.isOptimizing) {
+      return;
+    }
 
-      if (strategy.condition(metrics)) {
-        this.isOptimizing = true;
-        strategy.lastRun = now;
+    this.isOptimizing = true;
+    try {
+      // Sort strategies by priority
+      const applicableStrategies = this.strategies
+        .filter(strategy => strategy.condition(metrics))
+        .sort((a, b) => b.priority - a.priority);
 
-        try {
-          await strategy.action();
-          this.emit('optimization-complete', {
-            strategy: strategy.name,
-            timestamp: now,
-          });
-        } catch (error) {
-          this.emit('optimization-error', {
-            strategy: strategy.name,
-            error,
-            timestamp: now,
-          });
+      for (const strategy of applicableStrategies) {
+        const now = Date.now();
+        if (strategy.lastRun && now - strategy.lastRun < strategy.cooldown) {
+          continue;
         }
 
-        this.isOptimizing = false;
+        strategy.lastRun = now;
+        await strategy.action();
+        this.emit('optimization-complete', {
+          strategy: strategy.name,
+          timestamp: now,
+        });
       }
+    } catch (error) {
+      this.emit('optimization-error', {
+        strategy: 'Unknown',
+        error,
+        timestamp: Date.now(),
+      });
+    } finally {
+      this.isOptimizing = false;
     }
   }
 
@@ -128,15 +156,13 @@ export class OptimizationEngine extends EventEmitter {
     return {
       name: `Dynamic-${anomaly.metric}-Optimization`,
       condition: (metrics) => {
-        const metricValues = metrics.get(anomaly.metric);
-        return (
-          metricValues &&
-          metricValues[metricValues.length - 1].value > anomaly.mean + anomaly.stdDev
-        );
+        const metricValues = metrics.performance.responseTime;
+        return metricValues > anomaly.mean + anomaly.stdDev;
       },
       action: async () => {
         await this.optimizeDynamic(anomaly);
       },
+      priority: 4,
       cooldown: 180000, // 3 minutes
     };
   }

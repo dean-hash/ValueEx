@@ -1,184 +1,153 @@
 import { EventEmitter } from 'events';
 import { MetricsCollector } from './metricsCollector';
-import { OptimizationEngine } from './optimizationEngine';
-import type { ResonanceField } from '../../types/resonanceField';
+import { UnifiedIntelligenceField } from '../intelligence/unifiedIntelligenceField';
 
-interface HealthStatus {
-  status: 'healthy' | 'warning' | 'critical';
-  components: {
-    [key: string]: {
-      status: 'healthy' | 'warning' | 'critical';
-      metrics: any;
-      lastCheck: number;
-    };
-  };
+export interface HealthStatus {
+  status: 'healthy' | 'degraded' | 'unhealthy';
+  message: string;
+  timestamp: Date;
+  components: Record<string, ComponentHealth>;
   lastUpdate: number;
+}
+
+export interface ComponentHealth {
+  status: 'healthy' | 'degraded' | 'unhealthy';
+  metrics: Record<string, number>;
+  message?: string;
+  lastCheck: number;
+}
+
+export interface HealthThresholds {
+  apiResponseTime: { degraded: number; unhealthy: number };
+  memoryUsage: { degraded: number; unhealthy: number };
+  errorRate: { degraded: number; unhealthy: number };
+  cpuUsage: { degraded: number; unhealthy: number };
 }
 
 export class HealthMonitor extends EventEmitter {
   private static instance: HealthMonitor;
   private metricsCollector: MetricsCollector;
-  private optimizationEngine: OptimizationEngine;
-  private resonanceField: ResonanceField;
+  private intelligenceField: UnifiedIntelligenceField;
   private status: HealthStatus;
-  private checkInterval: NodeJS.Timer;
+  private checkInterval: NodeJS.Timeout;
+  private thresholds: HealthThresholds;
 
-  private constructor() {
+  constructor(metricsCollector: MetricsCollector, intelligenceField: UnifiedIntelligenceField) {
     super();
-    this.metricsCollector = MetricsCollector.getInstance();
-    this.optimizationEngine = OptimizationEngine.getInstance();
-    this.resonanceField = ResonanceField.getInstance();
+    this.metricsCollector = metricsCollector;
+    this.intelligenceField = intelligenceField;
 
     this.status = {
       status: 'healthy',
+      message: 'System is healthy',
+      timestamp: new Date(),
       components: {},
       lastUpdate: Date.now(),
     };
 
+    this.thresholds = {
+      apiResponseTime: { degraded: 500, unhealthy: 1000 },
+      memoryUsage: { degraded: 70, unhealthy: 90 },
+      errorRate: { degraded: 5, unhealthy: 10 },
+      cpuUsage: { degraded: 80, unhealthy: 95 },
+    };
+
+    this.checkInterval = setInterval(() => this.checkHealth(), 60000);
     this.initializeMonitoring();
   }
 
-  public static getInstance(): HealthMonitor {
-    if (!HealthMonitor.instance) {
-      HealthMonitor.instance = new HealthMonitor();
-    }
-    return HealthMonitor.instance;
-  }
-
-  private initializeMonitoring() {
-    // Monitor metrics
-    this.metricsCollector.on('metric-collected', (data) => {
+  private initializeMonitoring(): void {
+    this.metricsCollector.on('metric-collected', (data: Record<string, number>) => {
       this.updateComponentHealth(data);
     });
 
-    // Monitor optimization events
-    this.optimizationEngine.on('optimization-complete', (data) => {
-      this.handleOptimizationEvent(data);
-    });
-
-    // Monitor resonance field anomalies
-    this.resonanceField.on('anomaly', (anomalies) => {
-      this.handleAnomalies(anomalies);
-    });
-
-    // Regular health checks
-    this.checkInterval = setInterval(() => {
-      this.performHealthCheck();
-    }, 10000);
+    this.intelligenceField.on(
+      'resonance-change',
+      (anomalies: Array<{ metric: string; value: number }>) => {
+        this.handleAnomalies(anomalies);
+      }
+    );
   }
 
-  private updateComponentHealth(data: any) {
-    const { name, value } = data;
-    const component = this.status.components[name] || {
+  public getStatus(): HealthStatus {
+    return { ...this.status };
+  }
+
+  private updateComponentHealth(data: Record<string, number>): void {
+    const component: ComponentHealth = {
       status: 'healthy',
-      metrics: {},
+      metrics: data,
       lastCheck: Date.now(),
     };
 
-    component.metrics = {
-      ...component.metrics,
-      current: value,
-      timestamp: Date.now(),
-    };
-
-    // Update component status based on thresholds
-    component.status = this.calculateComponentStatus(name, value);
-    component.lastCheck = Date.now();
-
-    this.status.components[name] = component;
+    component.status = this.evaluateComponentHealth(component.metrics).status;
+    this.status.components[data.componentName || 'system'] = component;
     this.updateOverallStatus();
   }
 
-  private calculateComponentStatus(
-    name: string,
-    value: number
-  ): 'healthy' | 'warning' | 'critical' {
-    const thresholds = {
-      apiResponseTime: { warning: 300, critical: 500 },
-      memoryUsage: { warning: 0.7, critical: 0.85 },
-      errorRate: { warning: 0.02, critical: 0.05 },
-      cpuUsage: { warning: 0.6, critical: 0.8 },
+  private evaluateComponentHealth(metrics: Record<string, number>): ComponentHealth {
+    let status: ComponentHealth['status'] = 'healthy';
+    let message = '';
+
+    Object.entries(metrics).forEach(([metric, value]) => {
+      const threshold = this.thresholds[metric as keyof HealthThresholds];
+      if (threshold) {
+        if (value >= threshold.unhealthy) {
+          status = 'unhealthy';
+          message = `${metric} exceeds unhealthy threshold`;
+        } else if (value >= threshold.degraded && status !== 'unhealthy') {
+          status = 'degraded';
+          message = `${metric} exceeds degraded threshold`;
+        }
+      }
+    });
+
+    return {
+      status,
+      metrics,
+      message,
+      lastCheck: Date.now(),
     };
-
-    const componentThresholds = thresholds[name];
-    if (!componentThresholds) return 'healthy';
-
-    if (value >= componentThresholds.critical) return 'critical';
-    if (value >= componentThresholds.warning) return 'warning';
-    return 'healthy';
   }
 
-  private updateOverallStatus() {
-    const componentStatuses = Object.values(this.status.components).map((c) => c.status);
-
-    if (componentStatuses.includes('critical')) {
-      this.status.status = 'critical';
-    } else if (componentStatuses.includes('warning')) {
-      this.status.status = 'warning';
+  private updateOverallStatus(): void {
+    const statuses = Object.values(this.status.components).map((c) => c.status);
+    
+    if (statuses.includes('unhealthy')) {
+      this.status.status = 'unhealthy';
+      this.status.message = 'One or more components are unhealthy';
+    } else if (statuses.includes('degraded')) {
+      this.status.status = 'degraded';
+      this.status.message = 'One or more components are degraded';
     } else {
       this.status.status = 'healthy';
+      this.status.message = 'All components are healthy';
     }
 
     this.status.lastUpdate = Date.now();
     this.emit('health-update', this.status);
   }
 
-  private async performHealthCheck() {
-    const metrics = this.metricsCollector.getAllMetrics();
-
-    for (const [name, values] of metrics) {
-      if (values.length > 0) {
-        const latestValue = values[values.length - 1].value;
-        this.updateComponentHealth({ name, value: latestValue });
-      }
-    }
-
-    // Check for stale components
-    const now = Date.now();
-    for (const [name, component] of Object.entries(this.status.components)) {
-      if (now - component.lastCheck > 30000) {
-        // 30 seconds
-        component.status = 'warning';
-        this.emit('component-stale', { name, lastCheck: component.lastCheck });
-      }
-    }
-
-    this.updateOverallStatus();
-  }
-
-  private handleOptimizationEvent(data: any) {
-    const { timestamp } = data;
-    this.emit('optimization-event', {
-      timestamp,
-      impact: this.calculateOptimizationImpact(),
+  private handleAnomalies(anomalies: Array<{ metric: string; value: number }>): void {
+    anomalies.forEach(({ metric, value }) => {
+      console.warn(`Anomaly detected in ${metric}: ${value}`);
+      this.emit('anomaly-detected', { metric, value });
     });
   }
 
-  private calculateOptimizationImpact(): number {
-    // Calculate the impact of optimization based on metrics before and after
-    return 0.5; // Placeholder
-  }
-
-  private handleAnomalies(anomalies: any[]) {
-    anomalies.forEach((anomaly) => {
-      this.emit('anomaly-detected', {
-        ...anomaly,
-        timestamp: Date.now(),
-        suggestedAction: this.suggestAction(anomaly),
-      });
-    });
-  }
-
-  private suggestAction(anomaly: any): string {
-    // Implement action suggestion logic based on anomaly type and severity
-    return `Suggested action for ${anomaly.metric} anomaly`;
-  }
-
-  public getHealthStatus(): HealthStatus {
-    return { ...this.status };
-  }
-
-  public getComponentHealth(component: string) {
+  public getComponentHealth(component: string): ComponentHealth | undefined {
     return this.status.components[component];
+  }
+
+  public stop(): void {
+    if (this.checkInterval) {
+      clearInterval(this.checkInterval);
+    }
+  }
+
+  private checkHealth(): void {
+    // Perform health checks
+    this.status.timestamp = new Date();
+    this.emit('health-update', this.status);
   }
 }

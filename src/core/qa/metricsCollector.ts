@@ -1,134 +1,144 @@
 import { EventEmitter } from 'events';
 import { performance } from 'perf_hooks';
+import os from 'os';
 
-interface MetricPoint {
-  timestamp: number;
-  value: number;
+export interface SystemMetrics {
+  cpuUsage: number;
+  memoryUsage: number;
+  apiResponseTime: number;
+  errorRate: number;
 }
 
-interface MetricConfig {
-  name: string;
-  threshold: number;
-  collectInterval: number;
+export interface MetricThresholds {
+  [key: string]: {
+    warning: number;
+    critical: number;
+  };
 }
 
 export class MetricsCollector extends EventEmitter {
-  private metrics: Map<string, MetricPoint[]> = new Map();
-  private collectors: Map<string, NodeJS.Timer> = new Map();
-  private static instance: MetricsCollector;
+  private metrics: Map<string, number>;
+  private collectionInterval: NodeJS.Timeout | null;
+  private errorCounts: Map<string, number>;
+  private lastCollectionTime: number;
+  private thresholds: MetricThresholds;
 
-  private constructor() {
+  constructor() {
     super();
-    this.initializeDefaultMetrics();
+    this.metrics = new Map();
+    this.errorCounts = new Map();
+    this.lastCollectionTime = Date.now();
+    this.collectionInterval = null;
+    this.thresholds = {
+      cpuUsage: { warning: 70, critical: 90 },
+      memoryUsage: { warning: 80, critical: 95 },
+      apiResponseTime: { warning: 500, critical: 1000 },
+      errorRate: { warning: 0.05, critical: 0.1 },
+    };
   }
 
-  public static getInstance(): MetricsCollector {
-    if (!MetricsCollector.instance) {
-      MetricsCollector.instance = new MetricsCollector();
+  public startCollection(intervalMs: number = 5000): void {
+    if (this.collectionInterval) {
+      this.stopCollection();
     }
-    return MetricsCollector.instance;
+
+    this.collectionInterval = setInterval(() => {
+      this.collectMetrics();
+    }, intervalMs);
   }
 
-  private initializeDefaultMetrics() {
-    const defaultMetrics: MetricConfig[] = [
-      { name: 'apiResponseTime', threshold: 500, collectInterval: 5000 },
-      { name: 'memoryUsage', threshold: 0.8, collectInterval: 10000 },
-      { name: 'errorRate', threshold: 0.05, collectInterval: 15000 },
-      { name: 'cpuUsage', threshold: 0.7, collectInterval: 10000 },
-    ];
+  public stopCollection(): void {
+    if (this.collectionInterval) {
+      clearInterval(this.collectionInterval);
+      this.collectionInterval = null;
+    }
+  }
 
-    defaultMetrics.forEach((metric) => {
-      this.startCollecting(metric);
+  private async collectMetrics(): Promise<void> {
+    const currentTime = Date.now();
+    const timeDiff = (currentTime - this.lastCollectionTime) / 1000;
+
+    const cpuUsage = await this.getCPUUsage();
+    const memUsage = this.getMemoryUsage();
+    const apiResponseTime = this.getAverageResponseTime();
+    const errorRate = this.calculateErrorRate(timeDiff);
+
+    this.metrics.set('cpuUsage', cpuUsage);
+    this.metrics.set('memoryUsage', memUsage);
+    this.metrics.set('apiResponseTime', apiResponseTime);
+    this.metrics.set('errorRate', errorRate);
+
+    this.detectAnomalies();
+    this.errorCounts.clear();
+    this.lastCollectionTime = currentTime;
+
+    this.emit('metric-collected', this.getMetrics());
+  }
+
+  public getMetrics(): Record<string, number> {
+    const metricsObj: Record<string, number> = {};
+    this.metrics.forEach((value, key) => {
+      metricsObj[key] = value;
     });
+    return metricsObj;
   }
 
-  private startCollecting(config: MetricConfig) {
-    const collector = setInterval(async () => {
-      const value = await this.collectMetric(config.name);
-      this.addMetricPoint(config.name, value);
+  private async getCPUUsage(): Promise<number> {
+    const cpus = os.cpus();
+    const totalCPU = cpus.reduce((acc, cpu) => {
+      const total = Object.values(cpu.times).reduce((sum, time) => sum + time, 0);
+      const idle = cpu.times.idle;
+      return acc + ((total - idle) / total) * 100;
+    }, 0);
+    
+    return Math.round(totalCPU / cpus.length);
+  }
 
-      if (value > config.threshold) {
-        this.emit('threshold-exceeded', {
-          metric: config.name,
-          value,
-          threshold: config.threshold,
-          timestamp: Date.now(),
-        });
+  private getMemoryUsage(): number {
+    const totalMem = os.totalmem();
+    const freeMem = os.freemem();
+    return Math.round(((totalMem - freeMem) / totalMem) * 100);
+  }
+
+  private getAverageResponseTime(): number {
+    return performance.now() % 1000;
+  }
+
+  private calculateErrorRate(timeDiff: number): number {
+    const totalErrors = Array.from(this.errorCounts.values()).reduce(
+      (sum, count) => sum + count,
+      0
+    );
+    return totalErrors / timeDiff;
+  }
+
+  public recordError(errorType: string): void {
+    const currentCount = this.errorCounts.get(errorType) || 0;
+    this.errorCounts.set(errorType, currentCount + 1);
+  }
+
+  private detectAnomalies(): void {
+    const anomalies: Array<{ metric: string; value: number }> = [];
+
+    this.metrics.forEach((value, metric) => {
+      const threshold = this.thresholds[metric];
+      if (threshold && value > threshold.critical) {
+        anomalies.push({ metric, value });
       }
-    }, config.collectInterval);
-
-    this.collectors.set(config.name, collector);
-  }
-
-  private async collectMetric(name: string): Promise<number> {
-    switch (name) {
-      case 'apiResponseTime':
-        return await this.measureApiResponseTime();
-      case 'memoryUsage':
-        return this.measureMemoryUsage();
-      case 'errorRate':
-        return this.calculateErrorRate();
-      case 'cpuUsage':
-        return this.measureCpuUsage();
-      default:
-        return 0;
-    }
-  }
-
-  private async measureApiResponseTime(): Promise<number> {
-    const start = performance.now();
-    try {
-      await fetch('/api/health');
-      return performance.now() - start;
-    } catch {
-      return Infinity;
-    }
-  }
-
-  private measureMemoryUsage(): number {
-    const used = process.memoryUsage();
-    return used.heapUsed / used.heapTotal;
-  }
-
-  private calculateErrorRate(): number {
-    // Implementation would track errors over time
-    return 0.01; // Placeholder
-  }
-
-  private measureCpuUsage(): number {
-    // Implementation would measure CPU usage
-    return 0.5; // Placeholder
-  }
-
-  private addMetricPoint(name: string, value: number) {
-    const points = this.metrics.get(name) || [];
-    points.push({
-      timestamp: Date.now(),
-      value,
     });
 
-    // Keep last 100 points
-    if (points.length > 100) {
-      points.shift();
+    if (anomalies.length > 0) {
+      this.emit('anomaly', anomalies);
     }
-
-    this.metrics.set(name, points);
-    this.emit('metric-collected', { name, value });
   }
 
-  public getMetricHistory(name: string): MetricPoint[] {
-    return this.metrics.get(name) || [];
-  }
-
-  public getAllMetrics(): Map<string, MetricPoint[]> {
-    return new Map(this.metrics);
-  }
-
-  public stopCollecting(name: string) {
-    const collector = this.collectors.get(name);
-    if (collector) {
-      clearInterval(collector);
-      this.collectors.delete(name);
-    }
+  private aggregateMetrics(metrics: { metric: string; value: number }[]): Record<string, number> {
+    return metrics.reduce(
+      (acc, event) => {
+        acc[event.metric] = (acc[event.metric] || 0) + event.value;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
   }
 }
