@@ -18,7 +18,7 @@ export class LocalIntelligence {
   async enrichSignal(signal: ScrapedDemandSignal): Promise<ScrapedDemandSignal> {
     try {
       const insights = await this.analyzeSignal(signal);
-      
+
       signal.analysis = {
         ...signal.analysis,
         localInsights: insights,
@@ -31,9 +31,9 @@ export class LocalIntelligence {
 
       return signal;
     } catch (error: any) {
-      logger.error('Error enriching signal with local intelligence', { 
+      logger.error('Error enriching signal with local intelligence', {
         error: error.message,
-        signal: signal.query 
+        signal: signal.query,
       });
       return signal;
     }
@@ -93,16 +93,15 @@ Format your response as a JSON array of insights.`;
       // If not valid JSON, split by newlines and clean up
       return modelOutput
         .split('\n')
-        .map(line => line.trim())
-        .filter(line => line.length > 0);
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0);
     }
   }
 
   private calculateConfidence(insights: string[]): number {
     // Extract confidence score if present in insights
-    const confidenceInsight = insights.find(insight => 
-      insight.toLowerCase().includes('confidence') && 
-      insight.includes('%')
+    const confidenceInsight = insights.find(
+      (insight) => insight.toLowerCase().includes('confidence') && insight.includes('%')
     );
 
     if (confidenceInsight) {

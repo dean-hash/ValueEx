@@ -1,0 +1,106 @@
+{
+  "format": 1,
+  "restore": {
+    "c:\\Users\\DeanM\\OneDrive\\ValueEx\\scripts\\GraphMailer.csproj": {}
+  },
+  "projects": {
+    "c:\\Users\\DeanM\\OneDrive\\ValueEx\\scripts\\GraphMailer.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "c:\\Users\\DeanM\\OneDrive\\ValueEx\\scripts\\GraphMailer.csproj",
+        "projectName": "GraphMailer",
+        "projectPath": "c:\\Users\\DeanM\\OneDrive\\ValueEx\\scripts\\GraphMailer.csproj",
+        "packagesPath": "C:\\Users\\DeanM\\.nuget\\packages\\",
+        "outputPath": "c:\\Users\\DeanM\\OneDrive\\ValueEx\\scripts\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "c:\\Users\\DeanM\\OneDrive\\ValueEx\\scripts\\NuGet.Config",
+          "C:\\Users\\DeanM\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.100"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "Azure.Identity": {
+              "target": "Package",
+              "version": "[1.10.0, )"
+            },
+            "Microsoft.Bot.Builder": {
+              "target": "Package",
+              "version": "[4.22.9, )"
+            },
+            "Microsoft.Bot.Builder.Integration.AspNet.Core": {
+              "target": "Package",
+              "version": "[4.22.9, )"
+            },
+            "Microsoft.Bot.Connector": {
+              "target": "Package",
+              "version": "[4.22.9, )"
+            },
+            "Microsoft.Bot.Schema": {
+              "target": "Package",
+              "version": "[4.22.9, )"
+            },
+            "Microsoft.CognitiveServices.Speech": {
+              "target": "Package",
+              "version": "[1.42.0, )"
+            },
+            "Microsoft.Extensions.Logging.Console": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            },
+            "Microsoft.Graph": {
+              "target": "Package",
+              "version": "[5.34.0, )"
+            },
+            "Microsoft.Teams.AI": {
+              "target": "Package",
+              "version": "[1.9.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.102/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

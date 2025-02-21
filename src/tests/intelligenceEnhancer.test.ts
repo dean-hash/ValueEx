@@ -46,7 +46,7 @@ describe('IntelligenceEnhancer', () => {
         status: 'active',
         content: 'Strong market demand detected',
         timestamp: new Date().toISOString(),
-      }
+      },
     ],
     timestamp: new Date().toISOString(),
   };

@@ -1,214 +1,163 @@
-import { DemandSignal, ValuePattern, MatchRecommendation } from '../types';
+import { DemandSignal, DemandContext } from '../../../types/mvp/demand';
 
-/**
- * ValueSignalProcessor
- * 
- * Core engine for processing value signals and identifying authentic value connections.
- * Focuses on removing exploitative practices and fostering genuine value exchange.
- */
-export class ValueSignalProcessor {
-    private signals: Map<string, DemandSignal> = new Map();
-    private patterns: ValuePattern[] = [];
-    
-    /**
-     * Process an incoming value signal
-     * @param signal Raw demand signal
-     * @returns Processed signal with authenticity metrics
-     */
-    async processSignal(signal: DemandSignal): Promise<DemandSignal> {
-        // Validate and enrich the signal
-        const enrichedSignal = await this.enrichSignal(signal);
-        
-        // Store for pattern analysis
-        this.signals.set(enrichedSignal.id, enrichedSignal);
-        
-        // Update value patterns
-        await this.updatePatterns();
-        
-        return enrichedSignal;
+interface ProcessedSignal {
+  signal: DemandSignal;
+  context: DemandContext;
+}
+
+interface ProviderStatus {
+  status: 'ready' | 'processing' | 'error';
+  error?: string;
+}
+
+interface ProviderConfig {
+  maxBatchSize: number;
+  timeout: number;
+  retryAttempts: number;
+  cacheEnabled: boolean;
+}
+
+interface IntelligenceProvider {
+  name: string;
+  type: 'processing' | 'validation' | 'enrichment' | 'research';
+  status: ProviderStatus;
+  confidence: number;
+  config: ProviderConfig;
+
+  processSignal(signal: DemandSignal): Promise<ProcessedSignal>;
+  processSignalBatch(signals: DemandSignal[]): Promise<ProcessedSignal[]>;
+  validateAlignment(): Promise<boolean>;
+  getStatus(): ProviderStatus;
+}
+
+export class ValueSignalProcessor implements IntelligenceProvider {
+  name = 'ValueSignalProcessor';
+  type = 'processing' as const;
+  status: ProviderStatus = { status: 'ready' };
+  confidence = 0.85;
+  config: ProviderConfig = {
+    maxBatchSize: 10,
+    timeout: 30000,
+    retryAttempts: 3,
+    cacheEnabled: true,
+  };
+
+  private measureOrganicNature(signal: DemandSignal): number {
+    // Implement organic nature measurement
+    return 0.8;
+  }
+
+  private checkPatternConsistency(signal: DemandSignal): number {
+    // Implement pattern consistency check
+    return 0.7;
+  }
+
+  private assessValueEvidence(signal: DemandSignal): number {
+    // Implement value evidence assessment
+    return 0.75;
+  }
+
+  async processSignal(signal: DemandSignal): Promise<ProcessedSignal> {
+    try {
+      const organic = this.measureOrganicNature(signal);
+      const consistent = this.checkPatternConsistency(signal);
+      const valueScore = this.assessValueEvidence(signal);
+
+      return {
+        signal,
+        context: {
+          ...signal.context,
+          sentiment: (organic + consistent + valueScore) / 3,
+          volume: signal.strength || 0.5,
+        },
+      };
+    } catch (err) {
+      this.status = {
+        status: 'error',
+        error: err instanceof Error ? err.message : String(err),
+      };
+      throw err;
     }
+  }
 
-    /**
-     * Enrich signal with authenticity metrics and value indicators
-     */
-    private async enrichSignal(signal: DemandSignal): Promise<DemandSignal> {
-        return {
-            ...signal,
-            authenticity: {
-                // Measure signal authenticity through various indicators
-                organic: this.measureOrganicNature(signal),
-                consistent: this.checkPatternConsistency(signal),
-                valuable: this.assessValuePotential(signal)
-            },
-            valueMetrics: {
-                // Quantify different aspects of value
-                utility: this.calculateUtilityScore(signal),
-                sustainability: this.assessSustainability(signal),
-                fairness: this.evaluateFairness(signal)
-            }
-        };
+  async processSignalBatch(signals: DemandSignal[]): Promise<ProcessedSignal[]> {
+    const processPromises = signals.map((signal) => this.processSignal(signal));
+    return Promise.all(processPromises);
+  }
+
+  async validateAlignment(): Promise<boolean> {
+    try {
+      const testSignal: DemandSignal = {
+        id: 'test',
+        query: 'test query',
+        source: 'test',
+        timestamp: new Date().toISOString(),
+        strength: 1,
+        vertical: {
+          id: 'test',
+          name: 'Test Vertical',
+          characteristics: {
+            purchaseCycle: 'impulse',
+            priceElasticity: 0.5,
+            seasonality: 0.5,
+            techDependency: 0.5,
+          },
+          keyMetrics: {
+            avgMargin: 0.3,
+            customerLifetime: 12,
+            acquisitionCost: 100,
+            repeatPurchaseRate: 0.7,
+          },
+          competitiveFactors: {
+            entryBarriers: 0.5,
+            substituteThreat: 0.5,
+            supplierPower: 0.5,
+            buyerPower: 0.5,
+          },
+        },
+        insights: {
+          keywords: [],
+          context: '',
+          urgency: 0.5,
+          intent: 'test',
+          confidence: 0.8,
+          valueEvidence: {
+            authenticityMarkers: [],
+            realWorldImpact: [],
+            practicalUtility: [],
+          },
+          demographics: [],
+          priceRange: {
+            min: 0,
+            max: 100,
+          },
+          demandPatterns: {
+            frequency: 0.5,
+            consistency: 0.5,
+            evidence: [],
+          },
+        },
+        context: {
+          market: 'test',
+          category: 'test',
+          priceRange: '0-100',
+          intent: 'test',
+          urgency: 0.5,
+          volume: 0.5,
+          sentiment: 0.5,
+          categories: [],
+        },
+      };
+
+      await this.processSignal(testSignal);
+      return true;
+    } catch (err) {
+      console.error('Validation failed:', err);
+      return false;
     }
+  }
 
-    /**
-     * Measure how organic/authentic a signal is vs. manufactured demand
-     */
-    private measureOrganicNature(signal: DemandSignal): number {
-        const indicators = [
-            this.checkTemporalPatterns(signal),
-            this.analyzeRequirementCoherence(signal),
-            this.evaluateConstraintRealism(signal)
-        ];
-        
-        return indicators.reduce((sum, score) => sum + score, 0) / indicators.length;
-    }
-
-    /**
-     * Analyze value patterns across signals
-     */
-    private async updatePatterns(): Promise<void> {
-        const recentSignals = Array.from(this.signals.values())
-            .filter(s => this.isRecent(s.timestamp));
-
-        this.patterns = [
-            // Identify emerging value patterns
-            this.findFeaturePatterns(recentSignals),
-            this.analyzeValueDistribution(recentSignals),
-            this.detectTemporalTrends(recentSignals)
-        ].flat();
-    }
-
-    /**
-     * Find potential matches that maximize authentic value exchange
-     */
-    async findValueMatches(signal: DemandSignal): Promise<MatchRecommendation[]> {
-        const matches = await this.searchPotentialMatches(signal);
-        
-        return matches
-            .map(match => this.enrichMatchWithValueMetrics(match, signal))
-            .filter(match => this.isAuthenticMatch(match))
-            .sort((a, b) => b.valueScore - a.valueScore);
-    }
-
-    /**
-     * Calculate comprehensive value score for a potential match
-     */
-    private calculateValueScore(match: any, signal: DemandSignal): number {
-        return [
-            this.assessFeatureAlignment(match, signal),
-            this.evaluateConstraintSatisfaction(match, signal),
-            this.calculateMutualBenefit(match, signal),
-            this.assessLongTermValue(match, signal)
-        ].reduce((sum, score) => sum + score, 0) / 4;
-    }
-
-    /**
-     * Predict future value patterns and opportunities
-     */
-    async predictValueTrends(): Promise<ValuePattern[]> {
-        const historicalPatterns = this.analyzeHistoricalPatterns();
-        const emergingTrends = this.identifyEmergingTrends();
-        const potentialOpportunities = this.forecastOpportunities();
-
-        return this.synthesizePredictions(
-            historicalPatterns,
-            emergingTrends,
-            potentialOpportunities
-        );
-    }
-
-    // Helper methods for various calculations and analysis
-    private isRecent(timestamp: string): boolean {
-        const cutoff = new Date();
-        cutoff.setDate(cutoff.getDate() - 30); // 30 days
-        return new Date(timestamp) > cutoff;
-    }
-
-    private checkTemporalPatterns(signal: DemandSignal): number {
-        // Implement temporal pattern analysis
-        return 0.8; // Placeholder
-    }
-
-    private analyzeRequirementCoherence(signal: DemandSignal): number {
-        // Analyze if requirements make logical sense together
-        return 0.9; // Placeholder
-    }
-
-    private evaluateConstraintRealism(signal: DemandSignal): number {
-        // Check if constraints are realistic
-        return 0.85; // Placeholder
-    }
-
-    private findFeaturePatterns(signals: DemandSignal[]): ValuePattern[] {
-        // Implement feature pattern detection
-        return []; // Placeholder
-    }
-
-    private analyzeValueDistribution(signals: DemandSignal[]): ValuePattern[] {
-        // Analyze value distribution across signals
-        return []; // Placeholder
-    }
-
-    private detectTemporalTrends(signals: DemandSignal[]): ValuePattern[] {
-        // Detect temporal trends in value signals
-        return []; // Placeholder
-    }
-
-    private async searchPotentialMatches(signal: DemandSignal): Promise<any[]> {
-        // Search for potential matches
-        return []; // Placeholder
-    }
-
-    private enrichMatchWithValueMetrics(match: any, signal: DemandSignal): MatchRecommendation {
-        // Add value metrics to match
-        return {} as MatchRecommendation; // Placeholder
-    }
-
-    private isAuthenticMatch(match: MatchRecommendation): boolean {
-        // Verify match authenticity
-        return true; // Placeholder
-    }
-
-    private assessFeatureAlignment(match: any, signal: DemandSignal): number {
-        // Assess how well features align
-        return 0.9; // Placeholder
-    }
-
-    private evaluateConstraintSatisfaction(match: any, signal: DemandSignal): number {
-        // Evaluate constraint satisfaction
-        return 0.85; // Placeholder
-    }
-
-    private calculateMutualBenefit(match: any, signal: DemandSignal): number {
-        // Calculate mutual benefit score
-        return 0.95; // Placeholder
-    }
-
-    private assessLongTermValue(match: any, signal: DemandSignal): number {
-        // Assess long-term value potential
-        return 0.8; // Placeholder
-    }
-
-    private analyzeHistoricalPatterns(): any[] {
-        // Analyze historical patterns
-        return []; // Placeholder
-    }
-
-    private identifyEmergingTrends(): any[] {
-        // Identify emerging trends
-        return []; // Placeholder
-    }
-
-    private forecastOpportunities(): any[] {
-        // Forecast future opportunities
-        return []; // Placeholder
-    }
-
-    private synthesizePredictions(
-        historical: any[],
-        emerging: any[],
-        opportunities: any[]
-    ): ValuePattern[] {
-        // Synthesize predictions
-        return []; // Placeholder
-    }
+  getStatus(): ProviderStatus {
+    return this.status;
+  }
 }

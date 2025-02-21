@@ -8,12 +8,19 @@ export interface MVPProduct {
   category: string;
   vertical: MarketVertical;
   tags: string[];
-  resonanceFactors?: {
-    demandMatch: number; // How well it matches current demand
-    marketFit: number; // How well it fits in the market
-    valueAlignment: number; // How well it aligns with value proposition
+  valueProposition?: {
+    coreBenefit: string;
+    evidencePoints: string[];
+    realWorldImpact: string[];
   };
-  source: 'manual' | 'awin'; // Track source for future integration
+  resonanceFactors?: {
+    demandMatch: number;
+    marketFit: number;
+    valueAlignment: number;
+    practicalUtility: number;
+    sustainableValue: number;
+  };
+  source: 'manual' | 'awin';
   status: 'active' | 'inactive' | 'pending';
 }
 
@@ -26,4 +33,23 @@ export interface ProductMatchCriteria {
   tags?: string[];
   vertical?: string;
   resonanceThreshold?: number;
+  valueThreshold?: {
+    alignment: number;
+    utility: number;
+    sustainability: number;
+  };
+}
+
+export interface ProductOpportunity {
+  id: string;
+  category: string;
+  query: string;
+  confidence: number;
+  priceRange: string;
+  requirements: string[];
+  audience: string[];
+  metadata: {
+    demandStrength: number;
+    dataPoints: number;
+  };
 }

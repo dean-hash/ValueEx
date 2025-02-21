@@ -1,6 +1,7 @@
 export interface DemandPattern {
-  keywords?: string[];
-  category?: string;
+  id: string;
+  keywords: string[];
+  category: string;
   priceRange?: {
     min?: number;
     max?: number;
@@ -11,7 +12,7 @@ export interface DemandPattern {
     latitude?: number;
     longitude?: number;
   };
-  intensity?: number; // How strong is the demand signal (1-10)
+  intensity: number; // How strong is the demand signal (1-10)
   context?: {
     purpose?: string;
     urgency?: number;
@@ -28,5 +29,23 @@ export interface DemandPattern {
     localImpact?: number;
     culturalRelevance?: number;
     innovationLevel?: number;
+  };
+  signals: Array<{
+    type: string;
+    strength: number;
+    source: string;
+  }>;
+  confidence: number;
+  coherence: number;
+  spatialFactors: {
+    density: number;
+    distribution: 'clustered' | 'dispersed' | 'random';
+    hotspots: Array<{
+      location: {
+        latitude: number;
+        longitude: number;
+      };
+      intensity: number;
+    }>;
   };
 }

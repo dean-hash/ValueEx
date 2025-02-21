@@ -1,0 +1,133 @@
+{
+  "patterns": [
+    {
+      "id": "pattern-1",
+      "category": "Packaging",
+      "type": "value-creation",
+      "name": "Sustainable Value Chain",
+      "confidence": 0.88,
+      "components": [
+        {
+          "name": "Environmental Impact",
+          "weight": 0.4,
+          "evidence": ["reduced carbon footprint", "biodegradable materials", "waste reduction"],
+          "validation": {
+            "empirical": true,
+            "market": true,
+            "expert": true
+          }
+        },
+        {
+          "name": "Economic Efficiency",
+          "weight": 0.35,
+          "evidence": ["cost reduction", "operational efficiency", "market premium"],
+          "validation": {
+            "empirical": true,
+            "market": true,
+            "expert": true
+          }
+        },
+        {
+          "name": "Social Impact",
+          "weight": 0.25,
+          "evidence": ["consumer satisfaction", "brand loyalty", "community benefit"],
+          "validation": {
+            "empirical": true,
+            "market": true,
+            "expert": true
+          }
+        }
+      ],
+      "outcomes": {
+        "measured": [
+          {
+            "metric": "waste_reduction",
+            "value": 0.45,
+            "confidence": 0.92
+          },
+          {
+            "metric": "cost_savings",
+            "value": 0.32,
+            "confidence": 0.88
+          }
+        ],
+        "predicted": [
+          {
+            "metric": "market_share",
+            "value": 0.28,
+            "confidence": 0.85
+          }
+        ]
+      }
+    },
+    {
+      "id": "pattern-2",
+      "category": "Software",
+      "type": "value-creation",
+      "name": "Digital Transformation",
+      "confidence": 0.91,
+      "components": [
+        {
+          "name": "Operational Excellence",
+          "weight": 0.45,
+          "evidence": ["process automation", "resource optimization", "error reduction"],
+          "validation": {
+            "empirical": true,
+            "market": true,
+            "expert": true
+          }
+        },
+        {
+          "name": "Strategic Advantage",
+          "weight": 0.35,
+          "evidence": ["competitive positioning", "market intelligence", "innovation capacity"],
+          "validation": {
+            "empirical": true,
+            "market": true,
+            "expert": true
+          }
+        },
+        {
+          "name": "Customer Value",
+          "weight": 0.2,
+          "evidence": ["service quality", "personalization", "response time"],
+          "validation": {
+            "empirical": true,
+            "market": true,
+            "expert": true
+          }
+        }
+      ],
+      "outcomes": {
+        "measured": [
+          {
+            "metric": "efficiency_gain",
+            "value": 0.38,
+            "confidence": 0.94
+          },
+          {
+            "metric": "cost_reduction",
+            "value": 0.25,
+            "confidence": 0.89
+          }
+        ],
+        "predicted": [
+          {
+            "metric": "revenue_growth",
+            "value": 0.32,
+            "confidence": 0.86
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "timestamp": "2025-01-03T18:42:45-05:00",
+    "version": "1.0",
+    "coverage": {
+      "categories": ["Packaging", "Software"],
+      "confidence": 0.89,
+      "completeness": 0.92
+    }
+  }
+}

@@ -46,6 +46,32 @@ interface OpportunityScore {
   priority: 'HIGH' | 'MEDIUM' | 'LOW';
 }
 
+interface Merchant {
+  name: string;
+  averageCommission: number;
+  conversionRate: number;
+  validationStatus: string;
+  performance?: {
+    reliability: number;
+  };
+}
+
+interface ResonancePattern {
+  name: string;
+  resonanceScore: number;
+  harmonicFactors: {
+    strength: number;
+    urgency: number;
+    readiness: number;
+    confidence: number;
+  };
+  coherenceMetrics: {
+    valueAlignment: number;
+    trustFactor: number;
+    marketResonance: number;
+  };
+}
+
 export class MerchantOpportunityAnalyzer {
   private demandPatterns = new BehaviorSubject<DemandPattern[]>([]);
   private knownMerchants = new Map<string, MerchantOpportunity>();
@@ -107,27 +133,31 @@ export class MerchantOpportunityAnalyzer {
     merchant: MerchantOpportunity,
     patterns: DemandPattern[]
   ): number {
-    if (patterns.length === 0) return 0;
+    const matchedDemand = patterns.filter(
+      (pattern) =>
+        merchant.products.categories.includes(pattern.category) &&
+        pattern.pricePoint.min >= merchant.products.priceRange.min &&
+        pattern.pricePoint.max <= merchant.products.priceRange.max
+    );
 
-    const scores = patterns.map((pattern) => {
-      let score = 0;
+    if (matchedDemand.length === 0) return 0;
 
-      // Commission potential
-      score += this.normalizeCommission(merchant.commission) * 0.3;
+    const potentialRevenue = matchedDemand.reduce(
+      (total, pattern) =>
+        total + pattern.conversion.value * pattern.conversion.potential * pattern.frequency * 52,
+      0
+    );
 
-      // Demand strength
-      score += pattern.frequency * pattern.conversion.potential * 0.3;
+    const implementationEffort = this.calculateImplementationEffort(merchant);
 
-      // Price point alignment
-      score += this.calculatePriceAlignment(merchant.products.priceRange, pattern.pricePoint) * 0.2;
+    const demandScore =
+      matchedDemand.reduce((score, pattern) => score + pattern.urgency * pattern.frequency, 0) /
+      matchedDemand.length;
 
-      // Unique value propositions
-      score += (merchant.products.uniqueValue.length / 5) * 0.2;
+    const revenueScore = Math.min(10, potentialRevenue / 10000);
+    const effortScore = (11 - implementationEffort) / 2;
 
-      return score;
-    });
-
-    return scores.reduce((sum, score) => sum + score, 0) / patterns.length;
+    return demandScore * 0.3 + revenueScore * 0.5 + effortScore * 0.2;
   }
 
   private normalizeCommission(commission: MerchantOpportunity['commission']): number {
@@ -183,6 +213,51 @@ export class MerchantOpportunityAnalyzer {
     return 'LOW';
   }
 
+  private updateOpportunityScores(patterns: DemandPattern[]) {
+    this.knownMerchants.forEach((merchant, id) => {
+      const matchedDemand = patterns.filter(
+        (pattern) =>
+          merchant.products.categories.includes(pattern.category) &&
+          pattern.pricePoint.min >= merchant.products.priceRange.min &&
+          pattern.pricePoint.max <= merchant.products.priceRange.max
+      );
+
+      if (matchedDemand.length > 0) {
+        const potentialRevenue = matchedDemand.reduce(
+          (total, pattern) =>
+            total +
+            pattern.conversion.value * pattern.conversion.potential * pattern.frequency * 52,
+          0
+        );
+
+        const implementationEffort = this.calculateImplementationEffort(merchant);
+        const score = this.calculateOpportunityScore(merchant, matchedDemand);
+
+        this.opportunityScores.set(id, {
+          merchant,
+          score,
+          matchedDemand,
+          potentialRevenue,
+          implementationEffort,
+          priority: this.determinePriority(score, potentialRevenue, implementationEffort),
+        });
+      }
+    });
+  }
+
+  private calculateImplementationEffort(merchant: MerchantOpportunity): number {
+    let effort = 5; // Base effort
+
+    // Adjust based on requirements
+    if (merchant.requirements) {
+      if (merchant.requirements.traffic) effort += 1;
+      if (merchant.requirements.sales) effort += 1;
+      if (merchant.requirements.platform?.length) effort += merchant.requirements.platform.length;
+    }
+
+    return Math.min(10, effort); // Cap at 10
+  }
+
   public getTopOpportunities(limit: number = 10): OpportunityScore[] {
     return Array.from(this.opportunityScores.values())
       .sort((a, b) => {
@@ -216,5 +291,38 @@ export class MerchantOpportunityAnalyzer {
     });
 
     return report;
+  }
+
+  public async analyzeResonancePatterns(merchants: Merchant[]): Promise<ResonancePattern[]> {
+    const patterns = merchants.map((merchant) => ({
+      name: merchant.name,
+      resonanceScore: this.calculateResonanceScore(merchant),
+      harmonicFactors: {
+        strength: merchant.averageCommission / 100,
+        urgency: merchant.conversionRate,
+        readiness: merchant.validationStatus === 'approved' ? 1 : 0.5,
+        confidence: merchant.performance?.reliability || 0.7,
+      },
+      coherenceMetrics: this.measureCoherence(merchant),
+    }));
+
+    return patterns.sort((a, b) => b.resonanceScore - a.resonanceScore);
+  }
+
+  private calculateResonanceScore(merchant: Merchant): number {
+    // Base frequency alignment (432 Hz harmonic series)
+    const baseFreq = 432;
+    const merchantFreq = merchant.averageCommission * merchant.conversionRate;
+    const harmonicAlignment = Math.cos((merchantFreq / baseFreq) * Math.PI * 2);
+
+    return harmonicAlignment * (merchant.performance?.reliability || 0.7);
+  }
+
+  private measureCoherence(merchant: Merchant) {
+    return {
+      valueAlignment: merchant.averageCommission > 0 ? 1 : 0,
+      trustFactor: merchant.performance?.reliability || 0.7,
+      marketResonance: merchant.conversionRate > 0.02 ? 1 : 0.5,
+    };
   }
 }

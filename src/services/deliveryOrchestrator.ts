@@ -167,7 +167,7 @@ export class DeliveryOrchestrator {
 
   private findNextOptimalTime(channel: DeliveryChannel, context: DeliveryContext): Date {
     const { timeContext } = context;
-    let candidateTime = new Date(timeContext.localTime);
+    const candidateTime = new Date(timeContext.localTime);
 
     // If channel has preferred times, use next preferred time
     if (channel.preferences?.preferredTimes) {

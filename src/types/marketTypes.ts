@@ -21,6 +21,48 @@ export interface MarketVertical {
   };
 }
 
+export interface MarketData {
+  category: string;
+  totalProducts: number;
+  averagePrice: number;
+  metadata: {
+    trendingProducts: Array<{
+      id: string;
+      name: string;
+      price: number;
+      salesRank: number;
+    }>;
+    minPrice?: number;
+    maxPrice?: number;
+    timestamp: string;
+    status: string;
+    averageRating?: number;
+  };
+}
+
+export interface ProductData {
+  id: string;
+  name: string;
+  price: number;
+  metadata: {
+    description: string;
+    salesRank: number;
+    reviewCount: number;
+    averageRating: number;
+    timestamp: string;
+    status: string;
+  };
+}
+
+export interface PriceData {
+  timestamp: string;
+  price: number;
+  metadata: {
+    available: boolean;
+    productId: string;
+  };
+}
+
 export const MARKET_VERTICALS: Record<string, MarketVertical> = {
   electronics: {
     id: 'electronics',

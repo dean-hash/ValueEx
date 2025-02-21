@@ -1,67 +1,63 @@
-import { Gauge, Counter, register } from 'prom-client';
-import { logger } from '../../utils/logger';
 import { EventEmitter } from 'events';
+import { Logger } from '../logging/Logger';
 
-interface AlertThresholds {
-  processingTime: number;
-  errorRate: number;
-  responseTime: number;
+export interface ApiMetrics {
+  requests: number;
+  errors: number;
+  latency: number;
+  throughput?: number;
+}
+
+export interface Alert {
+  type: string;
+  severity: 'info' | 'warning' | 'critical';
+  message: string;
+  timestamp?: number;
+  data?: any;
+}
+
+export interface ResourceMetrics {
+  cpu: number;
+  memory: number;
+  disk: number;
+  network: {
+    latency: number;
+    bandwidth: number;
+  };
+}
+
+export interface ApiMetricsData {
+  latency: number;
+  success: boolean;
 }
 
 export class MetricsCollector extends EventEmitter {
   private static instance: MetricsCollector;
-  private errorWindow: number[] = [];
-  private readonly ERROR_WINDOW_SIZE = 100;
-  private thresholds: AlertThresholds = {
+  private apiMetrics: Map<string, ApiMetrics>;
+  private resourceMetrics: ResourceMetrics;
+  private logger: Logger;
+  private readonly thresholds = {
     processingTime: 1000, // 1 second
     errorRate: 0.1, // 10% error rate
     responseTime: 2000, // 2 seconds
+    cpuUsage: 80, // 80% CPU usage
+    memoryUsage: 80, // 80% memory usage
+    diskUsage: 90, // 90% disk usage
   };
-
-  // Core metrics
-  private readonly processingTime = new Gauge({
-    name: 'demand_signal_processing_time',
-    help: 'Time taken to process demand signals in milliseconds'
-  });
-
-  private readonly errorCount = new Counter({
-    name: 'demand_signal_errors_total',
-    help: 'Total number of errors in demand signal processing'
-  });
-
-  private readonly signalCount = new Counter({
-    name: 'demand_signals_processed_total',
-    help: 'Total number of demand signals processed',
-    labelNames: ['type', 'source']
-  });
-
-  private readonly responseTime = new Gauge({
-    name: 'value_response_generation_time',
-    help: 'Time taken to generate value responses in milliseconds'
-  });
-
-  // User interaction metrics
-  private readonly userInteractions = new Counter({
-    name: 'user_interactions_total',
-    help: 'Total number of user interactions',
-    labelNames: ['type', 'result']
-  });
-
-  private readonly userSessionDuration = new Gauge({
-    name: 'user_session_duration_seconds',
-    help: 'Duration of user sessions in seconds',
-    labelNames: ['user_type']
-  });
-
-  private readonly demandPatternStrength = new Gauge({
-    name: 'demand_pattern_strength',
-    help: 'Strength of identified demand patterns',
-    labelNames: ['pattern_type']
-  });
 
   private constructor() {
     super();
-    this.setupAlertChecks();
+    this.apiMetrics = new Map();
+    this.resourceMetrics = {
+      cpu: 0,
+      memory: 0,
+      disk: 0,
+      network: {
+        latency: 0,
+        bandwidth: 0,
+      },
+    };
+    this.logger = new Logger('MetricsCollector');
   }
 
   public static getInstance(): MetricsCollector {
@@ -71,107 +67,83 @@ export class MetricsCollector extends EventEmitter {
     return MetricsCollector.instance;
   }
 
-  private setupAlertChecks() {
-    setInterval(() => {
-      this.checkErrorRate();
-    }, 5000); // Check every 5 seconds
-  }
+  public trackApiMetrics(endpoint: string, data: ApiMetricsData): void {
+    const metrics = this.apiMetrics.get(endpoint) || {
+      requests: 0,
+      errors: 0,
+      latency: 0,
+    };
 
-  private checkErrorRate() {
-    const errorRate = this.errorWindow.reduce((sum, val) => sum + val, 0) / this.ERROR_WINDOW_SIZE;
+    metrics.requests++;
+    if (!data.success) {
+      metrics.errors++;
+    }
+    metrics.latency = (metrics.latency * (metrics.requests - 1) + data.latency) / metrics.requests;
+    metrics.throughput = metrics.requests / (Date.now() / 1000);
+
+    this.apiMetrics.set(endpoint, metrics);
+
+    // Check thresholds
+    if (data.latency > this.thresholds.responseTime) {
+      this.emitAlert({
+        type: 'latency',
+        severity: 'warning',
+        message: `High latency detected for ${endpoint}: ${data.latency}ms`,
+        timestamp: Date.now(),
+        data: { endpoint, latency: data.latency },
+      });
+    }
+
+    const errorRate = metrics.errors / metrics.requests;
     if (errorRate > this.thresholds.errorRate) {
-      this.emit('alert', {
+      this.emitAlert({
         type: 'error_rate',
-        message: `Error rate (${errorRate}) exceeds threshold (${this.thresholds.errorRate})`,
-        severity: 'high'
+        severity: 'critical',
+        message: `High error rate detected for ${endpoint}: ${(errorRate * 100).toFixed(2)}%`,
+        timestamp: Date.now(),
+        data: { endpoint, errorRate },
       });
     }
   }
 
-  recordProcessingTime(duration: number): void {
-    try {
-      this.processingTime.set(duration);
-      if (duration > this.thresholds.processingTime) {
-        this.emit('alert', {
-          type: 'processing_time',
-          message: `Processing time (${duration}ms) exceeds threshold (${this.thresholds.processingTime}ms)`,
-          severity: 'medium'
-        });
-      }
-    } catch (error) {
-      logger.error('Error recording processing time:', error);
-    }
+  public trackError(errorType: string): void {
+    this.logger.error(`Error tracked: ${errorType}`);
+    this.emitAlert({
+      type: 'error',
+      severity: 'warning',
+      message: `Error occurred: ${errorType}`,
+      timestamp: Date.now(),
+    });
   }
 
-  recordError(): void {
-    try {
-      this.errorCount.inc();
-      this.errorWindow.push(1);
-      if (this.errorWindow.length > this.ERROR_WINDOW_SIZE) {
-        this.errorWindow.shift();
-      }
-    } catch (error) {
-      logger.error('Error incrementing error count:', error);
-    }
+  public getApiMetrics(): { [key: string]: ApiMetrics } {
+    const result: { [key: string]: ApiMetrics } = {};
+    this.apiMetrics.forEach((value, key) => {
+      result[key] = value;
+    });
+    return result;
   }
 
-  recordSignal(type: string, source: string): void {
-    try {
-      this.signalCount.labels(type, source).inc();
-    } catch (error) {
-      logger.error('Error recording signal:', error);
-    }
+  public getResourceMetrics(): ResourceMetrics {
+    return { ...this.resourceMetrics };
   }
 
-  recordResponseTime(duration: number): void {
-    try {
-      this.responseTime.set(duration);
-      if (duration > this.thresholds.responseTime) {
-        this.emit('alert', {
-          type: 'response_time',
-          message: `Response time (${duration}ms) exceeds threshold (${this.thresholds.responseTime}ms)`,
-          severity: 'high'
-        });
-      }
-    } catch (error) {
-      logger.error('Error recording response time:', error);
-    }
+  async getMetricValues(metric: string): Promise<number[]> {
+    const metricData = this.apiMetrics.get(metric);
+    if (!metricData) return [];
+
+    return Object.values(metricData).map((entry) => entry.value);
   }
 
-  recordUserInteraction(type: string, result: string): void {
-    try {
-      this.userInteractions.labels(type, result).inc();
-    } catch (error) {
-      logger.error('Error recording user interaction:', error);
-    }
+  async getMetricTimestamps(metric: string): Promise<string[]> {
+    const metricData = this.apiMetrics.get(metric);
+    if (!metricData) return [];
+
+    return Object.values(metricData).map((entry) => entry.timestamp);
   }
 
-  recordSessionDuration(duration: number, userType: string): void {
-    try {
-      this.userSessionDuration.labels(userType).set(duration);
-    } catch (error) {
-      logger.error('Error recording session duration:', error);
-    }
-  }
-
-  recordDemandPattern(strength: number, patternType: string): void {
-    try {
-      this.demandPatternStrength.labels(patternType).set(strength);
-    } catch (error) {
-      logger.error('Error recording demand pattern:', error);
-    }
-  }
-
-  setAlertThresholds(thresholds: Partial<AlertThresholds>): void {
-    this.thresholds = { ...this.thresholds, ...thresholds };
-  }
-
-  async getMetrics(): Promise<string> {
-    try {
-      return await register.metrics();
-    } catch (error) {
-      logger.error('Error getting metrics:', error);
-      return '';
-    }
+  private emitAlert(alert: Alert): void {
+    this.emit('alert', alert);
+    this.logger.warn(`Alert emitted: ${alert.type} - ${alert.message}`);
   }
 }

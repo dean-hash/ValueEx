@@ -1,48 +1,55 @@
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
-
-# testing
-/coverage
-
-# production
-/build
-/dist
-
-# misc
-.DS_Store
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-*.pem
-.env.*
-!.env.example
-
-# debug
+# Dependencies
+node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Build output
+dist/
+build/
+.next/
+out/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+.env.*
+
 # IDE
-.idea/
 .vscode/
-*.swp
-*.swo
+*.code-workspace
+.idea/
 
-# TypeScript
-*.tsbuildinfo
-
-# Prisma
-/prisma/*.db
-/prisma/migrations/
-
-# Temp files
-*.log
-*.tmp
+# OS
+.DS_Store
+Thumbs.db
 
 # Next.js
 .next/
-out/
+.vercel
+*.tsbuildinfo
+next-env.d.ts
+
+# Large build files
+*.node
+cascade-space/node_modules/
+**/node_modules/@next/swc-*/
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Logs
+logs/
+*.log
+
+# Backup files
+ValueEx_Backup/
+*_Backup/
+*.backup
+*.bak
+
+# Hot updates
+*.hot-update.js
+*.hot-update.json

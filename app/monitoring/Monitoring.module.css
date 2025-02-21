@@ -1,0 +1,74 @@
+.container {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.healthIndicator {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    color: white;
+    font-weight: 600;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 2rem;
+}
+
+.card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.chart {
+    height: 300px;
+}
+
+.optimizations {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.optimizations li {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.resonance {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 0.25rem;
+    overflow-x: auto;
+}
+
+.resonance pre {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.error {
+    color: red;
+    padding: 2rem;
+    text-align: center;
+    font-weight: 600;
+}
+
+.loading {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+}

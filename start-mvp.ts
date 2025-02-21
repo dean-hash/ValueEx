@@ -3,7 +3,7 @@ import { logger } from './src/utils/logger';
 
 logger.info('Starting ValueEx MVP');
 
-mvpRunner.start().catch(error => {
-    logger.error('Failed to start MVP:', error);
-    process.exit(1);
+mvpRunner.start().catch((error) => {
+  logger.error('Failed to start MVP:', error);
+  process.exit(1);
 });

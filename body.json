@@ -1,0 +1,71 @@
+{
+  "properties": {
+    "displayName": "Affiliate Tracking Flow",
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {
+          "type": "Object",
+          "defaultValue": {
+            "type": "SystemAssigned"
+          }
+        }
+      },
+      "triggers": {
+        "When_a_HTTP_request_is_received": {
+          "type": "Request",
+          "kind": "Http",
+          "inputs": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "affiliateId": {"type": "string"},
+                "productId": {"type": "string"},
+                "amount": {"type": "number"}
+              },
+              "required": ["affiliateId", "productId", "amount"]
+            }
+          }
+        }
+      },
+      "actions": {
+        "Create_Business_Central_Sales_Order": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataservice",
+              "operationId": "CreateRecord",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataservice"
+            },
+            "parameters": {
+              "entityName": "salesorders",
+              "item/affiliateId": "@triggerBody()?['affiliateId']",
+              "item/productId": "@triggerBody()?['productId']",
+              "item/amount": "@triggerBody()?['amount']"
+            },
+            "authentication": {
+              "type": "SystemAssigned"
+            }
+          },
+          "runAfter": {}
+        },
+        "Response": {
+          "type": "Response",
+          "kind": "Http",
+          "inputs": {
+            "statusCode": 200,
+            "body": {
+              "message": "Sales order created successfully."
+            }
+          },
+          "runAfter": {
+            "Create_Business_Central_Sales_Order": [
+              "Succeeded"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

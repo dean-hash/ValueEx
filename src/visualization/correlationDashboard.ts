@@ -96,11 +96,14 @@ interface DemandVisualization {
       value: number | string;
       confidence: number;
     }[];
-    clusters?: Map<string, {
-      size: number;
-      avgSentiment: number;
-      dominantTopics: string[];
-    }>;
+    clusters?: Map<
+      string,
+      {
+        size: number;
+        avgSentiment: number;
+        dominantTopics: string[];
+      }
+    >;
   };
   metadata: {
     category: string;
@@ -143,23 +146,23 @@ export class CorrelationDashboard extends EventEmitter {
 
   private setupEventListeners(): void {
     // Listen for temporal patterns
-    this.analyzer.on('temporal_pattern_detected', pattern => {
+    this.analyzer.on('temporal_pattern_detected', (pattern) => {
       this.updateTemporalVisualization(pattern);
     });
 
     // Listen for multi-source correlations
-    this.analyzer.on('multi_source_correlation_detected', correlation => {
+    this.analyzer.on('multi_source_correlation_detected', (correlation) => {
       this.updateMultiSourceVisualization(correlation);
     });
 
     // Listen for trend detections
-    this.analyzer.on('trend_detected', trend => {
+    this.analyzer.on('trend_detected', (trend) => {
       this.updateTrendVisualization(trend);
     });
   }
 
   private initializeRealTimeUpdates(): void {
-    this.demandInsights.allSignals.subscribe(signal => {
+    this.demandInsights.allSignals.subscribe((signal) => {
       // Update network visualization in real-time
       const network = document.getElementById('demand-network');
       if (!network) return;
@@ -168,7 +171,7 @@ export class CorrelationDashboard extends EventEmitter {
       this.addSignalToNetwork(signal);
 
       // Update relationship strengths
-      signal.relatedSignals.forEach(related => {
+      signal.relatedSignals.forEach((related) => {
         if (related.relationship > 0.3) {
           this.updateNetworkRelationship(signal, related);
         }
@@ -181,14 +184,16 @@ export class CorrelationDashboard extends EventEmitter {
 
   private updateEmergingPatterns(): void {
     const patterns = Array.from(this.demandInsights.getEmergingPatterns())
-      .filter(pattern => pattern.signals.length >= 3)
+      .filter((pattern) => pattern.signals.length >= 3)
       .sort((a, b) => b.relationshipStrength - a.relationshipStrength)
       .slice(0, 5); // Top 5 strongest patterns
 
     const patternList = document.getElementById('emerging-patterns');
     if (!patternList) return;
 
-    patternList.innerHTML = patterns.map(pattern => `
+    patternList.innerHTML = patterns
+      .map(
+        (pattern) => `
       <div class="pattern-card ${pattern.relationshipStrength > 0.7 ? 'strong-pattern' : ''}">
         <h4>${pattern.topic}</h4>
         <p>Strength: ${(pattern.relationshipStrength * 100).toFixed(1)}%</p>
@@ -198,7 +203,9 @@ export class CorrelationDashboard extends EventEmitter {
           ${this.renderPatternTimeline(pattern.signals)}
         </div>
       </div>
-    `).join('');
+    `
+      )
+      .join('');
   }
 
   private renderPatternTimeline(signals: ContextualSignal[]): string {
@@ -208,7 +215,7 @@ export class CorrelationDashboard extends EventEmitter {
 
     return signals
       .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())
-      .map(signal => {
+      .map((signal) => {
         const position = ((signal.timestamp.getTime() - earliest) / timeRange) * 100;
         return `
           <div class="timeline-point" 
@@ -244,7 +251,7 @@ export class CorrelationDashboard extends EventEmitter {
     temporalPatterns.forEach((patterns, metric) => {
       this.updateTemporalVisualization({
         metric,
-        patterns
+        patterns,
       });
     });
 
@@ -253,7 +260,7 @@ export class CorrelationDashboard extends EventEmitter {
     multiSourceCorrelations.forEach((correlations, key) => {
       this.updateMultiSourceVisualization({
         sources: key.split('_'),
-        correlation: correlations[correlations.length - 1]
+        correlation: correlations[correlations.length - 1],
       });
     });
 
@@ -262,7 +269,7 @@ export class CorrelationDashboard extends EventEmitter {
     trends.forEach((trend, metric) => {
       this.updateTrendVisualization({
         metric,
-        trend
+        trend,
       });
     });
 
@@ -288,7 +295,7 @@ export class CorrelationDashboard extends EventEmitter {
       heatmaps: Array.from(this.heatmaps.entries()),
       comparativeViews: Array.from(this.comparativeViews.entries()),
       statisticalVisualizations: Array.from(this.statisticalVisualizations.entries()),
-      demandVisualizations: Array.from(this.demandVisualizations.entries())
+      demandVisualizations: Array.from(this.demandVisualizations.entries()),
     });
   }
 
@@ -299,37 +306,46 @@ export class CorrelationDashboard extends EventEmitter {
     const currentConfig = this.drillDownViews.get(viewId)?.config || {
       timeRange: 'day',
       granularity: 'hour',
-      filters: new Map()
+      filters: new Map(),
     };
 
     const newConfig: DrillDownConfig = {
       ...currentConfig,
       ...config,
-      filters: new Map([...currentConfig.filters, ...(config.filters || new Map())])
+      filters: new Map([...currentConfig.filters, ...(config.filters || new Map())]),
     };
 
     const drillDownView = this.createDrillDownView(baseView, newConfig);
     this.drillDownViews.set(viewId, drillDownView);
-    
+
     // Set up real-time updates for this view
     this.setupRealTimeUpdates(viewId, drillDownView);
-    
+
     return drillDownView;
   }
 
-  private createDrillDownView(base: StatisticalVisualization, config: DrillDownConfig): DrillDownView {
+  private createDrillDownView(
+    base: StatisticalVisualization,
+    config: DrillDownConfig
+  ): DrillDownView {
     const filteredData = this.applyFilters(base.data.primary, config);
     const timeWindowedData = this.applyTimeWindow(filteredData, config);
-    
+
     const correlations = this.analyzer.findRelatedMetrics(base.metadata.metric, config);
-    const anomalies = this.analyzer.detectAnomalies(timeWindowedData.datasets[0].data, timeWindowedData.labels);
+    const anomalies = this.analyzer.detectAnomalies(
+      timeWindowedData.datasets[0].data,
+      timeWindowedData.labels
+    );
     const predictions = this.generatePredictions(timeWindowedData.datasets[0].data, config);
 
-    const children = correlations.map(correlation => 
-      this.createDrillDownView({
-        ...base,
-        metadata: { ...base.metadata, metric: correlation.target }
-      }, config)
+    const children = correlations.map((correlation) =>
+      this.createDrillDownView(
+        {
+          ...base,
+          metadata: { ...base.metadata, metric: correlation.target },
+        },
+        config
+      )
     );
 
     return {
@@ -340,8 +356,12 @@ export class CorrelationDashboard extends EventEmitter {
         insights: [
           { key: 'Correlation Strength', value: correlations[0]?.strength || 0, confidence: 0.9 },
           { key: 'Anomaly Count', value: anomalies.length, confidence: 0.85 },
-          { key: 'Prediction Accuracy', value: predictions.confidence, confidence: predictions.confidence }
-        ]
+          {
+            key: 'Prediction Accuracy',
+            value: predictions.confidence,
+            confidence: predictions.confidence,
+          },
+        ],
       },
       children,
       config,
@@ -351,9 +371,9 @@ export class CorrelationDashboard extends EventEmitter {
         predictions: {
           shortTerm: predictions.values.slice(0, 24),
           longTerm: predictions.values.slice(24),
-          confidence: predictions.confidence
-        }
-      }
+          confidence: predictions.confidence,
+        },
+      },
     };
   }
 
@@ -363,31 +383,35 @@ export class CorrelationDashboard extends EventEmitter {
     }
 
     this.updateSubscriptions.add(viewId);
-    
+
     // Set up real-time data feed
     const updateInterval = this.determineUpdateInterval(view.config);
-    
+
     setInterval(() => {
       const newData = this.fetchLatestData(view.metadata.metric, view.config);
       const updatedView = this.updateDrillDownView(view, newData);
-      
+
       this.drillDownViews.set(viewId, updatedView);
-      
+
       // Emit update event with changes
       this.emit('drilldown_updated', {
         viewId,
         changes: this.calculateViewChanges(view, updatedView),
-        insights: this.generateRealTimeInsights(updatedView)
+        insights: this.generateRealTimeInsights(updatedView),
       });
     }, updateInterval);
   }
 
   private determineUpdateInterval(config: DrillDownConfig): number {
     switch (config.granularity) {
-      case 'minute': return 60000; // 1 minute
-      case 'hour': return 300000; // 5 minutes
-      case 'day': return 3600000; // 1 hour
-      default: return 300000; // 5 minutes default
+      case 'minute':
+        return 60000; // 1 minute
+      case 'hour':
+        return 300000; // 5 minutes
+      case 'day':
+        return 3600000; // 1 hour
+      default:
+        return 300000; // 5 minutes default
     }
   }
 
@@ -400,13 +424,16 @@ export class CorrelationDashboard extends EventEmitter {
   private updateDrillDownView(view: DrillDownView, newData: any): DrillDownView {
     const updatedData = this.mergeNewData(view.data.primary, newData);
     const predictions = this.generatePredictions(updatedData.datasets[0].data, view.config);
-    const anomalies = this.analyzer.detectAnomalies(updatedData.datasets[0].data, updatedData.labels);
+    const anomalies = this.analyzer.detectAnomalies(
+      updatedData.datasets[0].data,
+      updatedData.labels
+    );
 
     return {
       ...view,
       data: {
         ...view.data,
-        primary: updatedData
+        primary: updatedData,
       },
       insights: {
         ...view.insights,
@@ -414,17 +441,20 @@ export class CorrelationDashboard extends EventEmitter {
         predictions: {
           shortTerm: predictions.values.slice(0, 24),
           longTerm: predictions.values.slice(24),
-          confidence: predictions.confidence
-        }
-      }
+          confidence: predictions.confidence,
+        },
+      },
     };
   }
 
   private calculateViewChanges(oldView: DrillDownView, newView: DrillDownView): any {
     return {
       newAnomalies: this.findNewAnomalies(oldView.insights.anomalies, newView.insights.anomalies),
-      predictionChanges: this.comparePredictions(oldView.insights.predictions, newView.insights.predictions),
-      significantChanges: this.findSignificantChanges(oldView.data.primary, newView.data.primary)
+      predictionChanges: this.comparePredictions(
+        oldView.insights.predictions,
+        newView.insights.predictions
+      ),
+      significantChanges: this.findSignificantChanges(oldView.data.primary, newView.data.primary),
     };
   }
 
@@ -433,7 +463,7 @@ export class CorrelationDashboard extends EventEmitter {
       trendStrength: this.calculateTrendStrength(view.data.primary),
       anomalyRisk: this.calculateAnomalyRisk(view.insights.anomalies),
       predictionConfidence: view.insights.predictions.confidence,
-      recentChanges: this.summarizeRecentChanges(view.data.primary)
+      recentChanges: this.summarizeRecentChanges(view.data.primary),
     };
   }
 
@@ -441,17 +471,19 @@ export class CorrelationDashboard extends EventEmitter {
     // Apply filters based on config
     return {
       ...data,
-      datasets: data.datasets.map(dataset => ({
+      datasets: data.datasets.map((dataset) => ({
         ...dataset,
         data: dataset.data.filter((value, index) => {
           const timestamp = data.labels[index];
-          return this.filterByTimeRange(timestamp, config.timeRange) &&
+          return (
+            this.filterByTimeRange(timestamp, config.timeRange) &&
             this.filterByGranularity(timestamp, config.granularity) &&
             this.filterByRegion(dataset.label, config.region) &&
             this.filterByCategory(dataset.label, config.category) &&
-            this.filterByFilters(dataset.label, config.filters);
-        })
-      }))
+            this.filterByFilters(dataset.label, config.filters)
+          );
+        }),
+      })),
     };
   }
 
@@ -460,7 +492,7 @@ export class CorrelationDashboard extends EventEmitter {
     if (!networkContainer) return;
 
     const signals = Array.from(this.demandInsights.getEmergingPatterns())
-      .filter(pattern => pattern.signals.length >= 2)
+      .filter((pattern) => pattern.signals.length >= 2)
       .slice(0, 10); // Focus on top 10 patterns for clarity
 
     // Create network visualization
@@ -468,26 +500,26 @@ export class CorrelationDashboard extends EventEmitter {
       height: 500,
       width: 800,
       animate: true,
-      theme: 'light'
+      theme: 'light',
     });
 
     // Add nodes and edges based on signal relationships
-    signals.forEach(pattern => {
-      pattern.signals.forEach(signal => {
+    signals.forEach((pattern) => {
+      pattern.signals.forEach((signal) => {
         network.addNode({
           id: signal.id,
           label: this.truncateIntent(signal.intent),
-          size: 30 + (signal.contextualConfidence * 20),
-          color: this.getConfidenceColor(signal.contextualConfidence)
+          size: 30 + signal.contextualConfidence * 20,
+          color: this.getConfidenceColor(signal.contextualConfidence),
         });
 
-        signal.relatedSignals.forEach(related => {
+        signal.relatedSignals.forEach((related) => {
           if (related.relationship > 0.3) {
             network.addEdge({
               from: signal.id,
               to: related.signal.id,
               width: related.relationship * 5,
-              color: this.getRelationshipColor(related.relationship)
+              color: this.getRelationshipColor(related.relationship),
             });
           }
         });
@@ -495,11 +527,11 @@ export class CorrelationDashboard extends EventEmitter {
     });
 
     // Add interactive features
-    network.onNodeClick(node => {
+    network.onNodeClick((node) => {
       this.showSignalDetails(node.id);
     });
 
-    network.onEdgeClick(edge => {
+    network.onEdgeClick((edge) => {
       this.showRelationshipDetails(edge.from, edge.to);
     });
   }
@@ -508,7 +540,7 @@ export class CorrelationDashboard extends EventEmitter {
     // Green gradient based on confidence
     const hue = 120; // Green
     const saturation = 70;
-    const lightness = 100 - (confidence * 50); // Darker = higher confidence
+    const lightness = 100 - confidence * 50; // Darker = higher confidence
     return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
   }
 
@@ -516,7 +548,7 @@ export class CorrelationDashboard extends EventEmitter {
     // Blue gradient based on relationship strength
     const hue = 200; // Blue
     const saturation = 80;
-    const lightness = 100 - (strength * 50);
+    const lightness = 100 - strength * 50;
     return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
   }
 

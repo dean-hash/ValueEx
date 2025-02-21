@@ -1,63 +1,63 @@
 {
-    "posts": [
+  "posts": [
+    {
+      "title": "Tom Ford Oud Wood vs Tobacco Vanille - Which is more versatile?",
+      "upvotes": 45,
+      "comments": 23,
+      "url": "https://reddit.com/r/fragrance/post1",
+      "content": "Looking to make my first Tom Ford purchase. Love both but can only get one right now. Price is not a factor, just want the most versatile one for daily wear. $350 for either one.",
+      "timestamp": "2023-12-19T10:00:00Z"
+    },
+    {
+      "title": "Found Tobacco Vanille for $200 - Good deal?",
+      "upvotes": 67,
+      "comments": 34,
+      "url": "https://reddit.com/r/fragrance/post2",
+      "content": "Local store has TV for $200. Seems like a great price but wanted to check if there are better deals out there. Performance is great, longevity is amazing.",
+      "timestamp": "2023-12-19T11:30:00Z"
+    },
+    {
+      "title": "Oud Wood performance issues?",
+      "upvotes": 89,
+      "comments": 45,
+      "url": "https://reddit.com/r/fragrance/post3",
+      "content": "Love the scent but only getting 4-5 hours. Is this normal? Any tips to make it last longer? Paid $300 for it.",
+      "timestamp": "2023-12-19T09:15:00Z"
+    }
+  ],
+  "comments": [
+    {
+      "postId": "post1",
+      "content": "Oud Wood is more versatile IMO. TV can be too sweet for summer. Performance and longevity are both great.",
+      "upvotes": 12,
+      "replies": [
         {
-            "title": "Tom Ford Oud Wood vs Tobacco Vanille - Which is more versatile?",
-            "upvotes": 45,
-            "comments": 23,
-            "url": "https://reddit.com/r/fragrance/post1",
-            "content": "Looking to make my first Tom Ford purchase. Love both but can only get one right now. Price is not a factor, just want the most versatile one for daily wear. $350 for either one.",
-            "timestamp": "2023-12-19T10:00:00Z"
-        },
-        {
-            "title": "Found Tobacco Vanille for $200 - Good deal?",
-            "upvotes": 67,
-            "comments": 34,
-            "url": "https://reddit.com/r/fragrance/post2",
-            "content": "Local store has TV for $200. Seems like a great price but wanted to check if there are better deals out there. Performance is great, longevity is amazing.",
-            "timestamp": "2023-12-19T11:30:00Z"
-        },
-        {
-            "title": "Oud Wood performance issues?",
-            "upvotes": 89,
-            "comments": 45,
-            "url": "https://reddit.com/r/fragrance/post3",
-            "content": "Love the scent but only getting 4-5 hours. Is this normal? Any tips to make it last longer? Paid $300 for it.",
-            "timestamp": "2023-12-19T09:15:00Z"
+          "content": "Agree. OW works year-round. TV is amazing but more seasonal. Sillage is better on TV though.",
+          "upvotes": 8
         }
-    ],
-    "comments": [
+      ]
+    },
+    {
+      "postId": "post2",
+      "content": "That's a great price! Grey market usually has it for $240-260. The scent and projection are worth it.",
+      "upvotes": 23,
+      "replies": [
         {
-            "postId": "post1",
-            "content": "Oud Wood is more versatile IMO. TV can be too sweet for summer. Performance and longevity are both great.",
-            "upvotes": 12,
-            "replies": [
-                {
-                    "content": "Agree. OW works year-round. TV is amazing but more seasonal. Sillage is better on TV though.",
-                    "upvotes": 8
-                }
-            ]
-        },
-        {
-            "postId": "post2",
-            "content": "That's a great price! Grey market usually has it for $240-260. The scent and projection are worth it.",
-            "upvotes": 23,
-            "replies": [
-                {
-                    "content": "Make sure it's authentic though. Check batch codes. Performance varies between batches.",
-                    "upvotes": 15
-                }
-            ]
-        },
-        {
-            "postId": "post3",
-            "content": "Try spraying on clothes. I get 8+ hours that way. The scent and notes are amazing.",
-            "upvotes": 34,
-            "replies": [
-                {
-                    "content": "Also moisturize before applying. Makes a huge difference in longevity and sillage.",
-                    "upvotes": 19
-                }
-            ]
+          "content": "Make sure it's authentic though. Check batch codes. Performance varies between batches.",
+          "upvotes": 15
         }
-    ]
+      ]
+    },
+    {
+      "postId": "post3",
+      "content": "Try spraying on clothes. I get 8+ hours that way. The scent and notes are amazing.",
+      "upvotes": 34,
+      "replies": [
+        {
+          "content": "Also moisturize before applying. Makes a huge difference in longevity and sillage.",
+          "upvotes": 19
+        }
+      ]
+    }
+  ]
 }

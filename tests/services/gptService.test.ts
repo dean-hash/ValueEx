@@ -14,7 +14,7 @@ jest.mock('openai', () => {
 
 describe('GPTService', () => {
   let gptService: GPTService;
-  
+
   beforeAll(() => {
     process.env.OPENAI_API_KEY = 'test-key';
     gptService = GPTService.getInstance();

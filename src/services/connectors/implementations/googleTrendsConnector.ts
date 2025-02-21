@@ -1,126 +1,89 @@
-import { DataPoint } from '../dataConnector';
-import axios from 'axios';
+import { DataConnector } from '../dataConnector';
+import type { TrendData, RelatedQueryData, RegionalInterestData } from '../../../types/demandTypes';
 
-export class GoogleTrendsConnector {
-  private endpoint: string;
-  private apiKey?: string;
+interface GoogleTrendsResponse {
+  readonly data: {
+    readonly timelineData: Array<{
+      readonly time: string;
+      readonly value: number[];
+      readonly formattedTime: string;
+    }>;
+    readonly averages?: number[];
+    readonly status: string;
+  };
+}
 
-  constructor(endpoint: string, apiKey?: string) {
-    this.endpoint = endpoint;
+export class GoogleTrendsConnector extends DataConnector {
+  private readonly baseUrl: string;
+  private readonly apiKey: string;
+
+  constructor(apiKey: string) {
+    super({ type: 'trends', id: 'google-trends' });
+    this.baseUrl = 'https://trends.google.com/trends/api';
     this.apiKey = apiKey;
   }
 
-  public async fetchTrends(
-    keyword: string,
-    region: string = 'US',
-    timeRange: string = 'now 7-d'
-  ): Promise<DataPoint[]> {
-    try {
-      const response = await axios.get(
-        `${this.endpoint}/dailytrends`,
-        {
-          params: {
-            hl: 'en-US',
-            tz: '-240', // EST
-            geo: region,
-            date: timeRange
-          },
-          headers: this.apiKey ? {
-            'Authorization': `Bearer ${this.apiKey}`
-          } : undefined
-        }
-      );
-
-      return this.parseTrendsResponse(response.data);
-    } catch (error) {
-      console.error('Error fetching Google Trends data:', error);
-      throw error;
+  public async fetchTrendData(query: string): Promise<TrendData> {
+    if (!query.trim()) {
+      throw new Error('Query cannot be empty');
     }
-  }
-
-  private parseTrendsResponse(rawData: any): DataPoint[] {
-    const dataPoints: DataPoint[] = [];
 
     try {
-      // Remove ")]}'" prefix that Google Trends adds
-      const jsonStr = rawData.replace(/\)\]\}\'/, '');
-      const data = JSON.parse(jsonStr);
-
-      // Extract trending searches
-      const trendingSearches = data.default.trendingSearchesDays;
-      
-      for (const day of trendingSearches) {
-        for (const trend of day.trendingSearches) {
-          dataPoints.push({
-            timestamp: new Date(day.date).toISOString(),
-            value: this.calculateTrendValue(trend),
-            metadata: {
-              title: trend.title.query,
-              relatedQueries: trend.relatedQueries.map((q: any) => q.query),
-              articles: trend.articles.map((a: any) => ({
-                title: a.title,
-                source: a.source,
-                snippet: a.snippet
-              })),
-              formattedTraffic: trend.formattedTraffic
-            },
-            confidence: this.calculateConfidence(trend)
-          });
-        }
+      const response = await this.makeRequest('/dailytrends', { query, geo: 'US' });
+      const data = await this.validateResponse(response);
+      return this.parseTrendData(data, query);
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(`Failed to fetch trend data: ${error.message}`);
       }
-    } catch (error) {
-      console.error('Error parsing Google Trends response:', error);
-      throw error;
+      throw new Error('Unknown error occurred while fetching trend data');
+    }
+  }
+
+  private async validateResponse(response: Response): Promise<GoogleTrendsResponse> {
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.statusText}`);
     }
 
-    return dataPoints;
+    const data = await response.json();
+
+    if (!data || !data.timelineData) {
+      throw new Error('Invalid response format from Google Trends API');
+    }
+
+    return data;
   }
 
-  private calculateTrendValue(trend: any): number {
-    // Convert formatted traffic string to numeric value
-    // Example: "2M+" -> 2000000
-    const traffic = trend.formattedTraffic;
-    const numStr = traffic.replace(/[^0-9.]/g, '');
-    const multiplier = traffic.includes('M') ? 1000000 :
-                      traffic.includes('K') ? 1000 : 1;
-    
-    return parseFloat(numStr) * multiplier;
+  private parseTrendData(response: GoogleTrendsResponse, query: string): TrendData {
+    const latestDataPoint = response.data.timelineData[response.data.timelineData.length - 1];
+
+    if (!latestDataPoint) {
+      throw new Error('No trend data available');
+    }
+
+    return {
+      query,
+      timestamp: new Date(parseInt(latestDataPoint.time) * 1000).toISOString(),
+      value: latestDataPoint.value[0] || 0,
+      metadata: {
+        formattedTime: latestDataPoint.formattedTime,
+        average: response.data.averages?.[0] || 0,
+        status: response.data.status,
+      },
+    };
   }
 
-  private calculateConfidence(trend: any): number {
-    // Factors affecting confidence:
-    // 1. Number of related articles
-    // 2. Number of related queries
-    // 3. Traffic volume
-    // 4. Source diversity
+  private async makeRequest(endpoint: string, params: Record<string, string>): Promise<Response> {
+    const url = new URL(`${this.baseUrl}${endpoint}`);
+    Object.entries(params).forEach(([key, value]) => {
+      url.searchParams.append(key, value);
+    });
 
-    const articleScore = Math.min(trend.articles.length / 10, 1);
-    const queryScore = Math.min(trend.relatedQueries.length / 5, 1);
-    
-    // Calculate source diversity
-    const sources = new Set(trend.articles.map((a: any) => a.source));
-    const sourceScore = Math.min(sources.size / 5, 1);
-
-    // Traffic score based on formatted traffic
-    const trafficScore = this.calculateTrafficScore(trend.formattedTraffic);
-
-    return (articleScore + queryScore + sourceScore + trafficScore) / 4;
-  }
-
-  private calculateTrafficScore(formattedTraffic: string): number {
-    const value = this.calculateTrendValue({ formattedTraffic });
-    
-    // Scale based on typical daily search volumes
-    // 1M+ searches -> 1.0
-    // 100K+ searches -> 0.8
-    // 10K+ searches -> 0.6
-    // 1K+ searches -> 0.4
-    // Less -> 0.2
-    
-    if (value >= 1000000) return 1.0;
-    if (value >= 100000) return 0.8;
-    if (value >= 10000) return 0.6;
-    if (value >= 1000) return 0.4;
-    return 0.2;
+    return fetch(url.toString(), {
+      headers: {
+        Authorization: `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+    });
   }
 }

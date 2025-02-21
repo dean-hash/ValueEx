@@ -1,13 +1,12 @@
-import { DataPoint } from '../dataConnector';
+import { DataPoint, DataConnector } from '../dataConnector';
 import axios from 'axios';
 import { WebSocket } from 'ws';
 
-interface SocialConfig {
-  platform: 'twitter' | 'reddit' | 'linkedin';
+export interface SocialConfig {
+  platform: string;
   endpoint: string;
-  apiKey?: string;
-  apiSecret?: string;
   streamEndpoint?: string;
+  apiKey?: string;
 }
 
 interface SocialMetrics {
@@ -17,37 +16,36 @@ interface SocialMetrics {
   velocity: number;
 }
 
-export class SocialMediaConnector {
-  private config: SocialConfig;
+export class SocialMediaConnector extends DataConnector {
   private ws: WebSocket | null = null;
+  private readonly config: SocialConfig;
   private metrics: Map<string, SocialMetrics> = new Map();
   private callbacks: Set<(data: DataPoint) => void> = new Set();
 
   constructor(config: SocialConfig) {
+    super({ type: 'social', id: `social_${config.platform}` });
     this.config = config;
-    if (config.streamEndpoint) {
-      this.initializeStream();
-    }
+    this.setupWebSocket();
   }
 
   public onData(callback: (data: DataPoint) => void): void {
     this.callbacks.add(callback);
   }
 
-  private initializeStream(): void {
+  private setupWebSocket(): void {
     if (!this.config.streamEndpoint) return;
 
     this.ws = new WebSocket(this.config.streamEndpoint, {
       headers: {
-        'Authorization': `Bearer ${this.config.apiKey}`
-      }
+        Authorization: `Bearer ${this.config.apiKey}`,
+      },
     });
 
     this.ws.on('message', (data: string) => {
       try {
         const parsed = JSON.parse(data);
         const dataPoint = this.processStreamData(parsed);
-        this.callbacks.forEach(callback => callback(dataPoint));
+        this.callbacks.forEach((callback) => callback(dataPoint));
       } catch (error) {
         console.error('Error processing stream data:', error);
       }
@@ -55,11 +53,11 @@ export class SocialMediaConnector {
 
     this.ws.on('error', (error) => {
       console.error('WebSocket error:', error);
-      setTimeout(() => this.initializeStream(), 5000);
+      setTimeout(() => this.setupWebSocket(), 5000);
     });
 
     this.ws.on('close', () => {
-      setTimeout(() => this.initializeStream(), 5000);
+      setTimeout(() => this.setupWebSocket(), 5000);
     });
   }
 
@@ -81,15 +79,12 @@ export class SocialMediaConnector {
 
   private async fetchTwitterTrends(category: string, region: string): Promise<DataPoint[]> {
     try {
-      const response = await axios.get(
-        `${this.config.endpoint}/trends/place`,
-        {
-          params: { id: this.getWOEID(region) },
-          headers: {
-            'Authorization': `Bearer ${this.config.apiKey}`
-          }
-        }
-      );
+      const response = await axios.get(`${this.config.endpoint}/trends/place`, {
+        params: { id: this.getWOEID(region) },
+        headers: {
+          Authorization: `Bearer ${this.config.apiKey}`,
+        },
+      });
 
       return this.processTwitterTrends(response.data[0].trends, category);
     } catch (error) {
@@ -101,15 +96,12 @@ export class SocialMediaConnector {
   private async fetchRedditTrends(category: string, region: string): Promise<DataPoint[]> {
     try {
       const subreddits = await this.findRelevantSubreddits(category);
-      const promises = subreddits.map(subreddit =>
-        axios.get(
-          `${this.config.endpoint}/r/${subreddit}/hot`,
-          {
-            headers: {
-              'Authorization': `Bearer ${this.config.apiKey}`
-            }
-          }
-        )
+      const promises = subreddits.map((subreddit) =>
+        axios.get(`${this.config.endpoint}/r/${subreddit}/hot`, {
+          headers: {
+            Authorization: `Bearer ${this.config.apiKey}`,
+          },
+        })
       );
 
       const responses = await Promise.all(promises);
@@ -122,18 +114,15 @@ export class SocialMediaConnector {
 
   private async fetchLinkedInTrends(category: string, region: string): Promise<DataPoint[]> {
     try {
-      const response = await axios.get(
-        `${this.config.endpoint}/trending`,
-        {
-          params: {
-            categories: category,
-            location: region
-          },
-          headers: {
-            'Authorization': `Bearer ${this.config.apiKey}`
-          }
-        }
-      );
+      const response = await axios.get(`${this.config.endpoint}/trending`, {
+        params: {
+          categories: category,
+          location: region,
+        },
+        headers: {
+          Authorization: `Bearer ${this.config.apiKey}`,
+        },
+      });
 
       return this.processLinkedInTrends(response.data, category);
     } catch (error) {
@@ -143,7 +132,7 @@ export class SocialMediaConnector {
   }
 
   private processTwitterTrends(trends: any[], category: string): DataPoint[] {
-    return trends.map(trend => ({
+    return trends.map((trend) => ({
       timestamp: new Date().toISOString(),
       value: this.calculateTrendStrength(trend),
       metadata: {
@@ -152,9 +141,9 @@ export class SocialMediaConnector {
         tweetVolume: trend.tweet_volume,
         promoted: trend.promoted_content !== null,
         category,
-        platform: 'twitter'
+        platform: 'twitter',
       },
-      confidence: this.calculateTwitterConfidence(trend)
+      confidence: this.calculateTwitterConfidence(trend),
     }));
   }
 
@@ -163,7 +152,7 @@ export class SocialMediaConnector {
 
     for (const response of responses) {
       const posts = response.data.data.children;
-      
+
       for (const post of posts) {
         dataPoints.push({
           timestamp: new Date().toISOString(),
@@ -175,9 +164,9 @@ export class SocialMediaConnector {
             score: post.data.score,
             numComments: post.data.num_comments,
             category,
-            platform: 'reddit'
+            platform: 'reddit',
           },
-          confidence: this.calculateRedditConfidence(post.data)
+          confidence: this.calculateRedditConfidence(post.data),
         });
       }
     }
@@ -194,23 +183,23 @@ export class SocialMediaConnector {
         description: element.description,
         engagement: element.socialMetrics,
         category,
-        platform: 'linkedin'
+        platform: 'linkedin',
       },
-      confidence: this.calculateLinkedInConfidence(element)
+      confidence: this.calculateLinkedInConfidence(element),
     }));
   }
 
   private processStreamData(data: any): DataPoint {
     const metrics = this.calculateStreamMetrics(data);
-    
+
     return {
       timestamp: new Date().toISOString(),
       value: metrics.engagement * metrics.velocity,
       metadata: {
         ...data,
-        metrics
+        metrics,
       },
-      confidence: this.calculateStreamConfidence(metrics)
+      confidence: this.calculateStreamConfidence(metrics),
     };
   }
 
@@ -220,7 +209,7 @@ export class SocialMediaConnector {
       engagement: 0,
       sentiment: 0,
       reach: 0,
-      velocity: 0
+      velocity: 0,
     };
   }
 
@@ -238,11 +227,7 @@ export class SocialMediaConnector {
     const commentScore = Math.min(post.num_comments / 1000, 1);
     const ratioScore = post.upvote_ratio;
 
-    return (
-      scoreScore * scoreWeight +
-      commentScore * commentWeight +
-      ratioScore * ratioWeight
-    );
+    return scoreScore * scoreWeight + commentScore * commentWeight + ratioScore * ratioWeight;
   }
 
   private calculateLinkedInStrength(element: any): number {
@@ -255,11 +240,7 @@ export class SocialMediaConnector {
     const commentScore = Math.min(metrics.numComments / 100, 1);
     const shareScore = Math.min(metrics.numShares / 100, 1);
 
-    return (
-      likeScore * likeWeight +
-      commentScore * commentWeight +
-      shareScore * shareWeight
-    );
+    return likeScore * likeWeight + commentScore * commentWeight + shareScore * shareWeight;
   }
 
   private calculateTwitterConfidence(trend: any): number {

@@ -1,0 +1,74 @@
+{
+  "format": 1,
+  "restore": {
+    "c:\\Users\\DeanM\\OneDrive\\ValueEx\\scripts\\TeamsBot\\TeamsBot.csproj": {}
+  },
+  "projects": {
+    "c:\\Users\\DeanM\\OneDrive\\ValueEx\\scripts\\TeamsBot\\TeamsBot.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "c:\\Users\\DeanM\\OneDrive\\ValueEx\\scripts\\TeamsBot\\TeamsBot.csproj",
+        "projectName": "TeamsBot",
+        "projectPath": "c:\\Users\\DeanM\\OneDrive\\ValueEx\\scripts\\TeamsBot\\TeamsBot.csproj",
+        "packagesPath": "C:\\Users\\DeanM\\.nuget\\packages\\",
+        "outputPath": "c:\\Users\\DeanM\\OneDrive\\ValueEx\\scripts\\TeamsBot\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "c:\\Users\\DeanM\\OneDrive\\ValueEx\\scripts\\NuGet.Config",
+          "C:\\Users\\DeanM\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.100"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "Microsoft.Identity.Client": {
+              "target": "Package",
+              "version": "[4.67.2, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.102/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

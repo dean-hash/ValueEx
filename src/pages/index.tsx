@@ -1,164 +1,159 @@
-import { useState } from 'react';
+import React from 'react';
+import { useState, useEffect } from 'react';
+import Head from 'next/head';
+
+interface RevenueStats {
+  totalClicks: number;
+  totalSales: number;
+  totalRevenue: number;
+  conversionRate: number;
+}
 
 export default function Home() {
+  const [query, setQuery] = useState('');
+  const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<any[]>([]);
-  const [subreddit, setSubreddit] = useState('');
-  const [productName, setProductName] = useState('');
-  const [productCategory, setProductCategory] = useState('');
+  const [error, setError] = useState('');
+  const [stats, setStats] = useState<RevenueStats | null>(null);
 
-  const analyzeDemandForProduct = async () => {
+  // Fetch stats every 15 seconds
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch('/api/stats');
+        if (response.ok) {
+          const data = await response.json();
+          setStats(data);
+        }
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      }
+    };
+
+    fetchStats();
+    const interval = setInterval(fetchStats, 15000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
     try {
-      setLoading(true);
-      
-      const response = await fetch('/api/analyze-product-demand', {
+      const userId = `user_${Math.random().toString(36).substring(7)}`;
+      const response = await fetch('/api/match', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          productId: Date.now().toString(), // temporary ID for testing
-          productName,
-          productCategory,
-          subreddit: subreddit || 'all'
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, userId }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to analyze product demand');
+        throw new Error('Failed to find matches');
       }
 
-      const result = await response.json();
-      setResults(prev => [result, ...prev]);
-      
-      // Clear inputs after successful analysis
-      setProductName('');
-      setProductCategory('');
-
-    } catch (error: any) {
-      console.error('Error:', error);
-      alert(error.message || 'Error analyzing product demand');
+      const data = await response.json();
+      setMatches(data.matches || []);
+    } catch (err) {
+      setError('Error finding AI tools. Please try again.');
+      console.error('Search error:', err);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleAffiliateClick = async (affiliateUrl: string) => {
+    window.open(affiliateUrl, '_blank');
+  };
+
   return (
-    <div className="min-h-screen bg-gray-100 py-6 flex flex-col justify-center sm:py-12">
-      <div className="relative py-3 sm:max-w-xl sm:mx-auto">
-        <div className="relative px-4 py-10 bg-white shadow-lg sm:rounded-3xl sm:p-20">
-          <div className="max-w-md mx-auto">
-            <div className="divide-y divide-gray-200">
-              <div className="py-8 text-base leading-6 space-y-4 text-gray-700 sm:text-lg sm:leading-7">
-                <h2 className="text-2xl font-bold mb-8">ValueEx Product Demand Analyzer</h2>
-                
-                {/* Product Input Section */}
-                <div className="mb-8">
-                  <h3 className="text-xl font-semibold mb-4">1. Enter Product Details</h3>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700">Product Name</label>
-                    <input
-                      type="text"
-                      value={productName}
-                      onChange={(e) => setProductName(e.target.value)}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                      placeholder="e.g., iPhone 15, Nike Air Max, etc."
-                    />
-                  </div>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700">Category</label>
-                    <input
-                      type="text"
-                      value={productCategory}
-                      onChange={(e) => setProductCategory(e.target.value)}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                      placeholder="e.g., Electronics, Shoes, etc."
-                    />
-                  </div>
-                </div>
+    <div className="min-h-screen bg-gray-50">
+      <Head>
+        <title>ValueEx - Find Your Perfect AI Tool</title>
+        <meta name="description" content="Discover the best AI tools for your needs" />
+        <link
+          href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+          rel="stylesheet"
+        />
+      </Head>
 
-                {/* Subreddit Filter */}
-                <div className="mb-8">
-                  <h3 className="text-xl font-semibold mb-4">2. Filter Demand Sources</h3>
-                  <label className="block text-sm font-medium text-gray-700">Subreddit</label>
-                  <input
-                    type="text"
-                    value={subreddit}
-                    onChange={(e) => setSubreddit(e.target.value)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    placeholder="e.g., 'all' or specific subreddit"
-                  />
-                </div>
-
-                {/* Analyze Button */}
-                <button
-                  onClick={analyzeDemandForProduct}
-                  disabled={loading || !productName.trim()}
-                  className={`w-full py-2 px-4 rounded ${
-                    loading || !productName.trim()
-                      ? 'bg-gray-400'
-                      : 'bg-blue-500 hover:bg-blue-600'
-                  } text-white font-semibold`}
-                >
-                  {loading ? 'Analyzing...' : 'Analyze Demand'}
-                </button>
-
-                {/* Results Section */}
-                <div className="mt-8">
-                  <h3 className="text-xl font-semibold mb-4">3. Demand Analysis Results</h3>
-                  {results.map((result, index) => (
-                    <div key={index} className="mb-6 p-4 border rounded-lg bg-gray-50">
-                      <div className="text-sm text-gray-500 mb-2">
-                        {new Date(result.timestamp).toLocaleString()}
-                      </div>
-                      <div className="mb-2">
-                        <strong>Product:</strong> {result.productName}
-                      </div>
-                      <div className="mb-2">
-                        <strong>Category:</strong> {result.productCategory}
-                      </div>
-                      <div className="mb-2">
-                        <strong>Demand Score:</strong>{' '}
-                        <span className={`px-2 py-1 rounded ${
-                          result.demandScore > 0.7 ? 'bg-green-100 text-green-800' :
-                          result.demandScore > 0.4 ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
-                          {(result.demandScore * 100).toFixed(1)}%
-                        </span>
-                      </div>
-                      {result.signals?.map((signal: any, sigIndex: number) => (
-                        <div key={sigIndex} className="mt-4 p-3 bg-white rounded border">
-                          <div><strong>Source:</strong> {signal.source}</div>
-                          <div><strong>Relevance:</strong> {(signal.relevance * 100).toFixed(1)}%</div>
-                          <div className="mt-2">
-                            <strong>Key Points:</strong>
-                            <ul className="list-disc pl-5">
-                              {signal.keyPoints?.map((point: string, i: number) => (
-                                <li key={i}>{point}</li>
-                              ))}
-                            </ul>
-                          </div>
-                          {signal.pricePoints && signal.pricePoints.length > 0 && (
-                            <div className="mt-2">
-                              <strong>Price Points Mentioned:</strong>
-                              <ul className="list-disc pl-5">
-                                {signal.pricePoints.map((price: any, i: number) => (
-                                  <li key={i}>${price.value} ({price.context})</li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              </div>
+      <main className="max-w-4xl mx-auto px-4 py-8">
+        {stats && (
+          <div className="grid grid-cols-4 gap-4 mb-8">
+            <div className="bg-white p-4 rounded-lg shadow-md">
+              <h3 className="text-lg font-semibold text-gray-700">Total Clicks</h3>
+              <p className="text-2xl font-bold text-blue-600">{stats.totalClicks}</p>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow-md">
+              <h3 className="text-lg font-semibold text-gray-700">Total Sales</h3>
+              <p className="text-2xl font-bold text-green-600">{stats.totalSales}</p>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow-md">
+              <h3 className="text-lg font-semibold text-gray-700">Revenue</h3>
+              <p className="text-2xl font-bold text-green-600">${stats.totalRevenue.toFixed(2)}</p>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow-md">
+              <h3 className="text-lg font-semibold text-gray-700">Conversion Rate</h3>
+              <p className="text-2xl font-bold text-purple-600">
+                {(stats.conversionRate * 100).toFixed(1)}%
+              </p>
             </div>
           </div>
+        )}
+
+        <h1 className="text-4xl font-bold text-center mb-8 text-gray-800">
+          Find Your Perfect AI Tool
+        </h1>
+
+        <form onSubmit={handleSearch} className="mb-8">
+          <div className="flex gap-4">
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="What kind of AI tool are you looking for? (e.g., writing, image generation)"
+              className="flex-1 p-4 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <button
+              type="submit"
+              disabled={loading || !query}
+              className="px-8 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {loading ? 'Searching...' : 'Find Tools'}
+            </button>
+          </div>
+        </form>
+
+        {error && <div className="p-4 mb-6 bg-red-100 text-red-700 rounded-lg">{error}</div>}
+
+        <div className="grid gap-6">
+          {matches.map((match: any) => (
+            <div key={match.id} className="p-6 bg-white rounded-lg shadow-md">
+              <h2 className="text-2xl font-semibold mb-2">{match.name}</h2>
+              <p className="text-gray-600 mb-4">{match.description}</p>
+              <div className="flex justify-between items-center">
+                <span className="text-lg font-medium">
+                  {match.price ? `Starting at $${match.price}/month` : 'Custom Pricing'}
+                </span>
+                <button
+                  onClick={() => handleAffiliateClick(match.affiliateUrl)}
+                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  Get Started
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
-      </div>
+
+        {matches.length === 0 && !loading && query && (
+          <p className="text-center text-gray-600">
+            No matches found. Try a different search term.
+          </p>
+        )}
+
+        <div id="revenue-flow" className="mt-8 h-96 bg-white rounded-lg shadow-md"></div>
+      </main>
     </div>
   );
 }

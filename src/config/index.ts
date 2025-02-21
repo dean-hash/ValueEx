@@ -22,4 +22,5 @@ const config: Config = {
 // Validate configuration
 configSchema.parse(config);
 
-export { config, Config };
+export { config };
+export type { Config };

@@ -1,16 +1,17 @@
+import { describe, test, expect } from '@jest/globals';
 import { AwinService } from '../../services/awinService';
 import { IntelligenceEnhancer } from '../../services/intelligenceEnhancer';
 import { configService } from '../../config/configService';
 import { ResonanceFieldService } from '../../services/resonanceField';
 import { Logger } from '../../logger/logger';
 import { DemandPattern } from '../../types/demandTypes';
-import { AwinProduct } from '../../types/awinTypes';
 
 describe('Product Recommendation Pipeline Integration', () => {
   let awinService: AwinService;
   let intelligenceEnhancer: IntelligenceEnhancer;
   let resonanceField: ResonanceFieldService;
   let logger: Logger;
+  let testPattern: DemandPattern;
 
   beforeAll(() => {
     resonanceField = new ResonanceFieldService();
@@ -19,38 +20,41 @@ describe('Product Recommendation Pipeline Integration', () => {
     intelligenceEnhancer = IntelligenceEnhancer.getInstance();
   });
 
-  const testPattern: DemandPattern = {
-    id: 'test-pattern-001',
-    timeframe: '2024-Q1',
-    intensity: 0.8,
-    confidence: 0.9,
-    coherence: 0.85,
-    signals: [],
-    temporalFactors: {
-      seasonality: 0.7,
-      trendStrength: 0.8,
-      cyclicality: 0.6,
-    },
-    spatialFactors: {
-      geographicSpread: 0.7,
-      marketPenetration: 0.6,
-      demographicReach: 0.8,
-    },
-    context: {
-      marketTrends: ['sustainable', 'eco-friendly'],
-      userPreferences: ['organic'],
-      competitiveAnalysis: {
-        marketShare: 0.3,
-        competitorStrength: 0.7,
-        uniqueSellingPoints: ['green'],
+  beforeEach(() => {
+    testPattern = {
+      id: 'test-pattern',
+      signals: [],
+      confidence: 0.8,
+      coherence: 0.7,
+      temporalFactors: {
+        trend: 0.8,
+        seasonality: 0.5,
+        volatility: 0.3,
       },
-    },
-    category: 'Sustainable',
-    priceRange: {
-      min: 20,
-      max: 100,
-    },
-  };
+      spatialFactors: {
+        geographic: ['US', 'UK'],
+        demographic: ['18-35'],
+        psychographic: ['tech-savvy'],
+      },
+      context: {
+        market: 'test-market',
+        category: 'test-category',
+        priceRange: { min: 0, max: 100 },
+        intent: 'purchase',
+        topics: ['test'],
+        keywords: ['test'],
+        sentiment: 0.8,
+        urgency: 0.7,
+        matches: [],
+        marketTrends: ['trend1'],
+        userPreferences: ['pref1'],
+        competitiveAnalysis: {
+          competitors: [],
+          marketShare: 0,
+        },
+      },
+    };
+  });
 
   describe('End-to-end recommendation flow', () => {
     it('should find and enhance products based on demand pattern', async () => {
@@ -144,6 +148,15 @@ describe('Product Recommendation Pipeline Integration', () => {
         expect(resonance).toBeGreaterThanOrEqual(0);
         expect(resonance).toBeLessThanOrEqual(1);
       }
+    });
+
+    it('should enhance demand patterns', async () => {
+      const enhancer = new IntelligenceEnhancer();
+      const enhancedPattern = await enhancer.enhanceDemandContext(testPattern);
+      expect(enhancedPattern).toBeDefined();
+      expect(enhancedPattern.context.marketTrends.length).toBeGreaterThanOrEqual(
+        testPattern.context.marketTrends.length
+      );
     });
   });
 });

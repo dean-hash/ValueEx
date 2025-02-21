@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 export interface DemandContext {
   keywords: string[];
-  relatedCategories: string[];
+  relatedCategories?: string[];
   sentiment: number;
   urgency: number;
   matches?: Array<{
@@ -15,6 +15,7 @@ export interface DemandContext {
     opportunities?: string[];
     recommendations?: string[];
   }>;
+  error?: string;
 }
 
 export interface DemandRequirements {
@@ -34,6 +35,7 @@ export interface DemandSignal {
   confidence: number;
   context: DemandContext;
   requirements?: DemandRequirements;
+  category?: string;
 }
 
 export interface IntelligenceProvider {
@@ -61,7 +63,16 @@ export class DemandSignalAdapter extends EventEmitter {
   private static instance: DemandSignalAdapter;
   private marketTrends: MarketTrendAdapter;
   private recentSignals: Map<string, DemandSignal[]> = new Map();
-  private predictions: Map<string, any> = new Map();
+  private predictions: Map<
+    string,
+    {
+      timestamp: string;
+      value: number;
+      confidence: number;
+      source: string;
+      insights: string[];
+    }
+  > = new Map();
   private intelligenceProviders: IntelligenceProvider[] = [];
 
   private constructor() {
@@ -85,37 +96,51 @@ export class DemandSignalAdapter extends EventEmitter {
   }
 
   public async addSignal(signal: DemandSignal): Promise<void> {
-    const key = `${signal.source}_${signal.timestamp}`;
-    if (!this.recentSignals.has(key)) {
-      this.recentSignals.set(key, []);
+    try {
+      const enrichedSignal = await this.enrichSignal(signal);
+
+      // Store in recent signals
+      const sourceSignals = this.recentSignals.get(signal.source) || [];
+      sourceSignals.push(enrichedSignal);
+      this.recentSignals.set(signal.source, sourceSignals);
+
+      // Cleanup old signals (older than 24 hours)
+      const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+      this.recentSignals.set(
+        signal.source,
+        sourceSignals.filter((s) => s.timestamp > cutoff)
+      );
+
+      try {
+        // Add to market trends
+        await this.marketTrends.addSignal(signal.source, signal.timestamp.toString(), {
+          timestamp: signal.timestamp.toString(),
+          value: signal.confidence,
+          source: signal.type,
+          keywords: signal.context.keywords,
+          confidence: this.calculateSignalConfidence(signal),
+        });
+      } catch (error: unknown) {
+        console.error(
+          'Failed to add signal to market trends:',
+          error instanceof Error ? error.message : String(error)
+        );
+        // Continue execution - market trends failure shouldn't block signal processing
+      }
+
+      // Emit signal processed event
+      this.emit('signal:processed', {
+        source: signal.source,
+        timestamp: signal.timestamp,
+        confidence: signal.confidence,
+      });
+    } catch (error: unknown) {
+      this.emit('signal:error', {
+        source: signal.source,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error; // Re-throw to let caller handle the error
     }
-
-    const signals = this.recentSignals.get(key)!;
-    signals.push(signal);
-
-    // Keep only last 24 hours of signals
-    const cutoff = new Date();
-    cutoff.setHours(cutoff.getHours() - 24);
-
-    this.recentSignals.set(
-      key,
-      signals.filter((s) => new Date(s.timestamp) > cutoff)
-    );
-
-    // Add to market trends
-    await this.marketTrends.addSignal(signal.source, signal.timestamp, {
-      timestamp: signal.timestamp,
-      value: signal.confidence,
-      source: signal.type,
-      keywords: signal.context.keywords,
-      confidence: this.calculateSignalConfidence(signal),
-    });
-
-    this.emit('signal_processed', {
-      key,
-      signalCount: signals.length,
-      latestStrength: signal.confidence,
-    });
   }
 
   private calculateSignalConfidence(signal: DemandSignal): number {
@@ -129,7 +154,7 @@ export class DemandSignalAdapter extends EventEmitter {
     // Adjust based on context
     const contextScore =
       (signal.context.keywords.length > 0 ? 0.2 : 0) +
-      (signal.context.relatedCategories.length > 0 ? 0.2 : 0) +
+      ((signal.context.relatedCategories?.length ?? 0) > 0 ? 0.2 : 0) +
       (signal.context.sentiment !== undefined ? 0.1 : 0);
 
     return Math.min(typeConfidence + contextScore, 1);
@@ -147,7 +172,7 @@ export class DemandSignalAdapter extends EventEmitter {
       const prediction = await this.generatePrediction(signals, marketTrend);
       this.predictions.set(key, prediction);
 
-      this.emit('prediction_updated', prediction);
+      this.emit('prediction:updated', prediction);
     }
   }
 
@@ -242,10 +267,10 @@ export class DemandSignalAdapter extends EventEmitter {
           provider: provider.name,
           confidence: provider.confidence,
         });
-      } catch (error) {
+      } catch (error: unknown) {
         this.emit('intelligence:error', {
           provider: provider.name,
-          error: error.message,
+          error: error instanceof Error ? error.message : String(error),
         });
       }
     }

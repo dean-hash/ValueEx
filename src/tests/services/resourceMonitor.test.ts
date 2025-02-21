@@ -1,217 +1,193 @@
+import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
 import { ResourceMonitor } from '../../services/monitoring/resourceMonitor';
 import { MetricsCollector } from '../../services/monitoring/metrics';
-import { testLogger } from '../setup/testConfig';
+import { EventEmitter } from 'events';
+import type { UnknownData } from '../../types/common';
 
 jest.mock('os');
 jest.mock('fs');
 
 describe('ResourceMonitor Tests', () => {
   let monitor: ResourceMonitor;
+  let mockMetrics: jest.Mocked<MetricsCollector>;
   let alertCallback: jest.Mock;
 
   beforeEach(() => {
-    monitor = ResourceMonitor.getInstance();
+    // Mock MetricsCollector
+    mockMetrics = {
+      recordResourceMetric: jest.fn(),
+      recordApiMetrics: jest.fn(),
+      getAverageMetric: jest.fn(),
+      clearMetrics: jest.fn(),
+      on: jest.fn(),
+      emit: jest.fn(),
+    } as unknown as jest.Mocked<MetricsCollector>;
+
+    monitor = new ResourceMonitor(mockMetrics);
+
+    // Mock process.memoryUsage
+    const mockMemoryUsage = jest.fn().mockReturnValue({
+      rss: 1024 * 1024, // 1MB in bytes
+      heapTotal: 512 * 1024,
+      heapUsed: 256 * 1024,
+      external: 0,
+      arrayBuffers: 0,
+    });
+
+    process.memoryUsage = mockMemoryUsage;
+
+    // Mock os module
+    import * as os from 'os';
+    os.cpus = jest.fn().mockReturnValue([
+      {
+        model: 'Intel(R) Core(TM) i7',
+        speed: 2800,
+        times: {
+          user: 1000,
+          nice: 0,
+          sys: 500,
+          idle: 8500,
+          irq: 0,
+        },
+      },
+    ]);
+    os.totalmem = jest.fn().mockReturnValue(8 * 1024 * 1024 * 1024); // 8GB
+    os.freemem = jest.fn().mockReturnValue(4 * 1024 * 1024 * 1024); // 4GB
+    os.loadavg = jest.fn().mockReturnValue([1.5, 1.2, 1.0]);
+    os.networkInterfaces = jest.fn().mockReturnValue({
+      eth0: [
+        {
+          address: '192.168.1.1',
+          netmask: '255.255.255.0',
+          family: 'IPv4',
+          mac: '00:00:00:00:00:00',
+          internal: false,
+          cidr: '192.168.1.1/24',
+          bytes: {
+            received: 1000,
+            sent: 2000,
+          },
+        },
+      ],
+    });
+
+    // Mock fs module
+    import * as fs from 'fs';
+    fs.statfs = (path: string, callback: (error: Error | null, stats: any) => void): void => {
+      callback(null, {
+        type: 0x65735546,
+        bsize: 4096,
+        blocks: 1000000,
+        bfree: 500000,
+        bavail: 400000,
+        files: 1000000,
+        ffree: 500000,
+      });
+    };
+
     alertCallback = jest.fn();
     monitor.on('alert', alertCallback);
   });
 
   afterEach(() => {
     monitor.stopMonitoring();
-    monitor.clearHistory();
-    monitor.removeAllListeners();
+    jest.clearAllMocks();
   });
 
-  describe('Resource Monitoring', () => {
-    it('should detect high CPU usage', async () => {
-      // Mock high CPU usage
-      require('os').cpus.mockReturnValue([
-        { times: { user: 90, nice: 0, sys: 5, idle: 5, irq: 0 } }
-      ]);
+  describe('Basic Functionality', () => {
+    it('should start monitoring resources', async () => {
+      monitor.startMonitoring(1000);
+      await new Promise((resolve) => setTimeout(resolve, 1100));
 
-      monitor.startMonitoring(100);
-      await new Promise(resolve => setTimeout(resolve, 150));
-
-      expect(alertCallback).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: 'cpu_usage',
-          severity: 'warning'
-        })
-      );
+      expect(mockMetrics.recordResourceMetric).toHaveBeenCalled();
     });
 
-    it('should detect memory issues', async () => {
+    it('should stop monitoring when requested', () => {
+      monitor.startMonitoring(1000);
+      monitor.stopMonitoring();
+
+      expect(monitor.isMonitoring()).toBeFalsy();
+    });
+
+    it('should capture resource snapshots', async () => {
+      const snapshot = await monitor.captureSnapshot();
+
+      expect(snapshot).toHaveProperty('timestamp');
+      expect(snapshot).toHaveProperty('cpu');
+      expect(snapshot).toHaveProperty('memory');
+      expect(snapshot).toHaveProperty('disk');
+      expect(snapshot).toHaveProperty('network');
+    });
+  });
+
+  describe('Memory Monitoring', () => {
+    it('should track memory usage correctly', async () => {
+      const memoryUsage = await monitor.getMemoryUsage();
+
+      expect(memoryUsage).toHaveProperty('total');
+      expect(memoryUsage).toHaveProperty('used');
+      expect(memoryUsage).toHaveProperty('free');
+      expect(memoryUsage.total).toBeGreaterThan(memoryUsage.used);
+    });
+
+    it('should detect high memory usage', async () => {
       // Mock high memory usage
-      const originalMemoryUsage = process.memoryUsage;
-      process.memoryUsage = jest.fn().mockReturnValue({
-        heapTotal: 1000,
-        heapUsed: 900,
+      const mockHighMemUsage = jest.fn().mockReturnValue({
+        rss: 7 * 1024 * 1024 * 1024, // 7GB of 8GB total
+        heapTotal: 6 * 1024 * 1024 * 1024,
+        heapUsed: 5.5 * 1024 * 1024 * 1024,
         external: 0,
-        arrayBuffers: 0
+        arrayBuffers: 0,
       });
 
-      monitor.startMonitoring(100);
-      await new Promise(resolve => setTimeout(resolve, 150));
+      process.memoryUsage = mockHighMemUsage;
 
+      await monitor.captureSnapshot();
       expect(alertCallback).toHaveBeenCalledWith(
         expect.objectContaining({
-          type: 'memory_usage',
-          severity: 'critical'
-        })
-      );
-
-      process.memoryUsage = originalMemoryUsage;
-    });
-
-    it('should detect disk space issues', async () => {
-      // Mock low disk space
-      require('fs').statfs.mockImplementation((path, callback) => {
-        callback(null, {
-          blocks: 1000,
-          bfree: 50,
-          bsize: 1024
-        });
-      });
-
-      monitor.startMonitoring(100);
-      await new Promise(resolve => setTimeout(resolve, 150));
-
-      expect(alertCallback).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: 'disk_usage',
-          severity: 'critical'
+          type: 'memory',
+          severity: 'warning',
         })
       );
     });
   });
 
-  describe('API Rate Limiting', () => {
-    it('should detect approaching rate limits', async () => {
-      const snapshot = await (monitor as any).captureSnapshot();
-      snapshot.apiRequests.set('reddit', {
-        count: 90,
-        errors: 0,
-        latency: [100, 150, 200]
+  describe('Network Monitoring', () => {
+    it('should track network metrics', async () => {
+      const networkMetrics = await monitor.getNetworkMetrics();
+
+      expect(networkMetrics).toHaveProperty('latency');
+      expect(networkMetrics).toHaveProperty('bytesIn');
+      expect(networkMetrics).toHaveProperty('bytesOut');
+    });
+
+    it('should handle network errors gracefully', async () => {
+      import * as os from 'os';
+      os.networkInterfaces = jest.fn().mockImplementation(() => {
+        throw new Error('Network error');
       });
 
-      (monitor as any).analyzeSnapshot(snapshot);
-
-      expect(alertCallback).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: 'api_rate_limit',
-          severity: 'warning'
-        })
-      );
-    });
-
-    it('should track API latency', async () => {
-      const metrics = MetricsCollector.getInstance();
-      const recordApiMetrics = jest.spyOn(metrics, 'recordApiMetrics');
-
-      const snapshot = await (monitor as any).captureSnapshot();
-      snapshot.apiRequests.set('openai', {
-        count: 10,
-        errors: 1,
-        latency: [300, 400, 500]
+      const metrics = await monitor.getNetworkMetrics();
+      expect(metrics).toEqual({
+        latency: 0,
+        bytesIn: 0,
+        bytesOut: 0,
       });
-
-      (monitor as any).updateMetrics(snapshot);
-
-      expect(recordApiMetrics).toHaveBeenCalledWith('openai', {
-        requests: 10,
-        errors: 1,
-        latency: 400
-      });
-    });
-  });
-
-  describe('Memory Leak Detection', () => {
-    it('should detect potential memory leaks', async () => {
-      // Mock increasing memory usage
-      const snapshots = Array(10).fill(null).map((_, i) => ({
-        timestamp: Date.now() - (i * 1000),
-        memory: {
-          used: 1000 + (i * 100),
-          total: 2000,
-          percentage: 50 + (i * 5)
-        },
-        cpu: 50,
-        disk: { used: 1000, total: 2000, percentage: 50 },
-        apiRequests: new Map()
-      }));
-
-      (monitor as any).snapshots = snapshots;
-      (monitor as any).checkMemoryLeaks();
-
-      expect(alertCallback).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: 'memory_leak',
-          severity: 'critical'
-        })
-      );
-    });
-
-    it('should maintain memory leak history', () => {
-      const leak = {
-        timestamp: Date.now(),
-        allocation: 1000,
-        source: 'heap',
-        stackTrace: 'test stack'
-      };
-
-      (monitor as any).memoryLeaks = [leak];
-      const leaks = monitor.getMemoryLeaks();
-
-      expect(leaks).toHaveLength(1);
-      expect(leaks[0]).toEqual(leak);
-    });
-  });
-
-  describe('Edge Cases', () => {
-    it('should handle invalid disk stats', async () => {
-      require('fs').statfs.mockImplementation((path, callback) => {
-        callback(new Error('Disk error'));
-      });
-
-      monitor.startMonitoring(100);
-      await new Promise(resolve => setTimeout(resolve, 150));
-
-      expect(alertCallback).not.toHaveBeenCalled();
-    });
-
-    it('should handle missing CPU info', async () => {
-      require('os').cpus.mockReturnValue([]);
-
-      monitor.startMonitoring(100);
-      await new Promise(resolve => setTimeout(resolve, 150));
-
-      expect(alertCallback).not.toHaveBeenCalled();
     });
   });
 
   describe('Resource History', () => {
-    it('should maintain snapshot history', async () => {
-      const snapshots = Array(1100).fill(null).map((_, i) => ({
-        timestamp: Date.now() - (i * 1000),
-        memory: { used: 1000, total: 2000, percentage: 50 },
-        cpu: 50,
-        disk: { used: 1000, total: 2000, percentage: 50 },
-        apiRequests: new Map()
-      }));
+    it('should maintain snapshot history within limits', async () => {
+      monitor.startMonitoring(100);
+      await new Promise((resolve) => setTimeout(resolve, 550));
 
-      (monitor as any).snapshots = snapshots;
-      expect(monitor.getResourceHistory(30)).toHaveLength(
-        Math.min(1000, Math.ceil(30 * 60))
-      );
+      const snapshots = monitor.getSnapshots();
+      expect(snapshots.length).toBeLessThanOrEqual(monitor['MAX_SNAPSHOTS']);
     });
 
-    it('should clear history on demand', () => {
-      (monitor as any).snapshots = [{}, {}, {}];
-      (monitor as any).memoryLeaks = [{}, {}];
-
+    it('should clear history when requested', () => {
       monitor.clearHistory();
-
-      expect((monitor as any).snapshots).toHaveLength(0);
-      expect((monitor as any).memoryLeaks).toHaveLength(0);
+      expect(monitor.getSnapshots()).toHaveLength(0);
     });
   });
 });

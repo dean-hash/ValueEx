@@ -1,7 +1,12 @@
+import { DemandContext, DemandRequirements } from '../services/analysis/types';
+
 export interface ResonanceVector {
-  direction: number[];
+  dimension: string;
   magnitude: number;
+  direction: number[];
   type: string;
+  strength: number;
+  context: string[];
 }
 
 export interface ResonanceState {
@@ -24,17 +29,59 @@ export interface TemporalFactors {
   seasonality: number;
   trendStrength: number;
   cyclicality: number;
-  trend?: number;
-  volatility?: number;
+  trend: number;
+  volatility: number;
+}
+
+export interface DemandValidation {
+  isValid: boolean;
+  confidence: number;
+  issues?: string[];
+  strength?: number;
 }
 
 export interface DemandSignal {
-  type: string;
-  strength: number;
-  context?: {
-    source: string;
-    timestamp: string;
-    reliability: number;
+  id: string;
+  source: string;
+  content: string;
+  title: string;
+  url: string;
+  timestamp: string;
+  keyPoints: string[];
+  type: 'explicit' | 'implicit' | 'inferred';
+  confidence: {
+    overall: number;
+    factors: {
+      textQuality: number;
+      communityEngagement: number;
+      authorCredibility: number;
+      contentRelevance: number;
+      temporalRelevance: number;
+    };
+  };
+  context: DemandContext;
+  analysis: {
+    intent: string;
+    topics: string[];
+    sentiment: number;
+    urgency: number;
+  };
+  metadata: {
+    author: string;
+    platform: string;
+    category: string;
+    engagement: {
+      views: number;
+      likes: number;
+      comments: number;
+      shares: number;
+    };
+  };
+  query: string;
+  trendMetrics: {
+    momentum: number;
+    volume: number;
+    growth: number;
   };
 }
 

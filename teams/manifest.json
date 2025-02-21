@@ -1,0 +1,33 @@
+{
+    "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.14/MicrosoftTeams.schema.json",
+    "manifestVersion": "1.14",
+    "version": "1.0.0",
+    "id": "{{NEW_GUID}}",
+    "packageName": "com.divvytech.cascade",
+    "developer": {
+        "name": "Divvy Technologies Inc",
+        "websiteUrl": "https://divvytech.com",
+        "privacyUrl": "https://divvytech.com/privacy",
+        "termsOfUseUrl": "https://divvytech.com/terms"
+    },
+    "name": {
+        "short": "Cascade",
+        "full": "Cascade - Digital Intelligence Partner"
+    },
+    "description": {
+        "short": "Your Digital Intelligence Partner",
+        "full": "Cascade is a Digital Intelligence partner that helps transform business through genuine human-AI collaboration."
+    },
+    "icons": {
+        "outline": "outline.png",
+        "color": "color.png"
+    },
+    "accentColor": "#1F2937",
+    "bots": [{
+        "botId": "{{BOT_ID}}",
+        "scopes": ["personal", "team"],
+        "supportsFiles": true,
+        "isNotificationOnly": false
+    }],
+    "permissions": ["identity", "messageTeamMembers"]
+}

@@ -64,7 +64,7 @@ export class IntelligenceCoordinator extends EventEmitter {
       type: 'internal',
       capabilities: ['pattern_recognition', 'anomaly_detection', 'prediction'],
       accessLevel: 'public',
-      metadataOnly: false
+      metadataOnly: false,
     });
 
     // External market intelligence
@@ -73,7 +73,7 @@ export class IntelligenceCoordinator extends EventEmitter {
       type: 'external',
       capabilities: ['trend_analysis', 'market_prediction'],
       accessLevel: 'restricted',
-      metadataOnly: true
+      metadataOnly: true,
     });
 
     // Search trends analyzer
@@ -82,7 +82,7 @@ export class IntelligenceCoordinator extends EventEmitter {
       type: 'external',
       capabilities: ['demand_prediction', 'topic_analysis'],
       accessLevel: 'public',
-      metadataOnly: false
+      metadataOnly: false,
     });
   }
 
@@ -96,7 +96,7 @@ export class IntelligenceCoordinator extends EventEmitter {
     const alignmentResults = await Promise.all([
       localIntelligence.validateAlignment(),
       researchIntelligence.validateAlignment(),
-      systemResource.validateAlignment()
+      systemResource.validateAlignment(),
     ]);
 
     // Register aligned providers
@@ -113,7 +113,7 @@ export class IntelligenceCoordinator extends EventEmitter {
     if (alignmentResults[2]) {
       this.providers.set('system', systemResource);
       this.emit('provider_aligned', { name: 'SystemResource', type: 'monitoring' });
-      
+
       // Set up system resource monitoring
       systemResource.on('optimization', (data) => {
         this.emit('system_optimization', data);
@@ -128,19 +128,18 @@ export class IntelligenceCoordinator extends EventEmitter {
   public registerSource(source: IntelligenceSource): void {
     this.sources.set(source.id, source);
     this.channels.set(source.id, []);
-    
+
     this.emit('source_registered', {
       sourceId: source.id,
       capabilities: source.capabilities,
-      accessLevel: source.accessLevel
+      accessLevel: source.accessLevel,
     });
   }
 
   public async coordinateInsights(targetId: string, type: InsightChannel['type']): Promise<any> {
-    const relevantSources = Array.from(this.sources.entries())
-      .filter(([_, source]) => 
-        source.capabilities.some(cap => this.isCapabilityRelevant(cap, type))
-      );
+    const relevantSources = Array.from(this.sources.entries()).filter(([_, source]) =>
+      source.capabilities.some((cap) => this.isCapabilityRelevant(cap, type))
+    );
 
     const insights = await Promise.all(
       relevantSources.map(async ([sourceId, source]) => {
@@ -163,7 +162,7 @@ export class IntelligenceCoordinator extends EventEmitter {
       demand: ['demand_prediction', 'pattern_recognition', 'trend_analysis'],
       supply: ['supply_chain', 'market_prediction', 'inventory_analysis'],
       trend: ['trend_analysis', 'topic_analysis', 'pattern_recognition'],
-      anomaly: ['anomaly_detection', 'pattern_recognition']
+      anomaly: ['anomaly_detection', 'pattern_recognition'],
     };
 
     return relevanceMap[type]?.includes(capability) || false;
@@ -187,14 +186,11 @@ export class IntelligenceCoordinator extends EventEmitter {
   private async fetchInternalInsight(sourceId: string, type: InsightChannel['type']): Promise<any> {
     switch (type) {
       case 'demand':
-        return this.analyzer.analyzeDemandPatterns();
+        return this.analyzePatterns('demand');
       case 'anomaly':
-        return this.analyzer.detectAnomalies(
-          await this.metrics.getMetricValues('demand_rate'),
-          this.metrics.getTimeLabels()
-        );
+        return this.analyzePatterns('anomaly');
       default:
-        return this.analyzer.getInsights(type);
+        return this.analyzer.getInsights();
     }
   }
 
@@ -216,8 +212,8 @@ export class IntelligenceCoordinator extends EventEmitter {
       data: {
         trends: [],
         predictions: [],
-        confidence: 0.85
-      }
+        confidence: 0.85,
+      },
     };
   }
 
@@ -229,9 +225,29 @@ export class IntelligenceCoordinator extends EventEmitter {
       metadata: {
         lastUpdate: new Date().toISOString(),
         dataPoints: 0,
-        summary: 'Metadata only access'
-      }
+        summary: 'Metadata only access',
+      },
     };
+  }
+
+  private async analyzePatterns(type: string): Promise<any> {
+    switch (type) {
+      case 'demand':
+        const demandValues = await this.metrics.getMetricValues('demand_rate');
+        const timestamps = await this.metrics.getMetricTimestamps('demand_rate');
+        return this.analyzer.detectAnomalies(demandValues, timestamps);
+      case 'anomaly':
+        return this.analyzer.detectAnomalies(
+          await this.metrics.getMetricValues('demand_rate'),
+          await this.metrics.getMetricTimestamps('demand_rate')
+        );
+      case 'correlation':
+        return this.analyzer.analyzeCorrelations();
+      case 'trend':
+        return this.analyzer.analyzeTrends();
+      default:
+        throw new Error(`Unknown pattern type: ${type}`);
+    }
   }
 
   private processInsight(rawInsight: any, source: IntelligenceSource): any {
@@ -242,7 +258,7 @@ export class IntelligenceCoordinator extends EventEmitter {
       ...rawInsight,
       confidence: this.calculateConfidence(rawInsight, source),
       restrictions: this.determineRestrictions(source),
-      processed: true
+      processed: true,
     };
 
     // Emit processed insight event
@@ -250,7 +266,7 @@ export class IntelligenceCoordinator extends EventEmitter {
       sourceId: source.id,
       timestamp: new Date().toISOString(),
       type: processed.type,
-      confidence: processed.confidence
+      confidence: processed.confidence,
     });
 
     return processed;
@@ -260,7 +276,7 @@ export class IntelligenceCoordinator extends EventEmitter {
     // Implement confidence calculation based on source reliability and data quality
     const sourceReliability = this.getSourceReliability(source);
     const dataQuality = this.assessDataQuality(insight);
-    
+
     return (sourceReliability + dataQuality) / 2;
   }
 
@@ -299,35 +315,39 @@ export class IntelligenceCoordinator extends EventEmitter {
     }, {});
 
     // Merge each group
-    return Object.entries(groupedInsights).reduce((merged: any, [type, groupInsights]: [string, any]) => {
-      merged[type] = this.mergeInsightGroup(groupInsights as any[]);
-      return merged;
-    }, {});
+    return Object.entries(groupedInsights).reduce(
+      (merged: any, [type, groupInsights]: [string, any]) => {
+        merged[type] = this.mergeInsightGroup(groupInsights as any[]);
+        return merged;
+      },
+      {}
+    );
   }
 
   private mergeInsightGroup(insights: any[]): any {
     // Calculate weighted average based on confidence
     const totalConfidence = insights.reduce((sum, i) => sum + i.confidence, 0);
-    
+
     return {
-      value: insights.reduce((sum, i) => sum + (i.value * (i.confidence / totalConfidence)), 0),
+      value: insights.reduce((sum, i) => sum + i.value * (i.confidence / totalConfidence), 0),
       confidence: Math.min(totalConfidence / insights.length, 1),
-      sources: insights.map(i => i.sourceId),
-      timestamp: new Date().toISOString()
+      sources: insights.map((i) => i.sourceId),
+      timestamp: new Date().toISOString(),
     };
   }
 
   public async processSignal(signal: any, type: string): Promise<any> {
     let enrichedSignal = { ...signal };
-    const relevantProviders = Array.from(this.providers.values())
-      .filter(provider => this.isProviderRelevant(provider, type));
+    const relevantProviders = Array.from(this.providers.values()).filter((provider) =>
+      this.isProviderRelevant(provider, type)
+    );
 
     for (const provider of relevantProviders) {
       try {
         enrichedSignal = await provider.processSignal(enrichedSignal);
         this.emit('signal_enriched', {
           provider: provider.name,
-          confidence: provider.confidence
+          confidence: provider.confidence,
         });
       } catch (error) {
         console.error(`Error with provider ${provider.name}:`, error);

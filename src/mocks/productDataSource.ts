@@ -1,113 +1,152 @@
-import { AwinProduct } from '../types/awinTypes';
+import { Product } from '../types/product';
 import { DemandPattern } from '../types/demandTypes';
 
 /**
  * Mock product data source for development and testing
- * Simulates Awin API responses while the real API integration is pending
+ * Simulates product data with resonance patterns
  */
 export class MockProductDataSource {
-  private static instance: MockProductDataSource;
-
-  // Sample product data representing various categories and price points
-  private products: AwinProduct[] = [
+  private products: Product[] = [
     {
       id: 'mock-001',
-      title: 'Premium Wireless Headphones',
-      description: 'High-quality wireless headphones with noise cancellation',
-      price: 299.99,
+      title: 'Indoor Herb Garden Starter Kit',
+      description: 'Complete kit for growing organic herbs indoors, perfect for beginners',
+      price: 49.99,
       currency: 'USD',
-      merchant: 'TechGear Pro',
-      categories: ['Electronics', 'Audio', 'Accessories'],
-      url: 'https://example.com/headphones',
-      imageUrl: 'https://example.com/images/headphones.jpg',
-      confidence: 0.95,
-      coherence: 0.92,
+      category: 'Home & Garden',
+      resonanceScore: 0, // Will be calculated
+      merchant: {
+        id: 'US_GARDEN_ESSENTIALS',
+        name: 'Garden Essentials',
+        rating: 4.8,
+        trustScore: 0.95,
+      },
+      url: 'https://example.com/herb-garden-kit',
+      features: ['LED grow lights', 'Organic soil', 'Non-GMO herb seeds', 'Self-watering system'],
+      targetAudience: ['Urban gardeners', 'Beginners', 'Health conscious'],
+      pricePoint: 'mid-range',
+      insights: {
+        demandLevel: 0.85,
+        competitionLevel: 0.65,
+        marketTrend: 'rising',
+        seasonality: 0.9,
+        valueProposition: [
+          'Fresh herbs year-round',
+          'Space-efficient design',
+          'Perfect for apartments',
+        ],
+      },
+      resonanceMetrics: {
+        harmony: 0.9,
+        impact: 0.85,
+        sustainability: 0.95,
+        innovation: 0.8,
+        localRelevance: 0.9,
+      },
     },
     {
       id: 'mock-002',
-      title: 'Organic Cotton T-Shirt',
-      description: 'Sustainable, comfortable cotton t-shirt',
-      price: 29.99,
+      title: 'Stackable LED Indoor Garden System',
+      description: 'Vertical hydroponic system with smart controls',
+      price: 199.99,
       currency: 'USD',
-      merchant: 'EcoFashion',
-      categories: ['Clothing', 'Sustainable', 'Basics'],
-      url: 'https://example.com/tshirt',
-      imageUrl: 'https://example.com/images/tshirt.jpg',
-      confidence: 0.88,
-      coherence: 0.9,
+      category: 'Home & Garden',
+      resonanceScore: 0,
+      merchant: {
+        id: 'US_SMART_GARDEN',
+        name: 'Smart Garden Technologies',
+        rating: 4.9,
+        trustScore: 0.92,
+      },
+      url: 'https://example.com/vertical-garden',
+      features: [
+        'Stackable design',
+        'Smart phone control',
+        'Hydroponic system',
+        'Automated lighting',
+      ],
+      targetAudience: ['Tech enthusiasts', 'Space-conscious gardeners', 'Urban professionals'],
+      pricePoint: 'premium',
+      insights: {
+        demandLevel: 0.9,
+        competitionLevel: 0.55,
+        marketTrend: 'rising',
+        seasonality: 0.85,
+        valueProposition: [
+          'Space-efficient vertical design',
+          'Smart automation',
+          'Year-round growing',
+        ],
+      },
+      resonanceMetrics: {
+        harmony: 0.85,
+        impact: 0.9,
+        sustainability: 0.9,
+        innovation: 0.95,
+        localRelevance: 0.85,
+      },
     },
     {
       id: 'mock-003',
-      title: 'Smart Home Security Camera',
-      description: 'AI-powered security camera with night vision',
-      price: 149.99,
+      title: 'Minnesota-Made Indoor Herb Kit',
+      description: 'Locally sourced indoor herb growing kit with cold-resistant varieties',
+      price: 39.99,
       currency: 'USD',
-      merchant: 'SmartHome Solutions',
-      categories: ['Electronics', 'Security', 'Smart Home'],
-      url: 'https://example.com/camera',
-      imageUrl: 'https://example.com/images/camera.jpg',
-      confidence: 0.93,
-      coherence: 0.89,
+      category: 'Home & Garden',
+      resonanceScore: 0,
+      merchant: {
+        id: 'US_MN_LOCAL_GROWTH',
+        name: 'Minnesota Local Growth',
+        rating: 4.7,
+        trustScore: 0.98,
+      },
+      url: 'https://example.com/mn-herb-kit',
+      features: [
+        'Cold-resistant herbs',
+        'Local organic soil',
+        'Minnesota-grown seeds',
+        'Recycled containers',
+      ],
+      targetAudience: ['Local food enthusiasts', 'Minnesota residents', 'Sustainability focused'],
+      pricePoint: 'affordable',
+      insights: {
+        demandLevel: 0.95,
+        competitionLevel: 0.45,
+        marketTrend: 'rising',
+        seasonality: 0.95,
+        valueProposition: [
+          'Support local business',
+          'Climate-appropriate varieties',
+          'Sustainable packaging',
+        ],
+      },
+      resonanceMetrics: {
+        harmony: 0.95,
+        impact: 0.9,
+        sustainability: 0.98,
+        innovation: 0.75,
+        localRelevance: 0.98,
+      },
     },
   ];
 
-  private constructor() {}
-
-  public static getInstance(): MockProductDataSource {
-    if (!MockProductDataSource.instance) {
-      MockProductDataSource.instance = new MockProductDataSource();
-    }
-    return MockProductDataSource.instance;
-  }
-
-  /**
-   * Simulates product search based on demand pattern
-   */
-  public async searchProducts(pattern: DemandPattern): Promise<AwinProduct[]> {
+  async getProducts(pattern: DemandPattern): Promise<Product[]> {
     // Simulate API delay
     await new Promise((resolve) => setTimeout(resolve, 500));
 
+    // Filter products based on pattern
     return this.products.filter((product) => {
-      // Match by category if specified
-      if (pattern.category && !product.categories.includes(pattern.category)) {
-        return false;
-      }
-
-      // Match by price range if specified
-      if (pattern.priceRange) {
-        const price = product.price;
-        if (price < pattern.priceRange.min || price > pattern.priceRange.max) {
-          return false;
-        }
-      }
-
-      // Match by market trends (simulated)
-      const hasMatchingTrend = pattern.context.marketTrends.some((trend) =>
-        product.description.toLowerCase().includes(trend.toLowerCase())
+      const keywordMatch = pattern.keywords.some(
+        (keyword) =>
+          product.title.toLowerCase().includes(keyword.toLowerCase()) ||
+          product.features.some((f) => f.toLowerCase().includes(keyword.toLowerCase()))
       );
 
-      return hasMatchingTrend;
+      const locationMatch =
+        !pattern.location?.region ||
+        product.merchant.id.includes(pattern.location.region.toUpperCase());
+
+      return keywordMatch && locationMatch;
     });
-  }
-
-  /**
-   * Add a mock product for testing
-   */
-  public addMockProduct(product: AwinProduct): void {
-    this.products.push(product);
-  }
-
-  /**
-   * Clear all mock products
-   */
-  public clearMockProducts(): void {
-    this.products = [];
-  }
-
-  /**
-   * Get all available mock products
-   */
-  public getAllProducts(): AwinProduct[] {
-    return [...this.products];
   }
 }

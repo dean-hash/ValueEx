@@ -1,7 +1,7 @@
 import { AwinService } from '../../services/awinService';
-import { configService } from '../../config/configService';
 import { ResonanceFieldService } from '../../services/resonanceField';
 import { Logger } from '../../logger/logger';
+import { DemandPattern } from '../../types/demandTypes';
 
 describe('Awin Service Tests', () => {
   let awinService: AwinService;
@@ -10,29 +10,75 @@ describe('Awin Service Tests', () => {
 
   beforeEach(() => {
     logger = new Logger();
-    resonanceField = new ResonanceFieldService(logger);
-    awinService = new AwinService(configService, resonanceField, logger);
+    resonanceField = new ResonanceFieldService();
+    awinService = new AwinService('test-api-key', 'test-publisher-id', {
+      timeout: 5000,
+      resonanceField, // Pass resonanceField to enable product-demand matching
+    });
   });
 
   it('should initialize with correct configuration', () => {
     expect(awinService).toBeDefined();
+    expect(resonanceField).toBeDefined();
   });
 
-  // Note: Product search tests are currently blocked due to API limitations
-  // See documentation in awinService.ts for details
-  it('should handle product search gracefully when API is unavailable', async () => {
-    const searchParams = {
-      searchTerm: 'test product',
-      limit: 10
+  it('should handle product search with resonance matching', async () => {
+    const searchPattern: DemandPattern = {
+      id: 'test-pattern',
+      signals: [],
+      confidence: 0.8,
+      coherence: 0.7,
+      intensity: 0.9,
+      temporalFactors: {
+        trend: 0.5,
+        seasonality: 0.3,
+        volatility: 0.2,
+      },
+      spatialFactors: {
+        geographic: ['US'],
+        demographic: ['adults'],
+        psychographic: ['tech-savvy'],
+      },
+      resonanceFactors: {
+        sustainability: 0.8,
+        innovationLevel: 0.7,
+        localImpact: 0.9,
+      },
+      keywords: ['test', 'product'],
+      context: {
+        market: 'test',
+        category: 'test',
+        priceRange: { min: 0, max: 100 },
+        intent: 'purchase',
+        location: {
+          country: 'US',
+        },
+        timeframe: 'immediate',
+        constraints: [],
+        preferences: [],
+      },
     };
 
-    await expect(awinService.searchProducts(searchParams))
-      .resolves
-      .toEqual([]); // Expecting empty array as fallback
+    const products = await awinService.searchProducts(searchPattern);
+
+    // Verify resonance scoring
+    expect(products.length).toBeGreaterThanOrEqual(0);
+    products.forEach((product) => {
+      expect(product).toHaveProperty('resonanceScore');
+      expect(product.resonanceScore).toBeGreaterThanOrEqual(0);
+      expect(product.resonanceScore).toBeLessThanOrEqual(1);
+
+      expect(product).toHaveProperty('resonanceMetrics');
+      expect(product.resonanceMetrics).toHaveProperty('harmony');
+      expect(product.resonanceMetrics).toHaveProperty('impact');
+      expect(product.resonanceMetrics).toHaveProperty('sustainability');
+      expect(product.resonanceMetrics).toHaveProperty('innovation');
+      expect(product.resonanceMetrics).toHaveProperty('localRelevance');
+    });
   });
 
-  it('should fetch merchant programs successfully', async () => {
-    const programs = await awinService.getMerchantPrograms();
-    expect(Array.isArray(programs)).toBe(true);
+  it('should fetch merchants successfully', async () => {
+    const merchants = await awinService.getMerchants();
+    expect(Array.isArray(merchants)).toBe(true);
   });
 });

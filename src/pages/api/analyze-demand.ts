@@ -2,17 +2,14 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { DigitalIntelligence } from '../../services/digitalIntelligence';
 import { DemandValidator } from '../../services/mvp/demandValidator';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     const { content } = req.body;
-    
+
     if (!content) {
       return res.status(400).json({ error: 'Content is required' });
     }

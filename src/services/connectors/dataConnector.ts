@@ -2,7 +2,7 @@ import { EventEmitter } from 'events';
 import axios from 'axios';
 import { DemandSignalAdapter } from '../analysis/adapters/demandSignalAdapter';
 
-interface DataSource {
+export interface DataSource {
   id: string;
   type: 'api' | 'websocket' | 'rss' | 'webhook';
   endpoint: string;
@@ -15,30 +15,53 @@ interface DataSource {
   };
 }
 
-interface DataPoint {
-  timestamp: string;
+export interface DataPoint {
+  timestamp: number;
   value: number;
   metadata: Record<string, any>;
-  confidence: number;
+  source: string;
+  type: string;
+  confidence?: number;
+}
+
+export interface ConnectorConfig {
+  // Add any configuration options here
 }
 
 export class DataConnector extends EventEmitter {
-  private static instance: DataConnector;
+  protected readonly config: ConnectorConfig;
   private sources: Map<string, DataSource> = new Map();
   private connections: Map<string, any> = new Map();
   private demandSignals: DemandSignalAdapter;
 
-  private constructor() {
+  constructor(config: ConnectorConfig) {
     super();
+    this.config = config;
     this.demandSignals = DemandSignalAdapter.getInstance();
     this.setupDefaultSources();
   }
 
-  public static getInstance(): DataConnector {
-    if (!DataConnector.instance) {
-      DataConnector.instance = new DataConnector();
+  protected async makeRequest(url: string, options: RequestInit = {}): Promise<Response> {
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-    return DataConnector.instance;
+
+    return response;
+  }
+
+  protected validateResponse<T>(data: unknown): T {
+    if (!data) {
+      throw new Error('Invalid response: data is null or undefined');
+    }
+    return data as T;
   }
 
   private setupDefaultSources(): void {
@@ -49,7 +72,7 @@ export class DataConnector extends EventEmitter {
       endpoint: 'https://trends.google.com/trends/api',
       category: 'search_trends',
       region: 'global',
-      refreshInterval: 3600000 // 1 hour
+      refreshInterval: 3600000, // 1 hour
     });
 
     // Twitter API v2
@@ -59,7 +82,7 @@ export class DataConnector extends EventEmitter {
       endpoint: 'https://api.twitter.com/2',
       category: 'social_media',
       region: 'global',
-      refreshInterval: 300000 // 5 minutes
+      refreshInterval: 300000, // 5 minutes
     });
 
     // Amazon Product API
@@ -69,7 +92,7 @@ export class DataConnector extends EventEmitter {
       endpoint: 'https://webservices.amazon.com/paapi5',
       category: 'marketplace',
       region: 'us',
-      refreshInterval: 3600000 // 1 hour
+      refreshInterval: 3600000, // 1 hour
     });
 
     // eBay API
@@ -79,7 +102,7 @@ export class DataConnector extends EventEmitter {
       endpoint: 'https://api.ebay.com/buy/browse/v1',
       category: 'marketplace',
       region: 'global',
-      refreshInterval: 3600000 // 1 hour
+      refreshInterval: 3600000, // 1 hour
     });
 
     // Reddit API
@@ -89,7 +112,7 @@ export class DataConnector extends EventEmitter {
       endpoint: 'https://oauth.reddit.com',
       category: 'social_media',
       region: 'global',
-      refreshInterval: 300000 // 5 minutes
+      refreshInterval: 300000, // 5 minutes
     });
   }
 
@@ -145,7 +168,7 @@ export class DataConnector extends EventEmitter {
 
   private async fetchAPIData(source: DataSource): Promise<any> {
     const headers: Record<string, string> = {};
-    
+
     if (source.credentials?.apiKey) {
       headers['Authorization'] = `Bearer ${source.credentials.apiKey}`;
     }
@@ -161,7 +184,7 @@ export class DataConnector extends EventEmitter {
 
   private async processData(source: DataSource, rawData: any): Promise<void> {
     const dataPoints = await this.parseDataPoints(source, rawData);
-    
+
     for (const point of dataPoints) {
       await this.demandSignals.addSignal({
         category: source.category,
@@ -172,15 +195,16 @@ export class DataConnector extends EventEmitter {
         context: {
           keywords: this.extractKeywords(point.metadata),
           relatedCategories: this.extractRelatedCategories(point.metadata),
-          sentiment: this.calculateSentiment(point.metadata)
-        }
+          sentiment: this.calculateSentiment(point.metadata),
+          urgency: this.calculateUrgency(point.metadata),
+        },
       });
 
       this.emit('data_processed', {
         sourceId: source.id,
         timestamp: point.timestamp,
         value: point.value,
-        confidence: point.confidence
+        confidence: point.confidence,
       });
     }
   }
@@ -191,16 +215,17 @@ export class DataConnector extends EventEmitter {
     return [];
   }
 
-  private mapSourceTypeToSignalType(sourceType: string): 'search' | 'social' | 'marketplace' | 'direct' {
-    const typeMap: Record<string, 'search' | 'social' | 'marketplace' | 'direct'> = {
-      'google_trends': 'search',
-      'twitter_api': 'social',
-      'amazon_products': 'marketplace',
-      'ebay_api': 'marketplace',
-      'reddit_api': 'social'
-    };
-
-    return typeMap[sourceType] || 'direct';
+  protected mapSourceTypeToSignalType(sourceType: string): 'implicit' | 'explicit' | 'inferred' {
+    switch (sourceType) {
+      case 'marketplace':
+      case 'search':
+      case 'social':
+        return 'implicit';
+      case 'direct':
+        return 'explicit';
+      default:
+        return 'inferred';
+    }
   }
 
   private extractKeywords(metadata: Record<string, any>): string[] {
@@ -215,10 +240,14 @@ export class DataConnector extends EventEmitter {
     return [];
   }
 
-  private calculateSentiment(metadata: Record<string, any>): number | undefined {
-    // Implementation would calculate sentiment from metadata
-    // This is a placeholder
-    return undefined;
+  protected calculateSentiment(metadata: Record<string, any>): number {
+    // Base implementation returns a neutral sentiment
+    return 0.5;
+  }
+
+  protected calculateUrgency(metadata: Record<string, any>): number {
+    // Base implementation returns a neutral urgency
+    return 0.5;
   }
 
   public getSource(sourceId: string): DataSource | undefined {

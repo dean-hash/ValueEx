@@ -2,133 +2,203 @@
  * Core types for the ValueEx system
  */
 
-export interface DemandSignal {
-    id: string;
-    category: string;
-    subcategory?: string;
-    timestamp: string;
-    
-    // Core requirements
-    requirements: {
-        features: string[];
-        constraints: {
-            priceRange?: {
-                min: number;
-                max: number;
-                period?: string;
-            };
-            deployment?: string;
-            availability?: string;
-            support?: string;
-        };
-        volume?: {
-            users?: string;
-            transactions?: string;
-            quantity?: number;
-        };
-    };
+export interface DemandContext {
+  // Required fields
+  market: string;
+  category: string;
+  priceRange: string;
+  intent: string;
+  urgency: number;
+  volume: number;
+  sentiment: number;
+  categories: string[];
 
-    // Location and urgency
+  // Optional fields for enhanced analysis
+  keywords?: string[];
+  relatedCategories?: string[];
+  topics?: string[];
+  matches?: any[];
+  marketTrends?: {
+    growth: number;
+    volume: number;
+    seasonality: number;
+  };
+  userPreferences?: {
+    brands: string[];
+    pricePoints: string[];
+    features: string[];
+  };
+  competitiveAnalysis?: {
+    marketShare: number;
+    competitors: string[];
+    positioning: string;
+  };
+}
+
+export interface DemandRequirements {
+  features: string[];
+  constraints: {
+    budget?: number;
+    timeline?: string;
     location?: string;
-    urgency?: 'low' | 'medium' | 'high';
+  };
+}
 
-    // Authenticity metrics (added by processor)
-    authenticity?: {
-        organic: number;      // How natural/unmanufactured the demand is
-        consistent: number;   // How consistent with observed patterns
-        valuable: number;     // Potential for genuine value exchange
-    };
-
-    // Value metrics (added by processor)
-    valueMetrics?: {
-        utility: number;      // Practical usefulness
-        sustainability: number; // Long-term viability
-        fairness: number;     // Equitable value distribution
-    };
+export interface DemandSignal {
+  id: string;
+  source: string;
+  timestamp: number;
+  type: 'explicit' | 'implicit' | 'inferred';
+  confidence: number;
+  context: DemandContext;
+  requirements?: DemandRequirements;
 }
 
 export interface ValuePattern {
-    id: string;
-    type: 'feature' | 'price' | 'temporal' | 'geographic';
-    confidence: number;
-    
-    // Pattern details
-    pattern: {
-        description: string;
-        metrics: {
-            strength: number;
-            stability: number;
-            growth: number;
-        };
-        signals: string[];  // IDs of contributing signals
+  id: string;
+  type: 'feature' | 'price' | 'temporal' | 'geographic';
+  confidence: number;
+  signals: DemandSignal[];
+  coherence: number;
+  temporalFactors: {
+    seasonality: number;
+    trend: number;
+    volatility: number;
+  };
+  spatialFactors: {
+    geographic: string[];
+    demographic: string[];
+    psychographic: string[];
+  };
+  pattern: {
+    description: string;
+    metrics: {
+      strength: number;
+      stability: number;
+      growth: number;
     };
-
-    // Value implications
-    implications: {
-        opportunities: string[];
-        risks: string[];
-        recommendations: string[];
-    };
-
-    // Temporal aspects
-    emergence: string;    // When pattern first detected
-    lastUpdated: string;  // Last time pattern was confirmed
-    prediction: {
-        trend: 'rising' | 'stable' | 'declining';
-        confidence: number;
-    };
+    signals: string[]; // IDs of contributing signals
+  };
 }
 
 export interface MatchRecommendation {
-    id: string;
-    demandId: string;    // ID of the demand signal
-    supplyId: string;    // ID of the matching supply
-    
-    // Match quality
-    valueScore: number;  // Overall value alignment score
-    confidence: number;  // Confidence in the match
-    
-    // Value breakdown
-    valueMetrics: {
-        featureAlignment: number;
-        constraintSatisfaction: number;
-        mutualBenefit: number;
-        longTermValue: number;
-    };
-    
-    // Practical details
-    gaps: string[];      // Any unmet requirements
-    enhancements: string[]; // Potential improvements
-    risks: string[];     // Potential risks to consider
-    
-    // Implementation
-    nextSteps: string[]; // Recommended actions
-    timeline: string;    // Estimated implementation timeline
+  id: string;
+  demandId: string;
+  supplyId: string;
+  valueScore: number;
+  confidence: number;
+  valueMetrics: {
+    featureAlignment: number;
+    constraintSatisfaction: number;
+    mutualBenefit: number;
+    longTermValue: number;
+  };
+  gaps: string[];
+  enhancements: string[];
+  risks: string[];
+  nextSteps: string[];
+  timeline: string;
 }
 
 export interface ValuePrediction {
-    id: string;
-    timestamp: string;
-    
-    // Prediction details
-    prediction: {
-        type: 'demand' | 'pattern' | 'opportunity';
-        description: string;
-        probability: number;
-        impact: number;
-    };
-    
-    // Supporting evidence
-    evidence: {
-        patterns: string[];    // Related pattern IDs
-        signals: string[];     // Supporting signal IDs
-        confidence: number;
-    };
-    
-    // Actionable insights
-    recommendations: {
-        immediate: string[];
-        shortTerm: string[];
-        longTerm: string[];
-    };
+  id: string;
+  timestamp: string;
+  type: 'demand' | 'pattern' | 'opportunity';
+  description: string;
+  probability: number;
+  impact: number;
+  evidence: {
+    patterns: string[]; // Related pattern IDs
+    signals: string[]; // Supporting signal IDs
+    confidence: number;
+  };
+  recommendations: {
+    immediate: string[];
+    shortTerm: string[];
+    longTerm: string[];
+  };
+}
+
+export interface ResonanceState {
+  vectors: Array<{
+    dimension: string;
+    magnitude: number;
+    direction: number;
+    type: string;
+    strength: number;
+    context: string[];
+  }>;
+  coherence: number;
+  intensity: number;
+  confidence: number;
+}
+
+export interface NetworkNode {
+  id: string;
+  type: string;
+  data: any;
+  x?: number;
+  y?: number;
+  vx?: number;
+  vy?: number;
+}
+
+export interface NetworkLink {
+  source: string;
+  target: string;
+  value: number;
+  type: string;
+}
+
+export interface AnomalyData {
+  metric: string;
+  expectedValue: number;
+  actualValue: number;
+  deviation: number;
+  severity: 'low' | 'medium' | 'high';
+  timestamp: string;
+}
+
+export interface TrendMetrics {
+  trend: number;
+  seasonality: number;
+  volatility: number;
+}
+
+export interface DemandValidation {
+  isValid: boolean;
+  confidence: number;
+  issues?: string[];
+  strength: number;
+}
+
+export interface MarketContext {
+  geographic: string[];
+  demographic: string[];
+  psychographic: string[];
+}
+
+export interface MVPProduct {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  status: 'active' | 'inactive';
+  source: string;
+  vertical: string;
+  tags: string[];
+  resonanceFactors?: {
+    demand: number;
+    supply: number;
+    competition: number;
+  };
+}
+
+export interface IntelligenceProvider {
+  name: string;
+  type: 'context' | 'demand' | 'pattern' | 'prediction';
+  confidence: number;
+  processSignal(signal: DemandSignal): Promise<DemandSignal>;
+  validateAlignment(): Promise<boolean>;
 }

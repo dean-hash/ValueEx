@@ -1,13 +1,15 @@
 import { DemandSignal } from '../../types/mvp/demand';
-import { digitalIntelligence } from '../digitalIntelligence';
+import { DigitalIntelligenceProvider } from '../digitalIntelligence';
 import { logger } from '../../utils/logger';
 
 export class DemandTracker {
   private static instance: DemandTracker;
+  private intelligence: DigitalIntelligenceProvider;
   private signals: Map<string, DemandSignal> = new Map();
   private readonly SIGNAL_EXPIRY_DAYS = 30; // Signals older than this are marked expired
 
   private constructor() {
+    this.intelligence = new DigitalIntelligenceProvider();
     // Start the expiry check process
     setInterval(() => this.checkExpiredSignals(), 1000 * 60 * 60 * 24); // Daily check
   }
@@ -24,7 +26,7 @@ export class DemandTracker {
    */
   async trackDemand(query: string): Promise<DemandSignal> {
     try {
-      const analysis = await digitalIntelligence.analyzeNeed(query);
+      const analysis = await this.intelligence.analyzeNeed(query);
 
       const signal: DemandSignal = {
         id: `demand_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,

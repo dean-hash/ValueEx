@@ -1,8 +1,6 @@
 import puppeteer from 'puppeteer';
 import { SignalDimension, EmergentContext } from './demandPrecognition';
-import { logger } from '../utils/logger';
 import { MetricsCollector } from './monitoring/metrics';
-import { DemandSignal } from '../types/demandSignal';
 import axios from 'axios';
 import { RateLimiter } from 'limiter';
 
@@ -17,7 +15,7 @@ export class DemandSignalScraper {
     this.metrics = MetricsCollector.getInstance();
     this.limiter = new RateLimiter({
       tokensPerInterval: 100,
-      interval: 'minute'
+      interval: 'minute',
     });
   }
 
@@ -42,11 +40,11 @@ export class DemandSignalScraper {
 
       // Try primary source
       const signals = await this.scrapeReddit(subreddit, keyword);
-      
+
       // Record metrics
       this.metrics.recordProcessingTime(Date.now() - startTime);
       this.metrics.recordSignal('direct', `${subreddit}-${keyword}`);
-      
+
       return signals;
     } catch (error) {
       logger.error('Error fetching demand signals:', error);
@@ -71,11 +69,11 @@ export class DemandSignalScraper {
 
       // Try primary source
       const signals = await this.scrapeTwitter(keyword);
-      
+
       // Record metrics
       this.metrics.recordProcessingTime(Date.now() - startTime);
       this.metrics.recordSignal('direct', `twitter-${keyword}`);
-      
+
       return signals;
     } catch (error) {
       logger.error('Error fetching demand signals:', error);
@@ -121,7 +119,7 @@ export class DemandSignalScraper {
 
         // Update cache
         this.cache.set(`${subreddit}-${keyword}`, { data: signals[0], timestamp: Date.now() });
-        
+
         return signals;
       } finally {
         await browser.close();
@@ -164,7 +162,7 @@ export class DemandSignalScraper {
 
         // Update cache
         this.cache.set(`twitter-${keyword}`, { data: signals[0], timestamp: Date.now() });
-        
+
         return signals;
       } finally {
         await browser.close();
@@ -174,7 +172,10 @@ export class DemandSignalScraper {
     }
   }
 
-  private async fetchFromFallbackSource(subreddit: string, keyword: string): Promise<SignalDimension[]> {
+  private async fetchFromFallbackSource(
+    subreddit: string,
+    keyword: string
+  ): Promise<SignalDimension[]> {
     try {
       // Implement fallback logic (e.g., local database, alternative API)
       const signal: SignalDimension = {

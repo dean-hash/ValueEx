@@ -3,7 +3,7 @@ import dynamic from 'next/dynamic';
 
 // Dynamically import the NetworkGraph to avoid SSR issues with D3
 const DemandNetwork = dynamic(() => import('../src/visualization/DemandNetwork'), {
-  ssr: false
+  ssr: false,
 });
 
 export default function Home() {
@@ -38,15 +38,21 @@ export default function Home() {
             <div className="metrics-grid">
               <div className="metric-card">
                 <h3>Active Signals</h3>
-                <div id="active-signals-count" className="metric-value">0</div>
+                <div id="active-signals-count" className="metric-value">
+                  0
+                </div>
               </div>
               <div className="metric-card">
                 <h3>Average Confidence</h3>
-                <div id="avg-confidence" className="metric-value">0%</div>
+                <div id="avg-confidence" className="metric-value">
+                  0%
+                </div>
               </div>
               <div className="metric-card">
                 <h3>Strong Patterns</h3>
-                <div id="strong-patterns-count" className="metric-value">0</div>
+                <div id="strong-patterns-count" className="metric-value">
+                  0
+                </div>
               </div>
             </div>
           </section>

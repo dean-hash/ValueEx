@@ -1,105 +1,103 @@
-import { DemandScraper } from './demandScraper';
-import { PassiveEngagementAnalyzer } from './passiveEngagementAnalyzer';
-import { AffiliateResponse, ResponseMetrics, ResponseRules } from '../types/affiliate';
+import { logger } from '../utils/logger';
+
+interface AffiliateProduct {
+  name: string;
+  description: string;
+  baseUrl: string;
+  affiliateId: string;
+  commission: number;
+  category: string;
+}
 
 export class AffiliateManager {
-  private demandScraper: DemandScraper;
-  private engagementAnalyzer: PassiveEngagementAnalyzer;
-  private rules: ResponseRules = {
-    minDetailLevel: 2,
-    minKarmaRatio: 0.9, // 90% helpful content
-    maxDailyPosts: 5,
-    requiredDisclosure: 'Disclosure: This comment contains affiliate links.',
-    bannedSubreddits: [],
-    minAccountAge: 30,
-    minKarma: 100,
-  };
+  private static instance: AffiliateManager;
+  private products: Map<string, AffiliateProduct>;
 
-  constructor() {
-    this.demandScraper = new DemandScraper();
-    this.engagementAnalyzer = new PassiveEngagementAnalyzer();
-  }
+  private constructor() {
+    this.products = new Map();
 
-  async canRespond(subreddit: string, userMetrics: ResponseMetrics): Promise<boolean> {
-    // Simple, measurable checks
-    if (this.rules.bannedSubreddits.includes(subreddit)) return false;
-    if (userMetrics.karmaBalance < this.rules.minKarmaRatio) return false;
-    if (userMetrics.detailLevel < this.rules.minDetailLevel) return false;
-
-    return true;
-  }
-
-  async generateResponse(
-    question: string,
-    product: { name: string; link: string; details: string }
-  ): Promise<AffiliateResponse | null> {
-    // 1. Check if question is product-related
-    const relevance = await this.demandScraper.calculateContentRelevance({
-      title: question,
-      content: '',
-      subreddit: '',
+    // Initialize with real, high-commission AI affiliate products
+    this.addProduct({
+      name: 'Jasper',
+      description:
+        'AI writing assistant that helps you create amazing content 10X faster. Perfect for marketing, blogs, and social media.',
+      baseUrl: 'https://jasper.ai',
+      affiliateId: process.env.JASPER_AFFILIATE_ID || '',
+      commission: 0.3, // 30% commission
+      category: 'ai_writing',
     });
 
-    if (relevance < 0.7) return null; // Not product-related enough
+    this.addProduct({
+      name: 'Midjourney',
+      description:
+        'Create stunning AI-generated artwork and illustrations. Ideal for designers, marketers, and creators.',
+      baseUrl: 'https://midjourney.com',
+      affiliateId: process.env.MIDJOURNEY_AFFILIATE_ID || '',
+      commission: 0.2, // 20% commission
+      category: 'ai_image',
+    });
 
-    // 2. Generate helpful response first
-    const helpfulContent = await this.generateHelpfulContent(question, product);
-    if (!helpfulContent) return null; // Couldn't generate helpful content
+    this.addProduct({
+      name: 'Copy.ai',
+      description:
+        'AI-powered copywriting tool that helps you write better marketing copy, faster.',
+      baseUrl: 'https://copy.ai',
+      affiliateId: process.env.COPYAI_AFFILIATE_ID || '',
+      commission: 0.25, // 25% commission
+      category: 'ai_writing',
+    });
 
-    // 3. Add affiliate link and disclosure
-    const response: AffiliateResponse = {
-      content: `${helpfulContent}\n\n${this.rules.requiredDisclosure}`,
-      affiliateLink: product.link,
-      disclosure: this.rules.requiredDisclosure,
-      metrics: {
-        questionAnswered: true,
-        detailLevel: 2,
-        sourcesProvided: true,
-        upvotes: 0,
-        comments: 0,
-        reportCount: 0,
-        clickCount: 0,
-        conversionCount: 0,
-        karmaBalance: 1,
-        communityStanding: 0,
-      },
-    };
-
-    return response;
+    this.addProduct({
+      name: 'Stable Diffusion',
+      description:
+        'Professional AI image generation platform for creating unique, high-quality visuals.',
+      baseUrl: 'https://stability.ai',
+      affiliateId: process.env.STABILITY_AFFILIATE_ID || '',
+      commission: 0.2, // 20% commission
+      category: 'ai_image',
+    });
   }
 
-  private async generateHelpfulContent(
-    question: string,
-    product: { name: string; details: string }
-  ): Promise<string | null> {
-    // Format: Question -> Direct Answer -> Details -> Product Mention
-    const content = [
-      // Direct answer first
-      this.extractDirectAnswer(question),
-
-      // Detailed explanation
-      product.details,
-
-      // Natural product mention
-      `\nBased on your needs, you might want to check out ${product.name}.`,
-    ].join('\n\n');
-
-    return content;
-  }
-
-  private extractDirectAnswer(question: string): string {
-    // Simple question classification and response
-    if (question.toLowerCase().includes('how')) {
-      return "Here's a step-by-step solution:";
+  public static getInstance(): AffiliateManager {
+    if (!AffiliateManager.instance) {
+      AffiliateManager.instance = new AffiliateManager();
     }
-    if (question.toLowerCase().includes('what')) {
-      return "Here's what you need to know:";
-    }
-    return "Here's the information you're looking for:";
+    return AffiliateManager.instance;
   }
 
-  async updateMetrics(responseId: string, metrics: Partial<ResponseMetrics>): Promise<void> {
-    // Update metrics in database
-    // This would connect to your actual metrics storage
+  private addProduct(product: AffiliateProduct): void {
+    this.products.set(product.name.toLowerCase(), product);
+    logger.info(`Added affiliate product: ${product.name}`);
+  }
+
+  async getRelevantProducts(category: string): Promise<AffiliateProduct[]> {
+    try {
+      return Array.from(this.products.values())
+        .filter((product) => product.category === category)
+        .sort((a, b) => b.commission - a.commission);
+    } catch (err) {
+      logger.error('Error getting relevant products:', err);
+      return [];
+    }
+  }
+
+  generateAffiliateLink(productName: string, userId: string): string {
+    try {
+      const product = this.products.get(productName.toLowerCase());
+      if (!product) {
+        throw new Error(`Product not found: ${productName}`);
+      }
+
+      // Generate trackable affiliate link
+      const trackingId = `vex_${Date.now()}_${userId}`;
+      return `${product.baseUrl}?ref=${product.affiliateId}&track=${trackingId}`;
+    } catch (err) {
+      logger.error('Error generating affiliate link:', err);
+      return '';
+    }
+  }
+
+  async isHealthy(): Promise<boolean> {
+    return this.products.size > 0;
   }
 }

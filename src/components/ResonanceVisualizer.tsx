@@ -1,66 +1,133 @@
 import React, { useEffect, useRef } from 'react';
-import { ResonanceField } from '../visualizers/resonanceField';
+import * as THREE from 'three';
 import styled from 'styled-components';
+import { ResonanceState } from '../services/analysis/types';
 
-const VisualizerContainer = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: -1;
-  background: radial-gradient(circle at center, #000510 0%, #000000 100%);
-  opacity: 0.8;
+const Container = styled.div`
+  width: 100%;
+  height: 100%;
+  position: relative;
 `;
 
-const ResonanceOverlay = styled.div`
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  text-align: center;
-  color: rgba(255, 255, 255, 0.8);
-  font-family: 'Inter', sans-serif;
-  pointer-events: none;
-  
-  h1 {
-    font-size: 2em;
-    font-weight: 300;
-    letter-spacing: 0.2em;
-    margin: 0;
-    opacity: 0;
-    animation: fadeIn 2s ease-out forwards;
-  }
-  
-  p {
-    font-size: 1.2em;
-    opacity: 0;
-    animation: fadeIn 2s ease-out 1s forwards;
-  }
-  
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-`;
+interface Props {
+  resonanceState: ResonanceState;
+  width?: number;
+  height?: number;
+}
 
-export const ResonanceVisualizer: React.FC = () => {
+export const ResonanceVisualizer: React.FC<Props> = ({
+  resonanceState,
+  width = 800,
+  height = 600,
+}) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const resonanceFieldRef = useRef<ResonanceField | null>(null);
-  
-  useEffect(() => {
-    if (containerRef.current) {
-      resonanceFieldRef.current = new ResonanceField(containerRef.current);
-      return () => resonanceFieldRef.current?.dispose();
-    }
-  }, []);
+  const rendererRef = useRef<THREE.WebGLRenderer>();
+  const sceneRef = useRef<THREE.Scene>();
+  const cameraRef = useRef<THREE.PerspectiveCamera>();
+  const animationFrameRef = useRef<number>();
 
-  return (
-    <VisualizerContainer ref={containerRef}>
-      <ResonanceOverlay>
-        <h1>Resonance Field</h1>
-        <p>Visualizing intention and interaction</p>
-      </ResonanceOverlay>
-    </VisualizerContainer>
-  );
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    // Initialize Three.js scene
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+
+    renderer.setSize(width, height);
+    containerRef.current.appendChild(renderer.domElement);
+
+    camera.position.z = 5;
+
+    // Store refs
+    sceneRef.current = scene;
+    cameraRef.current = camera;
+    rendererRef.current = renderer;
+
+    // Cleanup
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      if (rendererRef.current) {
+        rendererRef.current.dispose();
+      }
+      if (containerRef.current?.firstChild) {
+        containerRef.current.removeChild(containerRef.current.firstChild);
+      }
+    };
+  }, [width, height]);
+
+  useEffect(() => {
+    if (!sceneRef.current || !cameraRef.current || !rendererRef.current) return;
+
+    // Clear existing objects
+    while (sceneRef.current.children.length > 0) {
+      sceneRef.current.remove(sceneRef.current.children[0]);
+    }
+
+    // Create visualization based on resonance state
+    const { vectors, coherence, intensity } = resonanceState;
+
+    // Create a group for all vectors
+    const vectorGroup = new THREE.Group();
+
+    vectors.forEach((vector, index) => {
+      const geometry = new THREE.CylinderGeometry(0.1, 0.1, vector.magnitude, 32);
+      const material = new THREE.MeshPhongMaterial({
+        color: getVectorColor(vector.type),
+        opacity: vector.strength,
+        transparent: true,
+      });
+      const mesh = new THREE.Mesh(geometry, material);
+
+      // Position and rotate vector
+      mesh.position.setFromSphericalCoords(
+        2, // radius
+        (Math.PI * index) / vectors.length, // phi
+        (2 * Math.PI * index) / vectors.length // theta
+      );
+      mesh.lookAt(0, 0, 0);
+
+      vectorGroup.add(mesh);
+    });
+
+    // Add ambient light
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    sceneRef.current.add(ambientLight);
+
+    // Add point light
+    const pointLight = new THREE.PointLight(0xffffff, 1);
+    pointLight.position.set(5, 5, 5);
+    sceneRef.current.add(pointLight);
+
+    // Add vector group to scene
+    sceneRef.current.add(vectorGroup);
+
+    // Animation
+    const animate = () => {
+      if (!sceneRef.current || !cameraRef.current || !rendererRef.current) return;
+
+      vectorGroup.rotation.y += 0.005 * intensity;
+      rendererRef.current.render(sceneRef.current, cameraRef.current);
+      animationFrameRef.current = requestAnimationFrame(animate);
+    };
+
+    animate();
+  }, [resonanceState]);
+
+  return <Container ref={containerRef} />;
 };
+
+function getVectorColor(type: string): number {
+  switch (type) {
+    case 'demand':
+      return 0x1f77b4;
+    case 'supply':
+      return 0x2ca02c;
+    case 'market':
+      return 0xff7f0e;
+    default:
+      return 0x999999;
+  }
+}

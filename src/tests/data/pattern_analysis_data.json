@@ -1,0 +1,136 @@
+{
+  "patterns": [
+    {
+      "id": "pattern-analysis-1",
+      "category": "Packaging",
+      "type": "demand",
+      "signals": [
+        {
+          "timestamp": "2024-12-01T00:00:00Z",
+          "metrics": {
+            "volume": 1200,
+            "value": 0.85,
+            "confidence": 0.88
+          },
+          "context": {
+            "market": "Food Service",
+            "segment": "Enterprise",
+            "region": "Northeast"
+          }
+        },
+        {
+          "timestamp": "2024-12-08T00:00:00Z",
+          "metrics": {
+            "volume": 1350,
+            "value": 0.87,
+            "confidence": 0.89
+          },
+          "context": {
+            "market": "Food Service",
+            "segment": "Enterprise",
+            "region": "Northeast"
+          }
+        },
+        {
+          "timestamp": "2024-12-15T00:00:00Z",
+          "metrics": {
+            "volume": 1480,
+            "value": 0.89,
+            "confidence": 0.91
+          },
+          "context": {
+            "market": "Food Service",
+            "segment": "Enterprise",
+            "region": "Northeast"
+          }
+        }
+      ],
+      "analysis": {
+        "trend": "increasing",
+        "seasonality": false,
+        "confidence": 0.92,
+        "drivers": [
+          {
+            "name": "Regulatory Changes",
+            "impact": 0.75
+          },
+          {
+            "name": "Consumer Demand",
+            "impact": 0.82
+          }
+        ]
+      }
+    },
+    {
+      "id": "pattern-analysis-2",
+      "category": "Software",
+      "type": "demand",
+      "signals": [
+        {
+          "timestamp": "2024-12-01T00:00:00Z",
+          "metrics": {
+            "volume": 2200,
+            "value": 0.88,
+            "confidence": 0.85
+          },
+          "context": {
+            "market": "Retail",
+            "segment": "Enterprise",
+            "region": "Global"
+          }
+        },
+        {
+          "timestamp": "2024-12-08T00:00:00Z",
+          "metrics": {
+            "volume": 2450,
+            "value": 0.89,
+            "confidence": 0.87
+          },
+          "context": {
+            "market": "Retail",
+            "segment": "Enterprise",
+            "region": "Global"
+          }
+        },
+        {
+          "timestamp": "2024-12-15T00:00:00Z",
+          "metrics": {
+            "volume": 2680,
+            "value": 0.91,
+            "confidence": 0.88
+          },
+          "context": {
+            "market": "Retail",
+            "segment": "Enterprise",
+            "region": "Global"
+          }
+        }
+      ],
+      "analysis": {
+        "trend": "increasing",
+        "seasonality": false,
+        "confidence": 0.9,
+        "drivers": [
+          {
+            "name": "Digital Transformation",
+            "impact": 0.85
+          },
+          {
+            "name": "Efficiency Needs",
+            "impact": 0.78
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "timestamp": "2025-01-03T18:42:45-05:00",
+    "confidence": 0.91,
+    "coverage": {
+      "categories": ["Packaging", "Software"],
+      "timespan": "2024-12",
+      "completeness": 0.88
+    },
+    "version": "1.0"
+  }
+}

@@ -31,10 +31,10 @@ export class GoogleTrendsScraper implements DemandSource {
         this.getRegionalInterest(query),
       ]);
 
-      logger.info('Got Google Trends data', { 
+      logger.info('Got Google Trends data', {
         timelinePoints: interestOverTime.length,
         relatedQueries: relatedQueries.length,
-        regions: Object.keys(regionalInterest).length 
+        regions: Object.keys(regionalInterest).length,
       });
 
       const trendMetrics = this.analyzeTrends(interestOverTime, regionalInterest);
@@ -48,7 +48,7 @@ export class GoogleTrendsScraper implements DemandSource {
         type: 'external',
         operation: 'enrichSignal',
         status: 'success',
-        data: signal
+        data: signal,
       } as IntelligenceEvent);
 
       return [signal];
@@ -64,14 +64,14 @@ export class GoogleTrendsScraper implements DemandSource {
         sourceId: 'google_trends',
         type: 'external',
         operation: 'interestOverTime',
-        params: { query }
+        params: { query },
       } as IntelligenceEvent);
 
       const result = await googleTrends.interestOverTime({
         keyword: query,
         startTime: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
       });
-      
+
       const data = JSON.parse(result);
       let timelineData: TrendData[] = [];
 
@@ -88,7 +88,7 @@ export class GoogleTrendsScraper implements DemandSource {
         type: 'external',
         operation: 'interestOverTime',
         status: 'success',
-        data: timelineData
+        data: timelineData,
       } as IntelligenceEvent);
 
       return timelineData;
@@ -97,7 +97,7 @@ export class GoogleTrendsScraper implements DemandSource {
         sourceId: 'google_trends',
         type: 'external',
         operation: 'interestOverTime',
-        error: error.message
+        error: error.message,
       } as IntelligenceEvent);
       throw error;
     }
@@ -109,14 +109,14 @@ export class GoogleTrendsScraper implements DemandSource {
         sourceId: 'google_trends',
         type: 'external',
         operation: 'regionalInterest',
-        params: { query }
+        params: { query },
       } as IntelligenceEvent);
 
       const result = await googleTrends.interestByRegion({
         keyword: query,
         resolution: 'COUNTRY',
       });
-      
+
       const data = JSON.parse(result);
       const regionalData: Record<string, number> = {};
 
@@ -133,7 +133,7 @@ export class GoogleTrendsScraper implements DemandSource {
         type: 'external',
         operation: 'regionalInterest',
         status: 'success',
-        data: regionalData
+        data: regionalData,
       } as IntelligenceEvent);
 
       return regionalData;
@@ -142,7 +142,7 @@ export class GoogleTrendsScraper implements DemandSource {
         sourceId: 'google_trends',
         type: 'external',
         operation: 'regionalInterest',
-        error: error.message
+        error: error.message,
       } as IntelligenceEvent);
       throw error;
     }
@@ -154,16 +154,16 @@ export class GoogleTrendsScraper implements DemandSource {
         sourceId: 'google_trends',
         type: 'external',
         operation: 'relatedQueries',
-        params: { query }
+        params: { query },
       } as IntelligenceEvent);
 
       const result = await googleTrends.relatedQueries({
-        keyword: query
+        keyword: query,
       });
 
       const data = JSON.parse(result);
       let queries: string[] = [];
-      
+
       if (data?.default?.rankedList?.[0]?.rankedKeyword) {
         queries = data.default.rankedList[0].rankedKeyword
           .map((item: any) => item.query)
@@ -175,7 +175,7 @@ export class GoogleTrendsScraper implements DemandSource {
         type: 'external',
         operation: 'relatedQueries',
         status: 'success',
-        data: queries
+        data: queries,
       } as IntelligenceEvent);
 
       return queries;
@@ -184,14 +184,17 @@ export class GoogleTrendsScraper implements DemandSource {
         sourceId: 'google_trends',
         type: 'external',
         operation: 'relatedQueries',
-        error: error.message
+        error: error.message,
       } as IntelligenceEvent);
       throw error;
     }
   }
 
-  private analyzeTrends(timelineData: TrendData[], regionalData: Record<string, number>): TrendMetrics {
-    const values = timelineData.map(d => d.value);
+  private analyzeTrends(
+    timelineData: TrendData[],
+    regionalData: Record<string, number>
+  ): TrendMetrics {
+    const values = timelineData.map((d) => d.value);
     const volume = Math.max(...values);
     const momentum = this.calculateMomentum(values);
     const velocity = this.calculateVelocity(values);
@@ -238,7 +241,7 @@ export class GoogleTrendsScraper implements DemandSource {
     relatedQueries: string[]
   ): ScrapedDemandSignal {
     const now = new Date().toISOString();
-    
+
     return {
       id: `gt_${query}_${Date.now()}`,
       query,
@@ -275,11 +278,13 @@ export class GoogleTrendsScraper implements DemandSource {
       },
       analysis: {
         sentiment: 0,
-        topics: [{
-          name: query,
-          confidence: 1,
-          keywords: relatedQueries,
-        }],
+        topics: [
+          {
+            name: query,
+            confidence: 1,
+            keywords: relatedQueries,
+          },
+        ],
         pricePoints: [],
         features: {},
         relationships: {

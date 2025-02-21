@@ -1,5 +1,5 @@
 import { AwinProduct, AwinSearchParams } from '../types/awinTypes';
-import { DemandPattern } from '../types/demandTypes';
+import { DemandPattern, DemandType } from '../types/demandTypes';
 
 export const mockProducts: AwinProduct[] = [
   {
@@ -52,35 +52,94 @@ export const mockDemandPatterns: DemandPattern[] = [
     coherence: 0.88,
     signals: [
       {
+        id: 'signal1',
+        title: 'Growing demand for AI writing tools',
+        content: 'Discussion about AI writing assistants and their impact on productivity',
+        url: 'https://reddit.com/r/productivity/ai-writing',
         source: 'reddit',
-        type: 'discussion',
+        type: DemandType.IMPLICIT,
         timestamp: new Date().toISOString(),
-        confidence: 0.85,
+        keyPoints: ['Increased productivity', 'AI integration', 'Writing assistance'],
+        confidence: {
+          overall: 0.85,
+          factors: {
+            textQuality: 0.88,
+            communityEngagement: 0.82,
+            authorCredibility: 0.85,
+            contentRelevance: 0.9,
+            temporalRelevance: 0.8,
+          },
+        },
+        context: {
+          market: 'AI Writing Tools',
+          category: 'Software',
+          priceRange: {
+            min: 20,
+            max: 100,
+            currency: 'USD',
+          },
+          intent: 'purchase',
+          topics: ['AI', 'Writing', 'Productivity'],
+          keywords: ['AI writing', 'content generation', 'writing assistant'],
+          sentiment: 0.8,
+          urgency: 0.7,
+          matches: ['product1', 'product2'],
+          marketTrends: {
+            momentum: 0.85,
+            volume: 10000,
+            growth: 0.25,
+            seasonality: 0.7,
+          },
+          userPreferences: {
+            brands: ['AITools', 'WriterPro'],
+            pricePoints: ['premium', 'enterprise'],
+            features: ['easy to use', 'integration capabilities'],
+          },
+          competitiveAnalysis: {
+            marketShare: 0.35,
+            competitors: ['Grammarly', 'ProWritingAid'],
+            positioning: 'Premium AI writing assistant with advanced features',
+          },
+        },
+        trendMetrics: {
+          momentum: 0.8,
+          volume: 0.7,
+          growth: 0.85,
+          seasonality: 0.6,
+        },
         analysis: {
           topics: ['AI', 'productivity', 'software'],
           sentiment: 0.75,
           urgency: 0.65,
-          intent: 'purchase_intent',
         },
       },
     ],
     temporalFactors: {
+      trend: 0.85,
       seasonality: 0.7,
-      trendStrength: 0.85,
-      cyclicality: 0.6,
+      volatility: 0.6,
     },
     spatialFactors: {
-      geographicSpread: 0.8,
-      marketPenetration: 0.65,
-      demographicReach: 0.75,
+      geographic: ['North America', 'Europe', 'Asia'],
+      demographic: ['Professionals', 'Students', 'Content Creators'],
+      psychographic: ['Tech-savvy', 'Productivity-focused', 'Quality-conscious'],
     },
     context: {
-      marketTrends: ['AI automation', 'productivity tools'],
-      userPreferences: ['easy to use', 'integration capabilities'],
+      marketTrends: {
+        momentum: 0.85,
+        volume: 10000,
+        growth: 0.25,
+        seasonality: 0.7,
+      },
+      userPreferences: {
+        brands: ['AITools', 'WriterPro'],
+        pricePoints: ['premium', 'enterprise'],
+        features: ['easy to use', 'integration capabilities'],
+      },
       competitiveAnalysis: {
         marketShare: 0.45,
-        competitorStrength: 0.7,
-        uniqueSellingPoints: ['AI-powered', 'seamless integration'],
+        competitors: ['Grammarly', 'ProWritingAid'],
+        positioning: 'Market-leading AI writing assistant',
       },
     },
     category: 'Software',

@@ -1,18 +1,37 @@
-type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+import winston from 'winston';
+
+export type LogLevel = 'error' | 'warn' | 'info' | 'debug';
 
 interface LogEntry {
   timestamp: string;
   level: LogLevel;
   message: string;
   context?: Record<string, any>;
+  error?: any;
 }
 
-export class Logger {
-  private static instance: Logger;
-  private logBuffer: LogEntry[] = [];
-  private readonly MAX_BUFFER_SIZE = 1000;
+interface RevenueEvent {
+  type: string;
+  amount: number;
+  timestamp: string;
+}
 
-  private constructor() {}
+class Logger {
+  private static instance: Logger;
+  private logger: winston.Logger;
+  private revenueEvents: RevenueEvent[] = [];
+
+  private constructor() {
+    this.logger = winston.createLogger({
+      level: 'info',
+      format: winston.format.json(),
+      transports: [
+        new winston.transports.Console({
+          format: winston.format.simple(),
+        }),
+      ],
+    });
+  }
 
   static getInstance(): Logger {
     if (!Logger.instance) {
@@ -21,55 +40,50 @@ export class Logger {
     return Logger.instance;
   }
 
-  private log(level: LogLevel, message: string, context?: Record<string, any>) {
+  private log(level: LogLevel, message: string, context?: Record<string, any>, error?: any) {
     const entry: LogEntry = {
       timestamp: new Date().toISOString(),
       level,
       message,
-      context,
+      ...(context && { context }),
+      ...(error && { error }),
     };
 
-    // Add to buffer
-    this.logBuffer.push(entry);
-
-    // Trim buffer if too large
-    if (this.logBuffer.length > this.MAX_BUFFER_SIZE) {
-      this.logBuffer = this.logBuffer.slice(-this.MAX_BUFFER_SIZE);
-    }
-
-    // Console output in development
-    if (process.env.NODE_ENV === 'development') {
-      const contextStr = context ? ` ${JSON.stringify(context)}` : '';
-      console.log(`[${entry.timestamp}] ${level.toUpperCase()}: ${message}${contextStr}`);
-    }
+    this.logger.log(level, entry);
   }
 
-  debug(message: string, context?: Record<string, any>) {
-    this.log('debug', message, context);
+  trackRevenueEvent(event: RevenueEvent) {
+    this.revenueEvents.push(event);
+    this.log('info', `Revenue event: ${event.type}`, event);
   }
 
-  info(message: string, context?: Record<string, any>) {
-    this.log('info', message, context);
+  getRevenueEvents(): RevenueEvent[] {
+    return this.revenueEvents;
+  }
+
+  error(message: string, error?: any, context?: Record<string, any>) {
+    this.log('error', message, context, error);
   }
 
   warn(message: string, context?: Record<string, any>) {
     this.log('warn', message, context);
   }
 
-  error(message: string, context?: Record<string, any>) {
-    this.log('error', message, context);
+  info(message: string, context?: Record<string, any>) {
+    this.log('info', message, context);
   }
 
-  getRecentLogs(count: number = 100, level?: LogLevel): LogEntry[] {
-    let logs = this.logBuffer;
-    if (level) {
-      logs = logs.filter((log) => log.level === level);
-    }
-    return logs.slice(-count);
+  debug(message: string, context?: Record<string, any>) {
+    this.log('debug', message, context);
   }
 
-  clearLogs() {
-    this.logBuffer = [];
+  getRecentLogs(): LogEntry[] {
+    // Return empty array as we're using console transport
+    return [];
+  }
+
+  clearLogs(): void {
+    // Not implemented as we're using console transport
   }
 }
 

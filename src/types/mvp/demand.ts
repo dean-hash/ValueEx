@@ -3,30 +3,75 @@ import { MarketVertical } from '../marketTypes';
 export interface DemandSignal {
   id: string;
   query: string;
-  timestamp: Date;
-  source: 'direct' | 'inferred'; // direct = user input, inferred = from analysis
+  source: string;
+  strength: number;
   vertical: MarketVertical;
-  strength: number; // 0-1
-  insights: {
-    marketSize?: number;
-    priceRange?: {
-      min: number;
-      max: number;
-    };
-    urgency: number; // 0-1
-    confidence: number; // 0-1
-    searchVolume?: number;
-    demographics?: string[];
-    keywords: string[];
+  insights: DemandInsights;
+  context: DemandContext;
+  timestamp: string; // ISO date string
+}
+
+export interface DemandInsights {
+  keywords: string[];
+  context: string;
+  urgency: number;
+  intent: string;
+  confidence: number;
+
+  valueEvidence: {
+    authenticityMarkers: string[];
+    realWorldImpact: string[];
+    practicalUtility: string[];
   };
-  status: 'active' | 'fulfilled' | 'expired';
-  fulfillmentData?: {
-    productId?: string;
-    fulfillmentDate?: Date;
-    successMetrics?: {
-      conversionRate?: number;
-      customerSatisfaction?: number;
-      repeatPurchaseRate?: number;
-    };
+
+  demographics: string[];
+  priceRange: {
+    min: number;
+    max: number;
   };
+
+  demandPatterns: {
+    frequency: number;
+    consistency: number;
+    evidence: string[];
+  };
+}
+
+export interface DemandContext {
+  market: string;
+  category: string;
+  priceRange: string;
+  intent: string;
+  urgency: number;
+  volume: number;
+  sentiment: number;
+  categories: string[];
+  authenticityScore?: number;
+  manipulationIndicators?: string[];
+  realWorldContext?: string[];
+  confidence?: number;
+  valueValidation?: {
+    evidenceStrength: number;
+    practicalApplication: string[];
+    sustainableValue: boolean;
+  };
+}
+
+export interface MatchScore {
+  score: number;
+  factors: {
+    marketFit: number;
+    priceAlignment: number;
+    demographicMatch: number;
+    urgencyFactor: number;
+    verticalAlignment: number;
+    valueCreation: number;
+  };
+}
+
+export interface DemandValidation {
+  isValid: boolean;
+  confidence: number;
+  issues?: string[];
+  strength?: number;
 }

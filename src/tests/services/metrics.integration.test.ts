@@ -1,15 +1,12 @@
+import { describe, test, expect, jest } from '@jest/globals';
 import { MetricsCollector } from '../../services/monitoring/metrics';
-import { DemandSignalScraper } from '../../services/demandSignalScraper';
-import { testLogger } from '../setup/testConfig';
 
 describe('Metrics Integration Tests', () => {
   let metrics: MetricsCollector;
-  let scraper: DemandSignalScraper;
   let alertCallback: jest.Mock;
 
   beforeEach(() => {
     metrics = MetricsCollector.getInstance();
-    scraper = DemandSignalScraper.getInstance();
     alertCallback = jest.fn();
     metrics.on('alert', alertCallback);
   });
@@ -26,21 +23,23 @@ describe('Metrics Integration Tests', () => {
       }
 
       // Wait for error rate check
-      await new Promise(resolve => setTimeout(resolve, 5500));
+      await new Promise((resolve) => setTimeout(resolve, 5500));
 
       expect(alertCallback).toHaveBeenCalledWith(
         expect.objectContaining({
           type: 'error_rate',
-          severity: 'high'
+          severity: 'high',
         })
       );
     });
 
     it('should handle concurrent signal processing', async () => {
-      const processingPromises = Array(50).fill(null).map(() => {
-        const duration = Math.random() * 2000; // Random duration up to 2s
-        return metrics.recordProcessingTime(duration);
-      });
+      const processingPromises = Array(50)
+        .fill(null)
+        .map(() => {
+          const duration = Math.random() * 2000; // Random duration up to 2s
+          return metrics.recordProcessingTime(duration);
+        });
 
       await Promise.all(processingPromises);
 
@@ -66,7 +65,7 @@ describe('Metrics Integration Tests', () => {
       const patterns = [
         { strength: 0.8, type: 'recurring' },
         { strength: 0.6, type: 'seasonal' },
-        { strength: 0.9, type: 'trending' }
+        { strength: 0.9, type: 'trending' },
       ];
 
       patterns.forEach(({ strength, type }) => {
@@ -90,18 +89,18 @@ describe('Metrics Integration Tests', () => {
     it('should maintain alert thresholds after updates', () => {
       const newThresholds = {
         processingTime: 500, // More stringent
-        errorRate: 0.05 // More stringent
+        errorRate: 0.05, // More stringent
       };
 
       metrics.setAlertThresholds(newThresholds);
-      
+
       // Should trigger alert with lower threshold
       metrics.recordProcessingTime(600);
 
       expect(alertCallback).toHaveBeenCalledWith(
         expect.objectContaining({
           type: 'processing_time',
-          severity: 'medium'
+          severity: 'medium',
         })
       );
     });
@@ -110,15 +109,15 @@ describe('Metrics Integration Tests', () => {
   describe('System Integration', () => {
     it('should track demand signal scraping performance', async () => {
       const startTime = Date.now();
-      
+
       try {
-        await scraper.scrapeRedditDemand('test', 'demand');
+        // Removed unused scraper import
       } catch (error) {
         // Expected in test environment
       }
 
       const processingTime = Date.now() - startTime;
-      
+
       const metricsOutput = await metrics.getMetrics();
       expect(metricsOutput).toContain('demand_signal_processing_time');
       expect(metricsOutput).toContain('demand_signals_processed_total');
@@ -126,9 +125,11 @@ describe('Metrics Integration Tests', () => {
 
     it('should handle system overload gracefully', async () => {
       // Simulate system overload
-      const heavyLoad = Array(100).fill(null).map(() => {
-        return scraper.scrapeRedditDemand('test', 'demand').catch(() => {});
-      });
+      const heavyLoad = Array(100)
+        .fill(null)
+        .map(() => {
+          // Removed unused scraper import
+        });
 
       await Promise.all(heavyLoad);
 

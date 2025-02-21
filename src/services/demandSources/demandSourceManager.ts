@@ -48,36 +48,46 @@ export class DemandSourceManager {
   public async gatherDemandSignals(query: string, options?: any): Promise<ScrapedDemandSignal[]> {
     const allSignals: ScrapedDemandSignal[] = [];
     const errors: Error[] = [];
+    const activeSourceWeights = new Map(this.sourceWeights);
 
     await Promise.all(
-      Array.from(this.sources.entries()).map(async ([sourceName, source]) => {
+      Array.from(this.sources.entries()).map(async ([name, source]) => {
         try {
-          logger.info(`Gathering signals from ${sourceName}`, { query });
           const signals = await source.scrape(query, options);
           const validSignals = signals.filter((signal) => source.validateSignal(signal));
 
-          // Add source metadata to each signal
+          // Apply source weight to confidence scores
+          const weight = activeSourceWeights.get(name) || 0;
           validSignals.forEach((signal) => {
-            signal.metadata.source = sourceName;
-            signal.metadata.sourceWeight = this.sourceWeights.get(sourceName) || 0;
+            signal.confidence *= weight;
+            signal.source = name;
           });
 
           allSignals.push(...validSignals);
-          logger.info(`Gathered ${validSignals.length} valid signals from ${sourceName}`);
         } catch (error) {
-          logger.error(`Error gathering signals from ${sourceName}`, { error });
+          logger.error(`Error gathering signals from ${name}:`, error);
           errors.push(error as Error);
+          // Remove failed source from active weights
+          activeSourceWeights.delete(name);
+          // Renormalize remaining weights
+          const totalWeight = Array.from(activeSourceWeights.values()).reduce(
+            (sum, w) => sum + w,
+            0
+          );
+          if (totalWeight > 0) {
+            for (const [src, weight] of activeSourceWeights) {
+              activeSourceWeights.set(src, weight / totalWeight);
+            }
+          }
         }
       })
     );
 
-    if (errors.length > 0 && allSignals.length === 0) {
-      throw new Error(
-        `Failed to gather signals from all sources: ${errors.map((e) => e.message).join(', ')}`
-      );
+    if (errors.length === this.sources.size) {
+      throw new Error('All demand sources failed to gather signals');
     }
 
-    return this.aggregateSignals(allSignals);
+    return allSignals;
   }
 
   private aggregateSignals(signals: ScrapedDemandSignal[]): ScrapedDemandSignal[] {

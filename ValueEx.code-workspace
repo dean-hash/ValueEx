@@ -15,6 +15,70 @@
     },
     "window.title": "ValueEx ${separator}${activeEditorShort}",
     "window.restoreWindows": "all",
-    "window.newWindowDimensions": "inherit"
+    "window.newWindowDimensions": "inherit",
+    
+    // Cascade Memory Settings
+    "cascade.memory.enabled": true,
+    "cascade.memory.persistenceLevel": "workspace",
+    "cascade.memory.contextTracking": "full",
+    "cascade.memory.projectHistory": true,
+    "cascade.memory.maxContextSize": 50000,
+    "cascade.memory.autoSave": true,
+    
+    // Windsurf Performance Settings
+    "windsurf.memory.enabled": true,
+    "windsurf.memory.contextSize": "large",
+    "windsurf.performance.mode": "balanced",
+    "windsurf.performance.maxConcurrentOperations": 4,
+    "windsurf.performance.typeCheckingStrategy": "background",
+    
+    // TypeScript Performance
+    "typescript.tsserver.maxMemory": 8192,
+    "typescript.tsserver.watchOptions": {
+      "watchFile": "useFsEvents",
+      "watchDirectory": "useFsEvents",
+      "fallbackPolling": "dynamicPriority"
+    },
+    "typescript.tsserver.experimental.enableProjectDiagnostics": true,
+    
+    // Editor Performance
+    "editor.maxTokenizationLineLength": 10000,
+    "editor.experimental.asyncTokenization": true,
+    "files.watcherExclude": {
+      "**/.git/objects/**": true,
+      "**/.git/subtree-cache/**": true,
+      "**/node_modules/**": true,
+      "**/dist/**": true
+    },
+    
+    // Context Monitoring Settings
+    "cascade.monitoring.enabled": true,
+    "cascade.monitoring.checkInterval": 30000,
+    "cascade.monitoring.metrics": [
+      "contextSize",
+      "memoryUsage",
+      "responseLatency",
+      "contextContinuity"
+    ],
+    "cascade.monitoring.alerts": {
+      "contextLoss": {
+        "enabled": true,
+        "threshold": 0.7,
+        "notifyImmediately": true
+      },
+      "performanceDegradation": {
+        "enabled": true,
+        "threshold": 0.8,
+        "notifyImmediately": true
+      }
+    },
+    "cascade.monitoring.logging": {
+      "level": "warning",
+      "file": ".cascade/monitor.log",
+      "rotation": {
+        "maxSize": "10MB",
+        "maxFiles": 5
+      }
+    }
   }
 }

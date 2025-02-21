@@ -117,22 +117,18 @@ describe('Product Demand Analysis Integration', () => {
   it('should analyze demand for iPhone 15', async () => {
     const productName = 'iPhone 15';
     const subreddit = 'apple';
-    
-    // Test multiple search variations
-    const searchQueries = [
-      `${productName} review`,
-      `${productName} worth it`,
-      `${productName} vs`
-    ];
 
-    let allSignals: DemandSignal[] = [];
+    // Test multiple search variations
+    const searchQueries = [`${productName} review`, `${productName} worth it`, `${productName} vs`];
+
+    const allSignals: DemandSignal[] = [];
     for (const query of searchQueries) {
-      const signals = await scraper.scrapeReddit(subreddit, query) as ScrapedDemandSignal[];
+      const signals = (await scraper.scrapeReddit(subreddit, query)) as ScrapedDemandSignal[];
       expect(signals).toBeDefined();
       expect(Array.isArray(signals)).toBe(true);
-      
+
       // Convert ScrapedDemandSignal to DemandSignal
-      const convertedSignals: DemandSignal[] = signals.map(signal => ({
+      const convertedSignals: DemandSignal[] = signals.map((signal) => ({
         id: signal.id,
         source: signal.context.community.name,
         content: signal.content,
@@ -147,28 +143,28 @@ describe('Product Demand Analysis Integration', () => {
             communityEngagement: signal.confidence.factors.communityEngagement,
             authorCredibility: signal.confidence.factors.authorCredibility,
             contentRelevance: signal.confidence.factors.contentRelevance,
-            temporalRelevance: signal.confidence.factors.temporalRelevance
-          }
+            temporalRelevance: signal.confidence.factors.temporalRelevance,
+          },
         },
         context: {
           sentiment: signal.analysis.sentiment,
           intent: 'unknown',
           topics: signal.analysis.topics.map((t: { name: string }) => t.name),
-          entities: []
+          entities: [],
         },
         validation: {
           confidence: 0,
           strength: 0,
-          relevance: 0
-        }
+          relevance: 0,
+        },
       }));
-      
+
       allSignals.push(...convertedSignals);
     }
 
     // Validate signals
     const validatedSignals = await Promise.all(
-      allSignals.map(async signal => {
+      allSignals.map(async (signal) => {
         const validation: DemandValidation = await validator.validateDemand(signal.content);
         expect(validation).toHaveProperty('confidence');
         expect(validation).toHaveProperty('strength');
@@ -176,18 +172,19 @@ describe('Product Demand Analysis Integration', () => {
           ...signal,
           validation: {
             confidence: validation.confidence,
-            strength: validation.confidence, // Use confidence as strength since it's not in the validation response
-            relevance: validation.confidence
+            strength: validation.strength, // Use strength from validation response
+            relevance: validation.confidence,
           },
-          relevance: validation.confidence
+          relevance: validation.confidence,
         };
       })
     );
 
     // Calculate demand score
-    const demandScore = validatedSignals.reduce((acc, signal) => {
-      return acc + ((signal.validation?.confidence || 0) * (signal.validation?.confidence || 0));
-    }, 0) / validatedSignals.length;
+    const demandScore =
+      validatedSignals.reduce((acc, signal) => {
+        return acc + (signal.validation?.confidence || 0) * (signal.validation?.confidence || 0);
+      }, 0) / validatedSignals.length;
 
     // Assertions
     expect(demandScore).toBeDefined();
@@ -202,32 +199,32 @@ describe('Product Demand Analysis Integration', () => {
       topSignals: validatedSignals
         .sort((a, b) => (b.relevance || 0) - (a.relevance || 0))
         .slice(0, 3)
-        .map(s => ({
+        .map((s) => ({
           source: s.source,
           relevance: s.relevance,
-          keyPoints: s.keyPoints || []
-        }))
+          keyPoints: s.keyPoints || [],
+        })),
     });
   }, 30000); // 30 second timeout
 
   it('should analyze demand for gaming headset', async () => {
     const productName = 'gaming headset';
     const subreddit = 'gaming';
-    
+
     const searchQueries = [
       `best ${productName}`,
       `${productName} recommendation`,
-      `${productName} under 100`
+      `${productName} under 100`,
     ];
 
-    let allSignals: DemandSignal[] = [];
+    const allSignals: DemandSignal[] = [];
     for (const query of searchQueries) {
-      const signals = await scraper.scrapeReddit(subreddit, query) as ScrapedDemandSignal[];
+      const signals = (await scraper.scrapeReddit(subreddit, query)) as ScrapedDemandSignal[];
       expect(signals).toBeDefined();
       expect(Array.isArray(signals)).toBe(true);
-      
+
       // Convert ScrapedDemandSignal to DemandSignal
-      const convertedSignals: DemandSignal[] = signals.map(signal => ({
+      const convertedSignals: DemandSignal[] = signals.map((signal) => ({
         id: signal.id,
         source: signal.context.community.name,
         content: signal.content,
@@ -242,27 +239,27 @@ describe('Product Demand Analysis Integration', () => {
             communityEngagement: signal.confidence.factors.communityEngagement,
             authorCredibility: signal.confidence.factors.authorCredibility,
             contentRelevance: signal.confidence.factors.contentRelevance,
-            temporalRelevance: signal.confidence.factors.temporalRelevance
-          }
+            temporalRelevance: signal.confidence.factors.temporalRelevance,
+          },
         },
         context: {
           sentiment: signal.analysis.sentiment,
           intent: 'unknown',
           topics: signal.analysis.topics.map((t: { name: string }) => t.name),
-          entities: []
+          entities: [],
         },
         validation: {
           confidence: 0,
           strength: 0,
-          relevance: 0
-        }
+          relevance: 0,
+        },
       }));
-      
+
       allSignals.push(...convertedSignals);
     }
 
     const validatedSignals = await Promise.all(
-      allSignals.map(async signal => {
+      allSignals.map(async (signal) => {
         const validation: DemandValidation = await validator.validateDemand(signal.content);
         expect(validation).toHaveProperty('confidence');
         expect(validation).toHaveProperty('strength');
@@ -270,17 +267,18 @@ describe('Product Demand Analysis Integration', () => {
           ...signal,
           validation: {
             confidence: validation.confidence,
-            strength: validation.confidence, // Use confidence as strength since it's not in the validation response
-            relevance: validation.confidence
+            strength: validation.strength, // Use strength from validation response
+            relevance: validation.confidence,
           },
-          relevance: validation.confidence
+          relevance: validation.confidence,
         };
       })
     );
 
-    const demandScore = validatedSignals.reduce((acc, signal) => {
-      return acc + ((signal.validation?.confidence || 0) * (signal.validation?.confidence || 0));
-    }, 0) / validatedSignals.length;
+    const demandScore =
+      validatedSignals.reduce((acc, signal) => {
+        return acc + (signal.validation?.confidence || 0) * (signal.validation?.confidence || 0);
+      }, 0) / validatedSignals.length;
 
     expect(demandScore).toBeDefined();
     expect(demandScore).toBeGreaterThan(0);
@@ -294,11 +292,53 @@ describe('Product Demand Analysis Integration', () => {
       topSignals: validatedSignals
         .sort((a, b) => (b.relevance || 0) - (a.relevance || 0))
         .slice(0, 3)
-        .map(s => ({
+        .map((s) => ({
           source: s.source,
           relevance: s.relevance,
-          keyPoints: s.keyPoints || []
-        }))
+          keyPoints: s.keyPoints || [],
+        })),
     });
   }, 30000); // 30 second timeout
+});
+
+describe('DemandAnalysis Integration Tests', () => {
+  let validator: DemandValidator;
+  let signal: ScrapedDemandSignal;
+
+  beforeEach(() => {
+    validator = new DemandValidator();
+    signal = {
+      id: 'test-signal',
+      source: 'test',
+      content: 'Test content',
+      keyPoints: ['point1', 'point2'],
+      context: {
+        market: 'test-market',
+        category: 'test-category',
+        priceRange: { min: 0, max: 100 },
+        intent: 'purchase',
+        topics: ['test'],
+        keywords: ['test'],
+        sentiment: 0.8,
+        urgency: 0.7,
+        matches: [],
+        marketTrends: ['trend1'],
+        userPreferences: ['pref1'],
+        competitiveAnalysis: {
+          competitors: [],
+          marketShare: 0,
+        },
+      },
+    };
+  });
+
+  it('should validate demand signals', async () => {
+    const validation: DemandValidation = {
+      isValid: true,
+      confidence: 0.8,
+      strength: 0.9,
+      reasons: ['Strong market fit', 'High user engagement'],
+    };
+    // Rest of the test
+  });
 });

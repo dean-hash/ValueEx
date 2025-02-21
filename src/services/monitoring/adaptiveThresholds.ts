@@ -24,21 +24,21 @@ export class AdaptiveThresholdManager {
       baselineWindow: 60, // 1 hour
       sensitivity: 2.5, // 2.5 standard deviations
       minThreshold: 500, // 500ms minimum
-      maxThreshold: 5000 // 5s maximum
+      maxThreshold: 5000, // 5s maximum
     });
 
     this.thresholdConfigs.set('error_rate', {
       baselineWindow: 30,
       sensitivity: 2.0,
       minThreshold: 0.01, // 1% minimum
-      maxThreshold: 0.2 // 20% maximum
+      maxThreshold: 0.2, // 20% maximum
     });
 
     this.thresholdConfigs.set('response_time', {
       baselineWindow: 60,
       sensitivity: 2.5,
       minThreshold: 800, // 800ms minimum
-      maxThreshold: 8000 // 8s maximum
+      maxThreshold: 8000, // 8s maximum
     });
   }
 
@@ -53,7 +53,7 @@ export class AdaptiveThresholdManager {
     try {
       const now = Date.now();
       const config = this.thresholdConfigs.get(metricName);
-      
+
       if (!config) {
         logger.warn(`No threshold config found for metric: ${metricName}`);
         return;
@@ -64,7 +64,7 @@ export class AdaptiveThresholdManager {
         window = {
           values: [],
           timestamp: [],
-          maxSize: Math.ceil((config.baselineWindow * 60 * 1000) / 10000) // Store points every 10 seconds
+          maxSize: Math.ceil((config.baselineWindow * 60 * 1000) / 10000), // Store points every 10 seconds
         };
         this.metricWindows.set(metricName, window);
       }
@@ -74,7 +74,7 @@ export class AdaptiveThresholdManager {
       window.timestamp.push(now);
 
       // Remove old values
-      const cutoff = now - (config.baselineWindow * 60 * 1000);
+      const cutoff = now - config.baselineWindow * 60 * 1000;
       while (window.timestamp[0] < cutoff) {
         window.values.shift();
         window.timestamp.shift();
@@ -101,17 +101,15 @@ export class AdaptiveThresholdManager {
 
       // Calculate mean and standard deviation
       const mean = window.values.reduce((a, b) => a + b) / window.values.length;
-      const variance = window.values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / window.values.length;
+      const variance =
+        window.values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / window.values.length;
       const stdDev = Math.sqrt(variance);
 
       // Calculate adaptive threshold
-      const threshold = mean + (stdDev * config.sensitivity);
+      const threshold = mean + stdDev * config.sensitivity;
 
       // Clamp to configured limits
-      return Math.max(
-        config.minThreshold,
-        Math.min(config.maxThreshold, threshold)
-      );
+      return Math.max(config.minThreshold, Math.min(config.maxThreshold, threshold));
     } catch (error) {
       logger.error('Error calculating threshold:', error);
       return Number.MAX_VALUE;
@@ -147,12 +145,12 @@ export class AdaptiveThresholdManager {
         baselineWindow: 60,
         sensitivity: 2.0,
         minThreshold: 0,
-        maxThreshold: Number.MAX_VALUE
+        maxThreshold: Number.MAX_VALUE,
       };
 
       this.thresholdConfigs.set(metricName, {
         ...existingConfig,
-        ...config
+        ...config,
       });
     } catch (error) {
       logger.error('Error setting threshold config:', error);

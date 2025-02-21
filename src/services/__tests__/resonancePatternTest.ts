@@ -324,4 +324,5 @@ class ResonancePatternTest {
   }
 }
 
-export { ResonancePatternTest, TestScenario };
+export { ResonancePatternTest };
+export type { TestScenario };

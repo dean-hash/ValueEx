@@ -85,13 +85,17 @@ export class MVPStorage {
   /**
    * Track a new match
    */
-  trackMatch(demandId: string, productId: string): void {
+  public trackMatch(
+    demandId: string,
+    match: { strategyId: string; confidence: number; timestamp: number }
+  ): void {
     this.data.matches.push({
       demandId,
-      productId,
-      timestamp: new Date().toISOString(),
+      productId: match.strategyId,
+      timestamp: new Date(match.timestamp).toISOString(),
       status: 'active',
     });
+    this.saveData();
   }
 
   /**
@@ -168,5 +172,29 @@ export class MVPStorage {
   cleanup(): void {
     clearInterval(this.saveInterval);
     this.saveData();
+  }
+
+  /**
+   * Check storage health
+   */
+  public async isHealthy(): Promise<boolean> {
+    try {
+      // Check if we can read and write to storage
+      const testData = { ...this.data };
+      await this.saveData();
+
+      // Verify data integrity
+      const loadedData = await this.loadData();
+      const isIntact = JSON.stringify(loadedData) === JSON.stringify(testData);
+
+      // Check disk space
+      const stats = await fs.promises.stat(this.filePath);
+      const isSizeOk = stats.size < 1024 * 1024 * 100; // 100MB limit
+
+      return isIntact && isSizeOk;
+    } catch (error) {
+      logger.error('Storage health check failed:', error);
+      return false;
+    }
   }
 }

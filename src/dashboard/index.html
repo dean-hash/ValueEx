@@ -3,106 +3,231 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ValueEx Metrics</title>
+    <title>ValueEx Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: Arial, sans-serif;
             margin: 0;
             padding: 20px;
-            background: #f5f5f5;
+            background-color: #f5f5f5;
         }
         .dashboard {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(2, 1fr);
             gap: 20px;
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
+        }
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .monetization-panel {
+            grid-column: span 2;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .opportunity-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .opportunity-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #4CAF50;
+        }
+        .metrics-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+        .metric {
+            text-align: center;
+            flex: 1;
+        }
+        .metric-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2196F3;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #444;
+            margin: 0 0 15px 0;
+        }
+        canvas {
+            width: 100% !important;
+            height: 300px !important;
         }
         .card {
             background: white;
-            border-radius: 8px;
             padding: 20px;
+            border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        .metric-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-        .metric-label {
-            color: #7f8c8d;
-            margin-top: 5px;
-        }
-        .chart-container {
-            height: 200px;
-            margin-top: 10px;
-        }
-        .alert {
-            background: #ff595e;
-            color: white;
+        .card-header {
+            background-color: #f8f9fa;
             padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 10px;
-            display: none;
+            border-bottom: 1px solid #ddd;
         }
-        .good {
-            color: #27ae60;
+        .card-body {
+            padding: 20px;
         }
-        .warning {
-            color: #f39c12;
+        .table-responsive {
+            overflow-x: auto;
         }
-        .bad {
-            color: #c0392b;
+        .table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        .table th, .table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        .table th {
+            background-color: #f8f9fa;
         }
     </style>
 </head>
 <body>
-    <div id="alerts" class="alert"></div>
+    <h1>ValueEx Resonance Dashboard</h1>
+    
     <div class="dashboard">
-        <div class="card">
-            <div class="metric-value" id="responseRate">-</div>
-            <div class="metric-label">Responses / Hour</div>
-            <div class="chart-container">
-                <canvas id="responseChart"></canvas>
+        <!-- Monetization Overview Panel -->
+        <div class="monetization-panel">
+            <h2>Monetization Opportunities</h2>
+            <div class="opportunity-grid">
+                <div class="opportunity-card">
+                    <h3>Domain Portfolio</h3>
+                    <div class="metrics-container">
+                        <div class="metric">
+                            <div class="metric-value" id="domainCount">0</div>
+                            <div>Active Domains</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value" id="totalValue">$0</div>
+                            <div>Est. Value</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="opportunity-card">
+                    <h3>Affiliate Revenue</h3>
+                    <div class="metrics-container">
+                        <div class="metric">
+                            <div class="metric-value" id="activePrograms">0</div>
+                            <div>Active Programs</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value" id="monthlyRevenue">$0</div>
+                            <div>Monthly Revenue</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="opportunity-card">
+                    <h3>Growth Potential</h3>
+                    <div class="metrics-container">
+                        <div class="metric">
+                            <div class="metric-value" id="growthScore">0%</div>
+                            <div>Growth Score</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value" id="opportunities">0</div>
+                            <div>New Opportunities</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="card">
-            <div class="metric-value" id="helpfulnessRatio">-</div>
-            <div class="metric-label">Helpfulness Ratio</div>
-            <div class="chart-container">
-                <canvas id="helpfulnessChart"></canvas>
+
+        <!-- Domain Portfolio Analysis Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4 class="mb-0">Domain Portfolio Analysis</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <canvas id="domainValueChart"></canvas>
+                    </div>
+                    <div class="col-md-6">
+                        <canvas id="nicheDistributionChart"></canvas>
+                    </div>
+                </div>
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h5>Portfolio Metrics</h5>
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="domainMetricsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Domain</th>
+                                        <th>Est. Value</th>
+                                        <th>SEO Value</th>
+                                        <th>Market Demand</th>
+                                        <th>Affiliate Potential</th>
+                                        <th>Strategy</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="domainMetricsBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h5>Affiliate Opportunities</h5>
+                        <div id="affiliateOpportunities"></div>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="card">
-            <div class="metric-value" id="conversionRate">-</div>
-            <div class="metric-label">Conversion Rate</div>
-            <div class="chart-container">
-                <canvas id="conversionChart"></canvas>
-            </div>
+
+        <div class="chart-container">
+            <canvas id="resonanceChart"></canvas>
         </div>
-        <div class="card">
-            <div class="metric-value" id="communityStanding">-</div>
-            <div class="metric-label">Community Standing</div>
-            <div class="chart-container">
-                <canvas id="standingChart"></canvas>
-            </div>
+        <div class="chart-container">
+            <canvas id="incomeChart"></canvas>
         </div>
-        <div class="card">
-            <div class="metric-value" id="errorRate">-</div>
-            <div class="metric-label">Error Rate</div>
-            <div class="chart-container">
-                <canvas id="errorChart"></canvas>
-            </div>
+        <div class="chart-container">
+            <canvas id="patternChart"></canvas>
         </div>
-        <div class="card">
-            <div class="metric-value" id="revenue">-</div>
-            <div class="metric-label">Revenue (24h)</div>
-            <div class="chart-container">
-                <canvas id="revenueChart"></canvas>
-            </div>
+        <div class="chart-container">
+            <canvas id="coherenceChart"></canvas>
         </div>
     </div>
-    <script src="dashboard.js"></script>
+
+    <script type="module">
+        import { ResonanceVisualizer } from './resonanceVisualizer.js';
+        import { DataSimulator } from '../core/simulation/dataSimulator.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const visualizer = new ResonanceVisualizer();
+            const simulator = new DataSimulator();
+            
+            // Initialize charts
+            visualizer.initializeCharts();
+            
+            // Subscribe to data updates
+            simulator.subscribe(data => {
+                visualizer.updateCharts(data);
+            });
+            
+            // Start simulation
+            simulator.startSimulation();
+        });
+    </script>
 </body>
 </html>

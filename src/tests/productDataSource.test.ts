@@ -9,28 +9,37 @@ describe('Product Data Source Tests', () => {
   });
 
   it('should find products matching demand pattern', async () => {
-    const demandPattern: DemandPattern = {
-      strength: 0.8,
-      confidence: 0.75,
-      source: 'market_analysis',
-      status: 'active',
-      signals: [
-        {
-          source: 'reddit',
-          strength: 0.8,
-          confidence: 0.75,
-          status: 'active',
-          content: 'High demand for gaming accessories',
-          timestamp: new Date().toISOString(),
-        }
-      ],
-      timestamp: new Date().toISOString(),
+    const mockDemandPattern: DemandPattern = {
+      id: 'test-pattern',
+      signals: [],
+      confidence: {
+        overall: 0.75,
+        factors: {
+          textQuality: 0.8,
+          communityEngagement: 0.7,
+          authorCredibility: 0.75,
+          contentRelevance: 0.8,
+          temporalRelevance: 0.7,
+        },
+      },
+      coherence: 0.8,
+      intensity: 0.7,
+      context: {
+        keywords: ['test', 'product'],
+        sentiment: 0,
+        urgency: 0.5,
+        matches: [],
+      },
+      requirements: {
+        features: ['test-feature'],
+        constraints: {},
+      },
     };
 
-    const products = await productDataSource.findMatchingProducts(demandPattern);
-    
+    const products = await productDataSource.findMatchingProducts(mockDemandPattern);
+
     expect(Array.isArray(products)).toBe(true);
-    products.forEach(product => {
+    products.forEach((product) => {
       expect(product).toHaveProperty('name');
       expect(product).toHaveProperty('price');
       expect(product).toHaveProperty('category');

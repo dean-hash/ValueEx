@@ -56,83 +56,82 @@ export class DemandInsights {
     this.metrics = MetricsCollector.getInstance();
 
     // Merge and enhance all signal sources with context awareness
-    this.allSignals = merge(
-      this.emailSignals,
-      this.publicSignals,
-      this.directSignals
-    ).pipe(
-      mergeMap(signal => this.enhancer.enhanceSignal(signal)),
-      map(signal => this.updatePatterns(signal))
+    this.allSignals = merge(this.emailSignals, this.publicSignals, this.directSignals).pipe(
+      mergeMap((signal) => this.enhancer.enhanceSignal(signal)),
+      map((signal) => this.updatePatterns(signal))
     );
 
     // Subscribe to process signals and update metrics
-    this.allSignals.subscribe(signal => {
+    this.allSignals.subscribe((signal) => {
       this.metrics.trackSignal({
         type: signal.source,
         confidence: signal.contextualConfidence,
         hasRelatedSignals: signal.relatedSignals.length > 0,
-        topRelationshipStrength: signal.relatedSignals[0]?.relationship || 0
+        topRelationshipStrength: signal.relatedSignals[0]?.relationship || 0,
       });
     });
   }
 
   private updatePatterns(signal: ContextualSignal): ContextualSignal {
     // Group related signals by their primary topics
-    signal.topics.forEach(topic => {
+    signal.topics.forEach((topic) => {
       if (!this.patterns.has(topic)) {
         this.patterns.set(topic, []);
       }
       const topicPatterns = this.patterns.get(topic)!;
       topicPatterns.push(signal);
-      
+
       // Keep only recent patterns
       const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
       this.patterns.set(
         topic,
-        topicPatterns.filter(s => s.timestamp > oneDayAgo)
+        topicPatterns.filter((s) => s.timestamp > oneDayAgo)
       );
     });
-    
+
     return signal;
   }
 
-  public getEmergingPatterns(): Observable<Array<{
-    topic: string;
-    signals: ContextualSignal[];
-    averageConfidence: number;
-    relationshipStrength: number;
-  }>> {
-    return new Observable(subscriber => {
+  public getEmergingPatterns(): Observable<
+    Array<{
+      topic: string;
+      signals: ContextualSignal[];
+      averageConfidence: number;
+      relationshipStrength: number;
+    }>
+  > {
+    return new Observable((subscriber) => {
       const patterns = Array.from(this.patterns.entries())
         .map(([topic, signals]) => ({
           topic,
           signals,
-          averageConfidence: signals.reduce((acc, sig) => acc + sig.contextualConfidence, 0) / signals.length,
-          relationshipStrength: this.calculatePatternStrength(signals)
+          averageConfidence:
+            signals.reduce((acc, sig) => acc + sig.contextualConfidence, 0) / signals.length,
+          relationshipStrength: this.calculatePatternStrength(signals),
         }))
-        .filter(pattern => pattern.signals.length >= 3) // Only patterns with sufficient support
+        .filter((pattern) => pattern.signals.length >= 3) // Only patterns with sufficient support
         .sort((a, b) => b.averageConfidence - a.averageConfidence);
-      
+
       subscriber.next(patterns);
     });
   }
 
   private calculatePatternStrength(signals: ContextualSignal[]): number {
     if (signals.length < 2) return 0;
-    
+
     // Calculate average relationship strength between all signals in the pattern
     let totalStrength = 0;
     let relationships = 0;
-    
+
     for (let i = 0; i < signals.length; i++) {
       for (let j = i + 1; j < signals.length; j++) {
-        const relationship = signals[i].relatedSignals
-          .find(rel => rel.signal === signals[j])?.relationship || 0;
+        const relationship =
+          signals[i].relatedSignals.find((rel) => rel.signal === signals[j])?.relationship || 0;
         totalStrength += relationship;
         relationships++;
       }
     }
-    
+
     return totalStrength / relationships;
   }
 
@@ -172,7 +171,7 @@ export class DemandInsights {
   }
 
   private recursiveSanitize(obj: any) {
-    for (let key in obj) {
+    for (const key in obj) {
       if (typeof obj[key] === 'string') {
         obj[key] = this.sanitizeIntent(obj[key]);
       } else if (typeof obj[key] === 'object') {
