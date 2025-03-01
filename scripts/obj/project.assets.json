@@ -5415,14 +5415,14 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "c:\\Users\\DeanM\\OneDrive\\ValueEx\\scripts\\GraphMailer.csproj",
+      "projectUniqueName": "C:\\Users\\DeanM\\OneDrive\\ValueEx\\scripts\\GraphMailer.csproj",
       "projectName": "GraphMailer",
-      "projectPath": "c:\\Users\\DeanM\\OneDrive\\ValueEx\\scripts\\GraphMailer.csproj",
+      "projectPath": "C:\\Users\\DeanM\\OneDrive\\ValueEx\\scripts\\GraphMailer.csproj",
       "packagesPath": "C:\\Users\\DeanM\\.nuget\\packages\\",
-      "outputPath": "c:\\Users\\DeanM\\OneDrive\\ValueEx\\scripts\\obj\\",
+      "outputPath": "C:\\Users\\DeanM\\OneDrive\\ValueEx\\scripts\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "c:\\Users\\DeanM\\OneDrive\\ValueEx\\scripts\\NuGet.Config",
+        "C:\\Users\\DeanM\\OneDrive\\ValueEx\\scripts\\NuGet.Config",
         "C:\\Users\\DeanM\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
@@ -5506,7 +5506,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.102/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.103/PortableRuntimeIdentifierGraph.json"
       }
     }
   },

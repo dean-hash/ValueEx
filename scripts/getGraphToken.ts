@@ -1,7 +1,7 @@
 import { ClientSecretCredential } from '@azure/identity';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { TokenCredentialAuthenticationProvider } from '@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials';
-import { AzureCommunicationTokenCredential } from '@azure/communication-common';
+import type { AzureCommunicationTokenCredential } from '@azure/communication-common';
 
 interface TeamsConfig {
   token: string;

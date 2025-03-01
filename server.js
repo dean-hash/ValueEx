@@ -1,3 +1,5 @@
+require('dotenv').config({ path: './master.env' });
+
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
@@ -12,7 +14,7 @@ const server = http.createServer((req, res) => {
 
     const extname = path.extname(filePath);
     let contentType = 'text/html';
-    
+
     switch (extname) {
         case '.js':
             contentType = 'text/javascript';
@@ -27,7 +29,7 @@ const server = http.createServer((req, res) => {
 
     fs.readFile(filePath, (error, content) => {
         if (error) {
-            if(error.code == 'ENOENT') {
+            if (error.code == 'ENOENT') {
                 res.writeHead(404);
                 res.end('File not found');
             } else {

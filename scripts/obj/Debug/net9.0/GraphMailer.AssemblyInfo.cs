@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("GraphMailer")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+cce926bd2c13efa8a7faf462f2a154cc9bc38e2c")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+72eea297a6392f222f9dc91cc5b944d7a60d2450")]
 [assembly: System.Reflection.AssemblyProductAttribute("GraphMailer")]
 [assembly: System.Reflection.AssemblyTitleAttribute("GraphMailer")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

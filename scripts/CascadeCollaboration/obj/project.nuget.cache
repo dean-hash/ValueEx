@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "nu7x+2lWv9c=",
+  "dgSpecHash": "qaCjJVXd+9Y=",
   "success": true,
-  "projectFilePath": "c:\\Users\\DeanM\\OneDrive\\ValueEx\\scripts\\TeamsBot\\TeamsBot.csproj",
+  "projectFilePath": "C:\\Users\\DeanM\\OneDrive\\ValueEx\\scripts\\CascadeCollaboration\\TeamsBot.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\DeanM\\.nuget\\packages\\microsoft.identity.client\\4.67.2\\microsoft.identity.client.4.67.2.nupkg.sha512",
     "C:\\Users\\DeanM\\.nuget\\packages\\microsoft.identitymodel.abstractions\\6.35.0\\microsoft.identitymodel.abstractions.6.35.0.nupkg.sha512",
