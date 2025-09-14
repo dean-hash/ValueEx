@@ -1,0 +1,47 @@
+{
+  "audit\\deps_python.json": [
+    "sqlite"
+  ],
+  "audit\\todos.json": [
+    "mongo"
+  ],
+  "audit\\token_hits.json": [
+    "cheerio",
+    "crawl4ai",
+    "mongo",
+    "playwright",
+    "puppeteer"
+  ],
+  "audit\\valuex_audit.py": [
+    "cheerio",
+    "crawl4ai",
+    "fastapi",
+    "mongo",
+    "playwright",
+    "puppeteer"
+  ],
+  "audit\\valuex_audit_novenv.py": [
+    "cheerio",
+    "crawl4ai",
+    "fastapi",
+    "mongo",
+    "playwright",
+    "puppeteer"
+  ],
+  "audit\\_summary.md": [
+    "cheerio",
+    "crawl4ai",
+    "mongo",
+    "playwright",
+    "puppeteer"
+  ],
+  "valuex-firehose\\app\\inbound.py": [
+    "fastapi"
+  ],
+  "valuex-firehose\\app\\main.py": [
+    "fastapi"
+  ],
+  "valuex-firehose\\app\\metrics.py": [
+    "fastapi"
+  ]
+}

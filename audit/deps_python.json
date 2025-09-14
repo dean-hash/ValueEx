@@ -1,0 +1,630 @@
+{
+  "audit\\valuex_audit.py": [],
+  "audit\\valuex_audit_novenv.py": [],
+  "resonance\\app.py": [
+    "__future__",
+    "pathlib",
+    "json",
+    "pandas",
+    "streamlit",
+    "time",
+    "html"
+  ],
+  "resonance\\scripts\\affiliate_refresh.py": [
+    "__future__",
+    "json",
+    "os",
+    "time",
+    "pathlib",
+    "typing",
+    "requests",
+    "dotenv",
+    "yaml"
+  ],
+  "resonance\\scripts\\check_affiliates.py": [
+    "__future__",
+    "json",
+    "os",
+    "pathlib",
+    "requests",
+    "dotenv"
+  ],
+  "resonance\\scripts\\digest_daily.py": [
+    "__future__",
+    "argparse",
+    "json",
+    "os",
+    "time",
+    "datetime",
+    "pathlib",
+    "typing",
+    "pandas",
+    "requests",
+    "dotenv"
+  ],
+  "resonance\\scripts\\dns_apply.py": [
+    "__future__",
+    "json",
+    "os",
+    "sys",
+    "pathlib",
+    "typing",
+    "dotenv",
+    "utils",
+    "argparse"
+  ],
+  "resonance\\scripts\\dns_check.py": [
+    "__future__",
+    "json",
+    "os",
+    "sys",
+    "pathlib",
+    "typing",
+    "subprocess",
+    "re",
+    "dotenv",
+    "utils",
+    "yaml"
+  ],
+  "resonance\\scripts\\doctor.py": [
+    "__future__",
+    "json",
+    "os",
+    "sys",
+    "smtplib",
+    "pathlib",
+    "typing",
+    "urllib",
+    "requests",
+    "dotenv",
+    "scripts"
+  ],
+  "resonance\\scripts\\ingest_github_issues.py": [
+    "os",
+    "json",
+    "time",
+    "requests",
+    "datetime",
+    "pathlib",
+    "urllib"
+  ],
+  "resonance\\scripts\\ingest_hn.py": [
+    "os",
+    "time",
+    "json",
+    "re",
+    "requests",
+    "pathlib",
+    "urllib"
+  ],
+  "resonance\\scripts\\ingest_jsonld_sample.py": [
+    "os",
+    "re",
+    "json",
+    "time",
+    "requests",
+    "pathlib",
+    "urllib"
+  ],
+  "resonance\\scripts\\ingest_linkedin_search.py": [
+    "__future__",
+    "json",
+    "os",
+    "time",
+    "dataclasses",
+    "pathlib",
+    "typing",
+    "requests",
+    "dotenv"
+  ],
+  "resonance\\scripts\\ingest_reddit.py": [
+    "__future__",
+    "json",
+    "os",
+    "time",
+    "pathlib",
+    "typing",
+    "requests"
+  ],
+  "resonance\\scripts\\ingest_suggest.py": [
+    "os",
+    "json",
+    "time",
+    "requests",
+    "pathlib",
+    "urllib"
+  ],
+  "resonance\\scripts\\ingest_x.py": [
+    "__future__",
+    "json",
+    "os",
+    "time",
+    "dataclasses",
+    "pathlib",
+    "typing",
+    "requests",
+    "dotenv"
+  ],
+  "resonance\\scripts\\run_all.py": [
+    "__future__",
+    "json",
+    "os",
+    "subprocess",
+    "sys",
+    "time",
+    "pathlib",
+    "typing",
+    "smtplib",
+    "email",
+    "calendar",
+    "dotenv"
+  ],
+  "resonance\\scripts\\run_pipeline.py": [
+    "__future__",
+    "json",
+    "pathlib",
+    "typing",
+    "sys",
+    "time",
+    "pandas",
+    "valuex_resonance"
+  ],
+  "resonance\\scripts\\_test_canonicalization.py": [
+    "valuex_resonance"
+  ],
+  "resonance\\utils\\godaddy_dns.py": [
+    "__future__",
+    "os",
+    "json",
+    "typing",
+    "requests"
+  ],
+  "resonance\\valuex_resonance\\dedupe.py": [
+    "__future__",
+    "hashlib",
+    "typing",
+    "valuex_common"
+  ],
+  "resonance\\valuex_resonance\\extractor.py": [
+    "__future__",
+    "re",
+    "math",
+    "datetime",
+    "pathlib",
+    "typing",
+    "schema"
+  ],
+  "resonance\\valuex_resonance\\match_offers.py": [
+    "__future__",
+    "hashlib",
+    "json",
+    "os",
+    "pathlib",
+    "typing",
+    "valuex_common",
+    "yaml",
+    "re",
+    "urllib",
+    "urllib",
+    "sys",
+    "importlib",
+    "urllib"
+  ],
+  "resonance\\valuex_resonance\\pipeline.py": [
+    "__future__",
+    "json",
+    "datetime",
+    "pathlib",
+    "typing",
+    "pandas",
+    "schema",
+    "extractor",
+    "dedupe",
+    "match_offers",
+    "yaml"
+  ],
+  "resonance\\valuex_resonance\\schema.py": [
+    "__future__",
+    "typing",
+    "pydantic"
+  ],
+  "resonance\\valuex_resonance\\__init__.py": [],
+  "tools\\lint_no_afp_outside_builder.py": [
+    "__future__",
+    "re",
+    "sys",
+    "pathlib"
+  ],
+  "valuex-firehose\\app\\inbound.py": [
+    "__future__",
+    "json",
+    "os",
+    "time",
+    "uuid",
+    "pathlib",
+    "typing",
+    "requests",
+    "fastapi",
+    "suppression"
+  ],
+  "valuex-firehose\\app\\main.py": [
+    "__future__",
+    "os",
+    "re",
+    "typing",
+    "time",
+    "yaml",
+    "fastapi",
+    "pydantic",
+    "offers",
+    "offers",
+    "app",
+    "app"
+  ],
+  "valuex-firehose\\app\\metrics.py": [
+    "__future__",
+    "os",
+    "typing",
+    "fastapi",
+    "pydantic",
+    "prometheus_client"
+  ],
+  "valuex-firehose\\app\\suppression.py": [
+    "__future__",
+    "hashlib",
+    "json",
+    "os",
+    "threading",
+    "time",
+    "pathlib",
+    "typing"
+  ],
+  "valuex-firehose\\app\\__init__.py": [],
+  "valuex-firehose\\config\\load_env.py": [
+    "__future__",
+    "json",
+    "os",
+    "pathlib",
+    "typing",
+    "jsonschema",
+    "dotenv"
+  ],
+  "valuex-firehose\\connectors\\base.py": [
+    "__future__",
+    "hashlib",
+    "re",
+    "dataclasses",
+    "datetime",
+    "typing",
+    "valuex_common"
+  ],
+  "valuex-firehose\\connectors\\github.py": [
+    "__future__",
+    "os",
+    "datetime",
+    "typing",
+    "httpx",
+    "base"
+  ],
+  "valuex-firehose\\connectors\\hn.py": [
+    "__future__",
+    "datetime",
+    "typing",
+    "httpx",
+    "base"
+  ],
+  "valuex-firehose\\connectors\\reddit.py": [
+    "__future__",
+    "asyncio",
+    "re",
+    "datetime",
+    "typing",
+    "httpx",
+    "base"
+  ],
+  "valuex-firehose\\connectors\\rss.py": [
+    "__future__",
+    "datetime",
+    "typing",
+    "feedparser",
+    "base",
+    "asyncio"
+  ],
+  "valuex-firehose\\connectors\\stackoverflow.py": [
+    "__future__",
+    "datetime",
+    "typing",
+    "httpx",
+    "base"
+  ],
+  "valuex-firehose\\connectors\\x_snscrape.py": [
+    "__future__",
+    "asyncio",
+    "json",
+    "os",
+    "subprocess",
+    "sys",
+    "datetime",
+    "typing",
+    "base"
+  ],
+  "valuex-firehose\\connectors\\__init__.py": [],
+  "valuex-firehose\\demand\\vectorizer.py": [
+    "__future__",
+    "math",
+    "re",
+    "datetime",
+    "typing"
+  ],
+  "valuex-firehose\\demand\\__init__.py": [],
+  "valuex-firehose\\ingest\\runner.py": [
+    "__future__",
+    "asyncio",
+    "os",
+    "collections",
+    "datetime",
+    "pathlib",
+    "typing",
+    "httpx",
+    "math",
+    "orjson",
+    "pandas",
+    "yaml",
+    "sys",
+    "connectors",
+    "connectors",
+    "connectors",
+    "connectors",
+    "connectors",
+    "connectors",
+    "connectors",
+    "demand",
+    "offers",
+    "offers",
+    "monetize",
+    "demand",
+    "monetize",
+    "offers",
+    "monetize",
+    "dotenv"
+  ],
+  "valuex-firehose\\linker\\builder.py": [
+    "__future__",
+    "os",
+    "re",
+    "typing",
+    "urllib",
+    "offers"
+  ],
+  "valuex-firehose\\linker\\__init__.py": [],
+  "valuex-firehose\\mailer\\sender.py": [
+    "__future__",
+    "os",
+    "smtplib",
+    "ssl",
+    "email",
+    "email",
+    "pathlib",
+    "typing",
+    "app",
+    "re"
+  ],
+  "valuex-firehose\\mailer\\__init__.py": [],
+  "valuex-firehose\\monetize\\llm_triage.py": [
+    "__future__",
+    "json",
+    "os",
+    "typing",
+    "httpx"
+  ],
+  "valuex-firehose\\monetize\\planner.py": [
+    "__future__",
+    "typing"
+  ],
+  "valuex-firehose\\monetize\\__init__.py": [],
+  "valuex-firehose\\offers\\awin.py": [
+    "__future__",
+    "os",
+    "time",
+    "typing",
+    "httpx"
+  ],
+  "valuex-firehose\\offers\\catalog.py": [
+    "__future__",
+    "os",
+    "time",
+    "re",
+    "typing",
+    "datetime",
+    "yaml",
+    "offers"
+  ],
+  "valuex-firehose\\offers\\linker.py": [
+    "__future__",
+    "os",
+    "pathlib",
+    "typing",
+    "urllib",
+    "yaml",
+    "valuex_common",
+    "awin",
+    "linker"
+  ],
+  "valuex-firehose\\offers\\__init__.py": [],
+  "valuex-firehose\\qa\\sample_labeler.py": [
+    "__future__",
+    "random",
+    "pathlib",
+    "datetime",
+    "typing",
+    "orjson",
+    "pandas"
+  ],
+  "valuex-firehose\\scripts\\awin_audit.py": [
+    "__future__",
+    "os",
+    "sys",
+    "pathlib",
+    "typing",
+    "argparse",
+    "re",
+    "json",
+    "datetime",
+    "httpx",
+    "offers",
+    "offers",
+    "yaml",
+    "dotenv"
+  ],
+  "valuex-firehose\\scripts\\check_connectivity.py": [
+    "__future__",
+    "asyncio",
+    "json",
+    "os",
+    "sys",
+    "pathlib",
+    "httpx",
+    "yaml",
+    "dotenv",
+    "connectors",
+    "connectors",
+    "connectors",
+    "connectors",
+    "connectors",
+    "connectors"
+  ],
+  "valuex-firehose\\scripts\\check_ollama.py": [
+    "__future__",
+    "json",
+    "os",
+    "pathlib",
+    "requests",
+    "dotenv"
+  ],
+  "valuex-firehose\\scripts\\doctor.py": [
+    "__future__",
+    "json",
+    "os",
+    "sys",
+    "pathlib",
+    "typing",
+    "requests",
+    "dotenv"
+  ],
+  "valuex-firehose\\scripts\\eval_harness.py": [
+    "__future__",
+    "argparse",
+    "asyncio",
+    "csv",
+    "json",
+    "os",
+    "sys",
+    "dataclasses",
+    "typing",
+    "yaml",
+    "connectors",
+    "connectors",
+    "app",
+    "monetize",
+    "dotenv",
+    "connectors"
+  ],
+  "valuex-firehose\\scripts\\make_env_from_resonance.py": [
+    "__future__",
+    "json",
+    "os",
+    "pathlib",
+    "dotenv"
+  ],
+  "valuex-firehose\\scripts\\send_cli.py": [
+    "__future__",
+    "argparse",
+    "json",
+    "sys",
+    "pathlib",
+    "mailer"
+  ],
+  "valuex-firehose\\scripts\\suppression_cli.py": [
+    "__future__",
+    "argparse",
+    "json",
+    "sys",
+    "pathlib",
+    "app"
+  ],
+  "valuex-firehose\\scripts\\verify_fiverr_links.py": [
+    "__future__",
+    "os",
+    "sys",
+    "pathlib",
+    "typing",
+    "urllib",
+    "json",
+    "linker",
+    "config"
+  ],
+  "valuex-firehose\\tests\\conftest.py": [
+    "sys",
+    "pathlib"
+  ],
+  "valuex-firehose\\tests\\test_env_schema_validation.py": [
+    "__future__",
+    "pathlib",
+    "json",
+    "os",
+    "pytest",
+    "config"
+  ],
+  "valuex-firehose\\tests\\test_fiverr_append_afp_preserves_invariants.py": [
+    "__future__",
+    "linker"
+  ],
+  "valuex-firehose\\tests\\test_fiverr_exact_return_if_afp_present.py": [
+    "__future__",
+    "linker"
+  ],
+  "valuex-firehose\\tests\\test_isolation_awin_fiverr.py": [
+    "__future__",
+    "linker"
+  ],
+  "valuex-firehose\\tests\\test_linker_affiliate.py": [
+    "__future__",
+    "os",
+    "urllib",
+    "pytest",
+    "offers",
+    "offers",
+    "linker"
+  ],
+  "valuex-firehose\\tests\\test_normalization_common.py": [
+    "__future__",
+    "valuex_common"
+  ],
+  "valuex-firehose\\tests\\test_url_with_query.py": [
+    "urllib",
+    "valuex_common",
+    "linker"
+  ],
+  "valuex-firehose\\tests\\test_vectorizer_offers.py": [
+    "__future__",
+    "os",
+    "pathlib",
+    "demand",
+    "offers"
+  ],
+  "valuex_common\\normalization.py": [
+    "__future__",
+    "re",
+    "typing",
+    "urllib"
+  ],
+  "valuex_common\\url.py": [
+    "__future__",
+    "typing",
+    "urllib"
+  ],
+  "valuex_common\\__init__.py": [
+    "normalization",
+    "url"
+  ]
+}

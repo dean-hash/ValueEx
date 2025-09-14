@@ -1,0 +1,54 @@
+{
+    "matching":  {
+                     "min_score":  1.5,
+                     "multi_source_bonus":  1,
+                     "recency_half_life_days":  14,
+                     "window_tokens":  8,
+                     "generic_terms":  [
+                                           "wordpress",
+                                           "shopify",
+                                           "webflow",
+                                           "logo",
+                                           "logomaker"
+                                       ]
+                 },
+    "signals":  {
+                    "urgency":  [
+                                    "need",
+                                    "looking for",
+                                    "urgent",
+                                    "asap",
+                                    "hiring",
+                                    "budget",
+                                    "quote"
+                                ],
+                    "negative":  [
+                                     "no agency",
+                                     "no seo",
+                                     "not hiring",
+                                     "solved"
+                                 ]
+                },
+    "normalization":  {
+                          "min_token_len":  2,
+                          "stopwords":  [
+                                            "the",
+                                            "a",
+                                            "an",
+                                            "for",
+                                            "in",
+                                            "on",
+                                            "to",
+                                            "and",
+                                            "of"
+                                        ]
+                      },
+    "toggles":  {
+                    "enable_x_sample":  true,
+                    "enable_reddit_fallback":  false
+                },
+    "run":  {
+                "run_id":  "run_20250909_172812",
+                "random_seed":  42
+            }
+}

@@ -1,0 +1,9 @@
+{
+  "timestamp": "2025-09-14T14:30:09.104505+00:00",
+  "label": "ollama-wired",
+  "git": {
+    "head": "",
+    "branch": ""
+  },
+  "next_steps": "Tomorrow: add 3 more intent examples; keep thresholds stable."
+}

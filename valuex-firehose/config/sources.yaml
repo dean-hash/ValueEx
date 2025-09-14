@@ -1,0 +1,64 @@
+reddit:
+  subs:
+    - Wordpress
+    - shopify
+    - webhosting
+    - techsupport
+    - sysadmin
+    - SEO
+    - smallbusiness
+    - freelance
+    - help
+  queries:
+    - generic
+    - verticals
+  limit: 25
+  include_comments: false
+
+x:
+  queries:
+    - generic
+    - developer
+  max_results: 100
+  window_hours: 48
+
+hn:
+  queries:
+    - ("how do i" OR "alternatives to" OR "worth it" OR "self-host") AND (wordpress|shopify|hosting|ssl|nginx|aws|azure)
+  limit: 50
+  tags:
+    - story
+    - ask_hn
+
+stackoverflow:
+  tags:
+    - wordpress
+    - shopify
+    - nginx
+    - ssl
+    - azure
+    - aws
+    - docker
+  window_hours: 48
+  unanswered_only: true
+
+github:
+  repos:
+    - WordPress/WordPress
+    - wordpress/gutenberg
+    - vercel/next.js
+    - shopify/shopify
+  queries:
+    - error
+    - fix
+    - cannot
+    - "won't"
+  window_hours: 48
+  limit: 25
+
+rss:
+  feeds:
+    - https://wordpress.org/support/rss/
+    - https://www.digitalocean.com/blog/tag/wordpress/feed
+    - https://status.digitalocean.com/history.atom
+  limit: 50

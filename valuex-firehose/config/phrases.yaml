@@ -1,0 +1,99 @@
+phrases:
+  generic:
+    - "how do i"
+    - "how do i fix"
+    - "won't start"
+    - "urgent"
+    - "alternatives to"
+    - "worth it"
+    - "refund"
+    - "site down"
+    - "server down"
+  developer:
+    - "need a developer"
+    - "paid project"
+    - "hire"
+
+verticals:
+  - wordpress
+  - shopify
+  - woocommerce
+  - ssl
+  - hosting
+  - azure
+  - aws
+  - router
+  - nginx
+  - docker
+
+actionable_labels:
+  - repair_or_fix
+  - urgent_service
+  - hire_freelancer
+  - comparison_or_buying
+
+vertical_aliases:
+  wordpress: [wp, elementor]
+  shopify: ["shopify app", shop]
+  woocommerce: [woo, "woo-commerce"]
+  ssl: [tls, certificate]
+  hosting: [host, "web host", cpanel]
+  azure: ["microsoft azure"]
+  aws: ["amazon web services", ec2, rds]
+  router: ["tp-link", tplink, netgear]
+  nginx: [ngnix]
+  docker: [container, compose]
+
+lex:
+  repair_words:
+    - cannot
+    - issue
+    - broken
+    - down
+    - stuck
+  urgent_words:
+    - please help
+    - help needed
+  hire_words:
+    - looking for developer
+    - consultant
+    - budget
+    - estimate
+  compare_words:
+    - alternative to
+    - recommendations
+    - best
+    - vs
+  negative_words:
+    - release
+    - announcement
+    - announcing
+    - blog
+    - newsletter
+    - changelog
+    - hiring
+    - job
+    - position
+    - role
+    - apply
+  informational_words:
+    - "how i set up"
+    - "how we built"
+    - "case study"
+    - "guide"
+    - "tutorial"
+    - "my setup"
+    - "walkthrough"
+    - "postmortem"
+    - "we built"
+    - "we launched"
+    - "launch post"
+  drop_title_patterns:
+    - "\\bmegathread\\b"
+    - "\\bweekly\\b"
+    - "who'?s\\s+hiring"
+    - "hiring\\s+thread"
+    - "release\\s+notes?"
+    - "newsletter"
+    - "changelog"
+    - "announc(e|ement|ing)"

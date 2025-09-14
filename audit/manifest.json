@@ -1,0 +1,909 @@
+{
+  "generated_at": 1757347493,
+  "root": "C:\\ValueX",
+  "files": [
+    {
+      "path": "ARCHITECTURE.md",
+      "size": 6446,
+      "mtime": 1757186407,
+      "lang": "markdown",
+      "hash": "239b2001e8400eb6c5d27847dc66c8e0b84a1457dfdcda920e4c59499fa7c0d3"
+    },
+    {
+      "path": ".github\\workflows\\valuex-firehose-ci.yml",
+      "size": 1185,
+      "mtime": 1757186458,
+      "lang": "yaml",
+      "hash": "321a738bc217fde210b4baeadc83b1d2f3ef7ff8ab5616ae0a3707c16bfeaf44"
+    },
+    {
+      "path": "audit\\components.json",
+      "size": 202908,
+      "mtime": 1757346617,
+      "lang": "json",
+      "hash": "7d4bad4d68aab48a01750b83b3277328670c1a22866042f1a79570463e9b2fd9"
+    },
+    {
+      "path": "audit\\deps_js.json",
+      "size": 115,
+      "mtime": 1757346617,
+      "lang": "json",
+      "hash": "e8940b09b72e33116a1f40364dd37ba33f53bf8d405e20c6b24f5dc93097070f"
+    },
+    {
+      "path": "audit\\deps_python.json",
+      "size": 816409,
+      "mtime": 1757346617,
+      "lang": "json",
+      "hash": "dcc873d217eadf864f45ac749b1b5cdc69ac2896b6adbb6a234d784681f0ec56"
+    },
+    {
+      "path": "audit\\duplicates.json",
+      "size": 29774,
+      "mtime": 1757346617,
+      "lang": "json",
+      "hash": "43075ae1bdfd98e4fcd0080a1f63d4f5d966d869d931ac0f29d7675285e0a608"
+    },
+    {
+      "path": "audit\\manifest.json",
+      "size": 1030068,
+      "mtime": 1757346617,
+      "lang": "json",
+      "hash": "f8e0037aef011f9b8be565cf8872a9646fe1cf027ddadf0dd119c5577e312255"
+    },
+    {
+      "path": "audit\\todos.json",
+      "size": 424015,
+      "mtime": 1757346617,
+      "lang": "json",
+      "hash": "4bb969c6c71998081ad46a226720c81bbfe8482dc7a33760670f0eefd68b36db"
+    },
+    {
+      "path": "audit\\token_hits.json",
+      "size": 3747,
+      "mtime": 1757346617,
+      "lang": "json",
+      "hash": "15137550a5fae64ff00375990dff5dfcb8c0f464ca92b42ef50647b368b8b913"
+    },
+    {
+      "path": "audit\\valuex_audit.py",
+      "size": 9819,
+      "mtime": 1757346587,
+      "lang": "python",
+      "hash": "c9d87ee61067d562ea83b00982575c5b8d2cb0465094f8b6f5423b1423401db9"
+    },
+    {
+      "path": "audit\\valuex_audit_novenv.py",
+      "size": 10049,
+      "mtime": 1757347462,
+      "lang": "python",
+      "hash": "78c6378b72b3ce8a6877be7ef26e9e16ecad252c97c912656d9054a375ea0259"
+    },
+    {
+      "path": "audit\\_summary.md",
+      "size": 27005,
+      "mtime": 1757346617,
+      "lang": "markdown",
+      "hash": "e1550f0ca7584170fdf6356c30bd5d2110a6f1cf911d3339cb80b90129136f86"
+    },
+    {
+      "path": "resonance\\app.py",
+      "size": 11821,
+      "mtime": 1755874973,
+      "lang": "python",
+      "hash": "5d94a7c0c736c126cd1a59db739fb62fafe8df145ffc3efba58a0651a0fe6284"
+    },
+    {
+      "path": "resonance\\README.md",
+      "size": 3622,
+      "mtime": 1756172257,
+      "lang": "markdown",
+      "hash": "e2aca2f6bbaedf0c4d9dae023d79e8a033839197fc8bd8d03cdd779cf633b34e"
+    },
+    {
+      "path": "resonance\\.streamlit\\config.toml",
+      "size": 106,
+      "mtime": 1755611961,
+      "lang": "toml",
+      "hash": "364eaaa8df44f1fa99e72efe7cf69b84a7d4cf6c6752230d55f58fa446542c93"
+    },
+    {
+      "path": "resonance\\.streamlit\\credentials.toml",
+      "size": 39,
+      "mtime": 1755613785,
+      "lang": "toml",
+      "hash": "e43ca94c539daeadabad03def15b9c83e4758528ef465d6a2f6f06865aa87ca5"
+    },
+    {
+      "path": "resonance\\config\\affiliate_map.yaml",
+      "size": 777,
+      "mtime": 1755794528,
+      "lang": "yaml",
+      "hash": "11eb2c18cd9f907b1035227a07ca946e2aebdd8b483627af78fc005e5b3a8ad4"
+    },
+    {
+      "path": "resonance\\config\\source_weights.yaml",
+      "size": 350,
+      "mtime": 1755714477,
+      "lang": "yaml",
+      "hash": "93c0529d8df408445dc2befcdb723827b262aa9810a9db0566ae83e77636afca"
+    },
+    {
+      "path": "resonance\\config\\weights.yaml",
+      "size": 161,
+      "mtime": 1755620242,
+      "lang": "yaml",
+      "hash": "44c0a6a75aef4a077f0ee5b97caad9ceff1ec9910bf293db7d49f7d09ccb9569"
+    },
+    {
+      "path": "resonance\\data\\cache\\awin\\programmes_1771290_1.json",
+      "size": 2403,
+      "mtime": 1756130058,
+      "lang": "json",
+      "hash": "d328243a1c4721b97e04d8711cd99c694870ee564fbe739ea9b94898c7b45b0c"
+    },
+    {
+      "path": "resonance\\data\\cache\\awin\\programmes_671175_1.json",
+      "size": 68508,
+      "mtime": 1756130058,
+      "lang": "json",
+      "hash": "22f28b77e1767aa1fdbd514671d49d37bc16990615b15f4431fbdfa49c4a3fb1"
+    },
+    {
+      "path": "resonance\\data\\cache\\awin\\programmes_679413_1.json",
+      "size": 773,
+      "mtime": 1756130058,
+      "lang": "json",
+      "hash": "db2b30f80fc643ede6ceee7fa98894e0a9da424527cdc4d975da901364c88309"
+    },
+    {
+      "path": "resonance\\data\\offers\\awin\\offers.json",
+      "size": 13053,
+      "mtime": 1756130058,
+      "lang": "json",
+      "hash": "debfa34166d66aa7e1d1f0c89079f26fb1328529c866eedb7789a5b695e7abcd"
+    },
+    {
+      "path": "resonance\\data\\samples\\awin_offers.json",
+      "size": 465,
+      "mtime": 1755630725,
+      "lang": "json",
+      "hash": "3d664009d9c60241438f642f57a383bf796e51b3473d5d2015da7899b8f92fa7"
+    },
+    {
+      "path": "resonance\\data\\status\\awin_offers.status.json",
+      "size": 120,
+      "mtime": 1755877974,
+      "lang": "json",
+      "hash": "411c8c7c202957c5fe16730beb399f0be84ce8bfca180d43652a1cb022b74685"
+    },
+    {
+      "path": "resonance\\data\\status\\digest_daily.status.json",
+      "size": 119,
+      "mtime": 1755633290,
+      "lang": "json",
+      "hash": "07c764b7f350ef2018eb7c8eca187d51f8efb6ea3cc53a78b84c32bf4105e3c5"
+    },
+    {
+      "path": "resonance\\data\\status\\github_help_wanted.status.json",
+      "size": 128,
+      "mtime": 1755878004,
+      "lang": "json",
+      "hash": "26a28ebea0cceaa0137b6fe6d2e17ca31e1edf7438a30e4c5a3fdeebce3e4fa3"
+    },
+    {
+      "path": "resonance\\data\\status\\hn_whoishiring.status.json",
+      "size": 125,
+      "mtime": 1755878004,
+      "lang": "json",
+      "hash": "c3d1ab7270f2ba4ccf65be4e13fd3b236dbb62573b11c9b2a2a0e7bae8bd8a45"
+    },
+    {
+      "path": "resonance\\data\\status\\linkedin_search.status.json",
+      "size": 124,
+      "mtime": 1755878004,
+      "lang": "json",
+      "hash": "dadc7775dbf9883bc9c739876f72a80dbd72e4a01d11e10ce8ff5564354fede1"
+    },
+    {
+      "path": "resonance\\data\\status\\pipeline.status.json",
+      "size": 754,
+      "mtime": 1755878007,
+      "lang": "json",
+      "hash": "5852e5edf91fc56e30e429ca11499df57658cfbe2a401501d8ba6d4de90dee0b"
+    },
+    {
+      "path": "resonance\\data\\status\\reddit_DesignJobs.status.json",
+      "size": 127,
+      "mtime": 1755878004,
+      "lang": "json",
+      "hash": "e5810226aa6fa2c33b0c3322e1a01ea4bc2d3f47e56d068dd6994cf0530679fc"
+    },
+    {
+      "path": "resonance\\data\\status\\reddit_forhire.status.json",
+      "size": 124,
+      "mtime": 1755878004,
+      "lang": "json",
+      "hash": "32c4b0390967ded43b928b25f08df7ce3ca390ff4c8f689a4bf113bacf2446e7"
+    },
+    {
+      "path": "resonance\\data\\status\\reddit_remotejobs.status.json",
+      "size": 127,
+      "mtime": 1755878004,
+      "lang": "json",
+      "hash": "4b2255520f74265543c684eddae4bfa8d82ad4132bc570cda048b61cee1b4a7b"
+    },
+    {
+      "path": "resonance\\data\\status\\suggest_queries.status.json",
+      "size": 126,
+      "mtime": 1755878004,
+      "lang": "json",
+      "hash": "cc7e2c6cac78d9c14868230a9a5cdf935bcd0cf702499d1cf7e55871818a2bc5"
+    },
+    {
+      "path": "resonance\\data\\status\\x_search.status.json",
+      "size": 117,
+      "mtime": 1755878003,
+      "lang": "json",
+      "hash": "17de0ac7db3397f1f3dc95b47394b0ec5d27b461fe9ac7b7c7bcd314fa892bdd"
+    },
+    {
+      "path": "resonance\\data\\status\\_latest-20250820T162958Z.json",
+      "size": 3293,
+      "mtime": 1755707398,
+      "lang": "json",
+      "hash": "8d3fd17bd735ddf4ac074245c1508d7d3c6aea718efef0a82e455b84bf434578"
+    },
+    {
+      "path": "resonance\\data\\status\\_latest-20250820T164315Z.json",
+      "size": 3293,
+      "mtime": 1755708195,
+      "lang": "json",
+      "hash": "c315a1fe576edadfaa67796646242426c77263572ae3fbfa39218d7174473004"
+    },
+    {
+      "path": "resonance\\data\\status\\_latest-20250820T193326Z.json",
+      "size": 3293,
+      "mtime": 1755718406,
+      "lang": "json",
+      "hash": "12b5f8a821d97b18ff0be46c52fbdd5a505632a343a3b279f2b2e04889b9edbf"
+    },
+    {
+      "path": "resonance\\data\\status\\_latest-20250822T155327Z.json",
+      "size": 3293,
+      "mtime": 1755878007,
+      "lang": "json",
+      "hash": "e0ff97f0357f0a8ac189a5a8ffc33febe21cff8ed7900a843757375135b4a428"
+    },
+    {
+      "path": "resonance\\data\\status\\_latest.json",
+      "size": 3293,
+      "mtime": 1755878007,
+      "lang": "json",
+      "hash": "e0ff97f0357f0a8ac189a5a8ffc33febe21cff8ed7900a843757375135b4a428"
+    },
+    {
+      "path": "resonance\\scripts\\affiliate_refresh.py",
+      "size": 9012,
+      "mtime": 1756140849,
+      "lang": "python",
+      "hash": "5283e0a154b09468491bddd9632dd2389daa95b822689c40b3a5bae0f412078d"
+    },
+    {
+      "path": "resonance\\scripts\\check_affiliates.py",
+      "size": 2990,
+      "mtime": 1756140767,
+      "lang": "python",
+      "hash": "365d6e61e4f153f38d5eb1373b78fe52d410fe73428839009f1839375a1a1ebb"
+    },
+    {
+      "path": "resonance\\scripts\\digest_daily.py",
+      "size": 5884,
+      "mtime": 1756140537,
+      "lang": "python",
+      "hash": "43325d034bdcb31d0766d27589c2b4af8ae99ef91b086a4e08adaf40f3c79947"
+    },
+    {
+      "path": "resonance\\scripts\\dns_apply.py",
+      "size": 8354,
+      "mtime": 1756231625,
+      "lang": "python",
+      "hash": "e1a03611757f086d069046f015e522a38e62305bf8e81394c573590a3328cce3"
+    },
+    {
+      "path": "resonance\\scripts\\dns_check.py",
+      "size": 6918,
+      "mtime": 1756231728,
+      "lang": "python",
+      "hash": "1471eb6dfb90e3e09f8b282d822a320e5789a83afa28aec0b0f9f50213e55fb6"
+    },
+    {
+      "path": "resonance\\scripts\\doctor.py",
+      "size": 5446,
+      "mtime": 1756226881,
+      "lang": "python",
+      "hash": "351b22da0c5e848bf3035451ef276c962bb80c026f36312d5903f93879dd16ef"
+    },
+    {
+      "path": "resonance\\scripts\\ingest_github_issues.py",
+      "size": 1539,
+      "mtime": 1755627500,
+      "lang": "python",
+      "hash": "2175edec83c01406b81dd72983a57da40bd2321136c0beb5035769b5e52d97bc"
+    },
+    {
+      "path": "resonance\\scripts\\ingest_hn.py",
+      "size": 2204,
+      "mtime": 1755627491,
+      "lang": "python",
+      "hash": "3d321378eab858c699a09ef10b4c959cc65bcd1e27877249a5b18e22b783ddba"
+    },
+    {
+      "path": "resonance\\scripts\\ingest_jsonld_sample.py",
+      "size": 2519,
+      "mtime": 1755627528,
+      "lang": "python",
+      "hash": "9b06c34470eb9d5c01393d0909f30e6611a4602b845bd6529ff236d5d91600d1"
+    },
+    {
+      "path": "resonance\\scripts\\ingest_linkedin_search.py",
+      "size": 4255,
+      "mtime": 1756140744,
+      "lang": "python",
+      "hash": "73ce7ee8ab5a93f964c97e7f29bbf7c48349102f03a723dd64652e9ee17d2737"
+    },
+    {
+      "path": "resonance\\scripts\\ingest_reddit.py",
+      "size": 6396,
+      "mtime": 1755620352,
+      "lang": "python",
+      "hash": "5305ba062df4cb870cd930899473438a447dc678d0869c450f8e0924098382b4"
+    },
+    {
+      "path": "resonance\\scripts\\ingest_suggest.py",
+      "size": 1901,
+      "mtime": 1755627511,
+      "lang": "python",
+      "hash": "e51e8cb8d07a03212b2398fdfc8b6fb423d22b571b0f88914cbfc37e64bed0a1"
+    },
+    {
+      "path": "resonance\\scripts\\ingest_x.py",
+      "size": 5578,
+      "mtime": 1756140805,
+      "lang": "python",
+      "hash": "f9d68ea585f26500c5ef077fc0006606da1acdc3b4bae7a27ae5d5cf2a929dda"
+    },
+    {
+      "path": "resonance\\scripts\\run_all.py",
+      "size": 9132,
+      "mtime": 1756140622,
+      "lang": "python",
+      "hash": "5a8cdb54cd067dccc7795818f8ff5368aeb287db4651153041f847cd731d345d"
+    },
+    {
+      "path": "resonance\\scripts\\run_pipeline.py",
+      "size": 7996,
+      "mtime": 1755638543,
+      "lang": "python",
+      "hash": "f8165429d05c8ce34031c09cc6ab68a9b128bfa44331252526eb6b6138eddd81"
+    },
+    {
+      "path": "resonance\\scripts\\schedule_example.ps1",
+      "size": 2114,
+      "mtime": 1755632433,
+      "lang": "ps1",
+      "hash": "66f43af042633bfbe4b986424c592231fea5f8c4b4bcb390675f4944807f54fa"
+    },
+    {
+      "path": "resonance\\scripts\\_test_canonicalization.py",
+      "size": 2300,
+      "mtime": 1755637215,
+      "lang": "python",
+      "hash": "b8a94dd3ae412e2a9673136f3fe6a35e560a0ad3b74cae5b528e3ad6fc983479"
+    },
+    {
+      "path": "resonance\\utils\\godaddy_dns.py",
+      "size": 3573,
+      "mtime": 1756231458,
+      "lang": "python",
+      "hash": "5c36c695733d3e45922eca0f81021a3f9fa728b48338d18a1136b1bf0c1feaff"
+    },
+    {
+      "path": "resonance\\valuex_resonance\\dedupe.py",
+      "size": 1061,
+      "mtime": 1756396798,
+      "lang": "python",
+      "hash": "d6838fac7d0782b1c2ec7bd77ace7efdbebc5f423a9e2ba926aee1d08da4109e"
+    },
+    {
+      "path": "resonance\\valuex_resonance\\extractor.py",
+      "size": 18549,
+      "mtime": 1755631147,
+      "lang": "python",
+      "hash": "0a0ee99fa39fb19d72074f7452542aed895614e5e1b8d0af429a29b0879f25a9"
+    },
+    {
+      "path": "resonance\\valuex_resonance\\match_offers.py",
+      "size": 9346,
+      "mtime": 1756397604,
+      "lang": "python",
+      "hash": "cb25cce167961f17b99cd6602bcbfe2f899472b343758e3cb1f1587b29f9c014"
+    },
+    {
+      "path": "resonance\\valuex_resonance\\pipeline.py",
+      "size": 11630,
+      "mtime": 1755874908,
+      "lang": "python",
+      "hash": "0e0a718ab85091b2db041aefc840e8f3c8fe3c3b290988f608f295d05d1daabd"
+    },
+    {
+      "path": "resonance\\valuex_resonance\\schema.py",
+      "size": 1001,
+      "mtime": 1755610692,
+      "lang": "python",
+      "hash": "ebca283558879a6ca68fda2b5a592a35b707a195e3f657b671cfa6b7c144b987"
+    },
+    {
+      "path": "resonance\\valuex_resonance\\__init__.py",
+      "size": 68,
+      "mtime": 1755610678,
+      "lang": "python",
+      "hash": "dff39f49416bb4f5e9d5986786715cdaa629caba7d892ecbd473524882649f54"
+    },
+    {
+      "path": "tools\\lint_no_afp_outside_builder.py",
+      "size": 1814,
+      "mtime": 1757186290,
+      "lang": "python",
+      "hash": "da0d4a404786200d88577d55c4c3e8d38efd4e98fc26e45acda305bf548ea5cc"
+    },
+    {
+      "path": "valuex-firehose\\README.md",
+      "size": 2129,
+      "mtime": 1756382783,
+      "lang": "markdown",
+      "hash": "7bdecd1e7466422ea9313bd413c82b10f869192a75a8b3a4b0c145f7a27f00d6"
+    },
+    {
+      "path": "valuex-firehose\\app\\inbound.py",
+      "size": 6210,
+      "mtime": 1756227081,
+      "lang": "python",
+      "hash": "1163921b6529dbf965acd49709abf97a182fd8b4450d3ca66042c26bb6bc8743"
+    },
+    {
+      "path": "valuex-firehose\\app\\main.py",
+      "size": 10040,
+      "mtime": 1756387244,
+      "lang": "python",
+      "hash": "e760f2b9ad6579d0a1744fadb641020feaf90a88b12872ec292193b90d5ba7c2"
+    },
+    {
+      "path": "valuex-firehose\\app\\metrics.py",
+      "size": 2623,
+      "mtime": 1756080758,
+      "lang": "python",
+      "hash": "49cff7476e9fc3dfd4d69c2bac05a54cd64eb28b9cb1b120ffe21a4446ffcd16"
+    },
+    {
+      "path": "valuex-firehose\\app\\suppression.py",
+      "size": 2811,
+      "mtime": 1756226623,
+      "lang": "python",
+      "hash": "520691f2cf8ef1abe2842229738b9cf0c200e2c7eb50df78680d9862052fe1c9"
+    },
+    {
+      "path": "valuex-firehose\\app\\__init__.py",
+      "size": 36,
+      "mtime": 1755967718,
+      "lang": "python",
+      "hash": "6c5f4eeaa4b4f909ab00196df5983aad4b489b2938b2bf586363b546685f8df8"
+    },
+    {
+      "path": "valuex-firehose\\config\\env.fixture.json",
+      "size": 285,
+      "mtime": 1757185306,
+      "lang": "json",
+      "hash": "053774c0f524506b71eb7dc088b444725ea78d77dfc6c65ceaaf74b76c213b54"
+    },
+    {
+      "path": "valuex-firehose\\config\\env.from_resonance.json",
+      "size": 308,
+      "mtime": 1757344408,
+      "lang": "json",
+      "hash": "58e83f500d405a4282a5745eb23b74fa75ea91064efabee9b28e0fec9d7e1e71"
+    },
+    {
+      "path": "valuex-firehose\\config\\env.schema.json",
+      "size": 603,
+      "mtime": 1757185257,
+      "lang": "json",
+      "hash": "9a5b9d3b98f05f5b6eb600faa31cc2118d0a106a7f453b21c284c38c6ad23eef"
+    },
+    {
+      "path": "valuex-firehose\\config\\load_env.py",
+      "size": 2522,
+      "mtime": 1757185478,
+      "lang": "python",
+      "hash": "9a06a7a4a66046657012ec884c55c0aaedc5b6bce0f332b785916a01019e6114"
+    },
+    {
+      "path": "valuex-firehose\\config\\offers.seed.yaml",
+      "size": 24160,
+      "mtime": 1756161879,
+      "lang": "yaml",
+      "hash": "6e46b9c8bf8989a55744bb247187e81cb3e6ef2c3eb3463131b72d005bc53721"
+    },
+    {
+      "path": "valuex-firehose\\config\\offers.yaml",
+      "size": 5106,
+      "mtime": 1756398630,
+      "lang": "yaml",
+      "hash": "2b4f9542187a3143fc5d057fc2a1c05452d5c685911948cc4588b9cd0ffa38d4"
+    },
+    {
+      "path": "valuex-firehose\\config\\phrases.yaml",
+      "size": 1738,
+      "mtime": 1756387134,
+      "lang": "yaml",
+      "hash": "1d40c80fa7d3c67d4dc796d162e195b88438fac49bf750035bb29720f22e25cc"
+    },
+    {
+      "path": "valuex-firehose\\config\\sources.yaml",
+      "size": 1033,
+      "mtime": 1755993821,
+      "lang": "yaml",
+      "hash": "97801e43cbce709206b8db8636b545a9e75a68b6d53cec8d1096d3185cee3078"
+    },
+    {
+      "path": "valuex-firehose\\connectors\\base.py",
+      "size": 2459,
+      "mtime": 1756396722,
+      "lang": "python",
+      "hash": "584f8984fcc7a9bc43f91283099a3c212263ab461fb49d1539e8bcb3e9116d7b"
+    },
+    {
+      "path": "valuex-firehose\\connectors\\github.py",
+      "size": 2968,
+      "mtime": 1756053034,
+      "lang": "python",
+      "hash": "bb23edeaf6940ace52a0be6c66114da695b1cb6cc5aace7a3aa96c62ecffdcfa"
+    },
+    {
+      "path": "valuex-firehose\\connectors\\hn.py",
+      "size": 2217,
+      "mtime": 1756052995,
+      "lang": "python",
+      "hash": "c7cf06019e13dff48b7e93e6cb41d129b69f8c77c687088d2a6569dba7ec6ddb"
+    },
+    {
+      "path": "valuex-firehose\\connectors\\reddit.py",
+      "size": 3377,
+      "mtime": 1755993681,
+      "lang": "python",
+      "hash": "9f9b29c50115e9d05b257c990e1bda5f90ab6df7732ec6660e50431c5d9b2c91"
+    },
+    {
+      "path": "valuex-firehose\\connectors\\rss.py",
+      "size": 2383,
+      "mtime": 1756053227,
+      "lang": "python",
+      "hash": "2d4e11feb4735aba2029054bd71194ab116fe2cfef77df2f4daaa624f485a756"
+    },
+    {
+      "path": "valuex-firehose\\connectors\\stackoverflow.py",
+      "size": 2516,
+      "mtime": 1756053184,
+      "lang": "python",
+      "hash": "e09b2528645d0ceb6a422a3bf1cc4f807afed29cf5fd96cd5deb860d2508b293"
+    },
+    {
+      "path": "valuex-firehose\\connectors\\x_snscrape.py",
+      "size": 3588,
+      "mtime": 1756053140,
+      "lang": "python",
+      "hash": "0d0655364881cbd925c543ef85b914e066164131c2b69a9351151cc98e85c1ca"
+    },
+    {
+      "path": "valuex-firehose\\connectors\\__init__.py",
+      "size": 135,
+      "mtime": 1755967680,
+      "lang": "python",
+      "hash": "3e37d0d6597d223976de013df11089c295f2a3c1279402107b560ba08bb95808"
+    },
+    {
+      "path": "valuex-firehose\\data\\awin_joined_20250825_184343.json",
+      "size": 9259,
+      "mtime": 1756161823,
+      "lang": "json",
+      "hash": "a0d942f0ec324717c09478f82666f016731bc66219dd11172628d4ffc0cf24df"
+    },
+    {
+      "path": "valuex-firehose\\data\\summary_latest.md",
+      "size": 2202,
+      "mtime": 1756238753,
+      "lang": "markdown",
+      "hash": "559b4453334e055967617b7c97d763c1fa1e265c725ec41e4d099aa4150bccaa"
+    },
+    {
+      "path": "valuex-firehose\\data\\snapshots\\run_manifest_20250825T115005Z.json",
+      "size": 574,
+      "mtime": 1756122605,
+      "lang": "json",
+      "hash": "330e6aa4c70587fcefe2dbbf942e6e58e52051171a19de69347add54ce071bb2"
+    },
+    {
+      "path": "valuex-firehose\\data\\snapshots\\run_manifest_20250825T160108Z.json",
+      "size": 568,
+      "mtime": 1756137668,
+      "lang": "json",
+      "hash": "bb7541ffb2876e6f9d39e300821246f5144e80be3c65d76df1bfa5a1b2455d0a"
+    },
+    {
+      "path": "valuex-firehose\\data\\snapshots\\run_manifest_20250826T200553Z.json",
+      "size": 574,
+      "mtime": 1756238753,
+      "lang": "json",
+      "hash": "24ce950771f58f4dbd84d22712d046c296c285aec0c3e37ce01b9a02e0c63520"
+    },
+    {
+      "path": "valuex-firehose\\demand\\vectorizer.py",
+      "size": 4245,
+      "mtime": 1756237060,
+      "lang": "python",
+      "hash": "b52bc59853e426ae1a461512645b16be41066ab901c13c3ad7c3413840e89873"
+    },
+    {
+      "path": "valuex-firehose\\demand\\__init__.py",
+      "size": 69,
+      "mtime": 1756080379,
+      "lang": "python",
+      "hash": "2caff875f8422ac028d8a28d36af0de7732f144a214c7945d77a039af697dacf"
+    },
+    {
+      "path": "valuex-firehose\\ingest\\runner.py",
+      "size": 21080,
+      "mtime": 1756237130,
+      "lang": "python",
+      "hash": "647232179520e0a5294c23586f1ade901923d2ab88396c26fe1e39382610c41d"
+    },
+    {
+      "path": "valuex-firehose\\linker\\builder.py",
+      "size": 6219,
+      "mtime": 1757185195,
+      "lang": "python",
+      "hash": "0848a88b624552afa58a600e15f5512e5eb7373fc0d51d21b7d630c232ce863a"
+    },
+    {
+      "path": "valuex-firehose\\linker\\CONTRACT.md",
+      "size": 3277,
+      "mtime": 1757186576,
+      "lang": "markdown",
+      "hash": "edf1689a0ad0f9940a58a3761c3f724392b50e8c32cef1a35f7be38e1a7774a5"
+    },
+    {
+      "path": "valuex-firehose\\linker\\__init__.py",
+      "size": 52,
+      "mtime": 1757184749,
+      "lang": "python",
+      "hash": "2f97e47b62b8cc489083a73689759ba7728d63e54b9aa3ad84939328bf5c7070"
+    },
+    {
+      "path": "valuex-firehose\\mailer\\sender.py",
+      "size": 3778,
+      "mtime": 1756239429,
+      "lang": "python",
+      "hash": "64a8fb53710d7734d08957278d67a87700981f8f07761f6fb62bacbb9054409f"
+    },
+    {
+      "path": "valuex-firehose\\mailer\\__init__.py",
+      "size": 17,
+      "mtime": 1756240477,
+      "lang": "python",
+      "hash": "2841fcf88f6cf053229d59220aaec8f0208d07e1828c0eae750e736fa88e0b74"
+    },
+    {
+      "path": "valuex-firehose\\monetize\\llm_triage.py",
+      "size": 4511,
+      "mtime": 1756133628,
+      "lang": "python",
+      "hash": "da87e958db293dcc2cd65b568c2809fecde0c7ce6e2a8c5935fa3763f33aad73"
+    },
+    {
+      "path": "valuex-firehose\\monetize\\planner.py",
+      "size": 2655,
+      "mtime": 1756080662,
+      "lang": "python",
+      "hash": "79aab7f405396ebc5306f8d209ace3028ace599e68aa740492a78858433b1766"
+    },
+    {
+      "path": "valuex-firehose\\monetize\\__init__.py",
+      "size": 71,
+      "mtime": 1756080445,
+      "lang": "python",
+      "hash": "f48811f181977284e3d862357840a4903d95cb0d7024e144ce59e7fae1a3b0db"
+    },
+    {
+      "path": "valuex-firehose\\offers\\awin.py",
+      "size": 6198,
+      "mtime": 1756158468,
+      "lang": "python",
+      "hash": "323f7d51faea69dbc7639a1ea470787502fcdc14894f2134c02e0522ded11328"
+    },
+    {
+      "path": "valuex-firehose\\offers\\catalog.py",
+      "size": 8047,
+      "mtime": 1756387864,
+      "lang": "python",
+      "hash": "a52b8acc4f904b80b994b89518a418a780d9770da08cbc4c3b6630e4965540d9"
+    },
+    {
+      "path": "valuex-firehose\\offers\\linker.py",
+      "size": 5272,
+      "mtime": 1757185569,
+      "lang": "python",
+      "hash": "6652f98e32e896df48c1ad5daa660ebff9fa9c67cf1a1cc33da99b3079e102ab"
+    },
+    {
+      "path": "valuex-firehose\\offers\\__init__.py",
+      "size": 69,
+      "mtime": 1756080405,
+      "lang": "python",
+      "hash": "6b7af30ce8cb2eeb0aef96b76b9e5ed79b4d398c69c5e1565305bab2eac59a97"
+    },
+    {
+      "path": "valuex-firehose\\qa\\sample_labeler.py",
+      "size": 1494,
+      "mtime": 1755967641,
+      "lang": "python",
+      "hash": "e4ecd5304817021bc816ec7e8b4de046f3d42c18b53e74ac86055c824b8d973f"
+    },
+    {
+      "path": "valuex-firehose\\scripts\\awin_audit.py",
+      "size": 11006,
+      "mtime": 1756162001,
+      "lang": "python",
+      "hash": "a19be57e448f528bd1bf64ac97457aad9cb446f3a304cf80d397d93a905ea3ec"
+    },
+    {
+      "path": "valuex-firehose\\scripts\\check_connectivity.py",
+      "size": 3201,
+      "mtime": 1756140452,
+      "lang": "python",
+      "hash": "7ab2b76b86784f6fba69960c15cdd0d4017c5f5e32df41679f6eb67a152ab148"
+    },
+    {
+      "path": "valuex-firehose\\scripts\\check_ollama.py",
+      "size": 1743,
+      "mtime": 1756140493,
+      "lang": "python",
+      "hash": "f08c755e9382c737ccbbd1789a0508b3649dbd8632568da68c1e53757df5d35d"
+    },
+    {
+      "path": "valuex-firehose\\scripts\\doctor.py",
+      "size": 4508,
+      "mtime": 1756141803,
+      "lang": "python",
+      "hash": "0bd4b2cf4a7626d79880db76d171ac578c89343f9d8d65319fd0cd907a43a581"
+    },
+    {
+      "path": "valuex-firehose\\scripts\\eval_harness.py",
+      "size": 15142,
+      "mtime": 1756394669,
+      "lang": "python",
+      "hash": "551c4f9c81ecc4b75f6cf479fe2d0417a1939f0c99d9cdf3061b89194971c701"
+    },
+    {
+      "path": "valuex-firehose\\scripts\\make_env_from_resonance.py",
+      "size": 1449,
+      "mtime": 1757344382,
+      "lang": "python",
+      "hash": "727c519a7fb2a512dfccd68250b263841c4aa6824a0fa8914488099549636c2a"
+    },
+    {
+      "path": "valuex-firehose\\scripts\\send_cli.py",
+      "size": 1298,
+      "mtime": 1756240602,
+      "lang": "python",
+      "hash": "d38655b8cb5ef31c98cec8ba14892cbb955a04d4b00c450d316bb2b94526ae8a"
+    },
+    {
+      "path": "valuex-firehose\\scripts\\suppression_cli.py",
+      "size": 2143,
+      "mtime": 1756239366,
+      "lang": "python",
+      "hash": "115f178f82e24a34fd93075ace7ece48ef6360c23c9730692a58c76936c89f4b"
+    },
+    {
+      "path": "valuex-firehose\\scripts\\verify_fiverr_links.py",
+      "size": 3012,
+      "mtime": 1757185768,
+      "lang": "python",
+      "hash": "505b3ebf4de1f2ef5341a0d18e087572f798813374065795766a6cc6a60f191b"
+    },
+    {
+      "path": "valuex-firehose\\tests\\conftest.py",
+      "size": 277,
+      "mtime": 1756398104,
+      "lang": "python",
+      "hash": "0bcd49b1f9e9dc2c1f844b9deb7b64671641d3df080b98a1d5bb942cf3fef5c0"
+    },
+    {
+      "path": "valuex-firehose\\tests\\test_env_schema_validation.py",
+      "size": 995,
+      "mtime": 1757188444,
+      "lang": "python",
+      "hash": "42889fde9d9a3b94baf20258ade42a59c3395a87978a90460f7d02c1c60caf98"
+    },
+    {
+      "path": "valuex-firehose\\tests\\test_fiverr_append_afp_preserves_invariants.py",
+      "size": 2154,
+      "mtime": 1757185668,
+      "lang": "python",
+      "hash": "1e291dba3e35f851c365aad6eeba70caa9d663c47b46264bd3baa9eb0f4d7d85"
+    },
+    {
+      "path": "valuex-firehose\\tests\\test_fiverr_exact_return_if_afp_present.py",
+      "size": 374,
+      "mtime": 1757185612,
+      "lang": "python",
+      "hash": "28dd8ffb94c854785bfcff5c035d94c2446f9f4f04cfa8ce1e9f6aabe64ede67"
+    },
+    {
+      "path": "valuex-firehose\\tests\\test_isolation_awin_fiverr.py",
+      "size": 652,
+      "mtime": 1757185715,
+      "lang": "python",
+      "hash": "6096422a6651cb6868286972813ef9c4b3814629890be5edcc6f878e06542d92"
+    },
+    {
+      "path": "valuex-firehose\\tests\\test_linker_affiliate.py",
+      "size": 4621,
+      "mtime": 1757188418,
+      "lang": "python",
+      "hash": "7de91bf4c278feb234c2033f068e468b123c81809f35cae4b1051aadb0ac263e"
+    },
+    {
+      "path": "valuex-firehose\\tests\\test_normalization_common.py",
+      "size": 1248,
+      "mtime": 1756398339,
+      "lang": "python",
+      "hash": "9b50d367c7ae55ea2c54c78f91e203f2be0c36b17ec0f1b3adc9c528ec8e8756"
+    },
+    {
+      "path": "valuex-firehose\\tests\\test_url_with_query.py",
+      "size": 908,
+      "mtime": 1757186204,
+      "lang": "python",
+      "hash": "e0a5806263c7038e88663e4805ea84909d5618a52b1b1520a09b6fd97a3f72f4"
+    },
+    {
+      "path": "valuex-firehose\\tests\\test_vectorizer_offers.py",
+      "size": 2742,
+      "mtime": 1756216084,
+      "lang": "python",
+      "hash": "b8581c926cb0f54d84ef5dc1aa444e2ae4fc8e4668b8730e521ce9645c3e7cba"
+    },
+    {
+      "path": "valuex_common\\normalization.py",
+      "size": 2882,
+      "mtime": 1756396565,
+      "lang": "python",
+      "hash": "b9add6ee31178adcab2f04c3f44207613ebf85a766ae82e11cd4d54e781e0621"
+    },
+    {
+      "path": "valuex_common\\url.py",
+      "size": 1604,
+      "mtime": 1756396635,
+      "lang": "python",
+      "hash": "2723fb350699399ec19e0b946356d2b864390f8676a3a1a454550b01109c5ec2"
+    },
+    {
+      "path": "valuex_common\\__init__.py",
+      "size": 330,
+      "mtime": 1756396437,
+      "lang": "python",
+      "hash": "641ac21c35b14ef9df910fa34d61da768c0d9cdb998d200577a1a138e06ab522"
+    }
+  ]
+}

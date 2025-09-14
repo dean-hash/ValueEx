@@ -1,0 +1,2 @@
+[console_scripts]
+valuex-firehose = valuex_firehose.cli:main

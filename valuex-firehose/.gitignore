@@ -1,0 +1,16 @@
+# Environments
+.venv/
+.env
+__pycache__/
+*.pyc
+
+# Data outputs
+data/
+!data/.gitkeep
+
+# Streamlit or other local caches
+.streamlit/
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,45 @@
+name: valuex-firehose CI
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+
+jobs:
+  test-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r valuex-firehose/requirements.txt
+
+      - name: Run unit tests
+        working-directory: valuex-firehose
+        run: |
+          python -m pytest -q
+
+      - name: Run Fiverr verification manifest (fixture)
+        env:
+          ENV_JSON: ${{ github.workspace }}/valuex-firehose/config/env.fixture.json
+        working-directory: valuex-firehose
+        run: |
+          python scripts/verify_fiverr_links.py
+
+      - name: Lint for centralized `afp` usage only
+        run: |
+          python tools/lint_no_afp_outside_builder.py
+
+      - name: Upload verification manifest artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fiverr-verification
+          path: valuex-firehose/data/verify_fiverr.jsonl
