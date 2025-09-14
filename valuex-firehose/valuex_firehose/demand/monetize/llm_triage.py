@@ -44,88 +44,47 @@ def _ollama_up(url: Optional[str] = None) -> bool:
     except Exception:
         return False
 
-def _ollama_generate(model: str, url: str, prompt: str) -> Dict[str, Any]:
+def _ollama_generate(model: str, url: str, prompt: str) -> dict:
     """
-    Generate a response using Ollama's API with fallback to chat API.
-    Returns dict or {"raw": str} on error.
+    Prefer /api/generate; fall back to /api/chat.
+    Return a dict. If the model responds with non-JSON, return {"raw": "..."}.
+    Never raise on model/format issues; only on hard network failures.
     """
     if not httpx:
-        return {"raw_error": "httpx not available for Ollama integration"}
+        raise RuntimeError("httpx not installed for Ollama path")
 
-    # Try /api/generate first
-    payload = {
-        "model": model,
-        "prompt": prompt,
-        "stream": False,
-        "options": {"temperature": 0.2, "num_predict": 200},
-    }
-    
     try:
-        with httpx.Client(timeout=45) as client:
-            # First try /api/generate
-            try:
-                r = client.post(f"{url}/api/generate", json=payload)
-                if r.status_code in (404, 405):
-                    raise httpx.HTTPStatusError("Trying chat fallback", request=r.request, response=r)
-                r.raise_for_status()
-                data = r.json()
-                resp = (data.get("response") or "").strip()
-                
-                # Try to parse the response
-                parsed = _parse_jsonish(resp)
-                if isinstance(parsed, dict):
-                    return {
-                        "provider": "ollama",
-                        "model": data.get("model", model),
-                        "ok": True,
-                        "result": {
-                            "route": bool(parsed.get("route", True)),
-                            "topics": parsed.get("topics", []),
-                            "angle": parsed.get("angle", ""),
-                            "justification": parsed.get("justification", ""),
-                        },
-                        "raw": resp,
-                    }
-                return {"raw": resp}
-                
-            except (httpx.HTTPStatusError, json.JSONDecodeError):
-                # Fall back to /api/chat
-                chat_payload = {
-                    "model": model,
-                    "messages": [{"role": "user", "content": prompt}],
-                    "stream": False,
-                    "options": {"temperature": 0.2, "num_predict": 200},
-                }
-                r = client.post(f"{url}/api/chat", json=chat_payload)
-                r.raise_for_status()
-                data = r.json()
-                resp = data.get("message", {}).get("content", "").strip()
-                
-                # Try to parse the response
-                parsed = _parse_jsonish(resp)
-                if isinstance(parsed, dict):
-                    return {
-                        "provider": "ollama-chat",
-                        "model": data.get("model", model),
-                        "ok": True,
-                        "result": {
-                            "route": bool(parsed.get("route", True)),
-                            "topics": parsed.get("topics", []),
-                            "angle": parsed.get("angle", ""),
-                            "justification": parsed.get("justification", ""),
-                        },
-                        "raw": resp,
-                    }
-                return {"raw": resp}
-                
+        # Primary: /api/generate
+        gen_payload = {"model": model, "prompt": prompt, "stream": False}
+        r = httpx.post(f"{url}/api/generate", json=gen_payload, timeout=45)
+        if r.status_code == 404 or r.status_code == 405:
+            # Fallback: /api/chat
+            chat_payload = {
+                "model": model,
+                "messages": [{"role": "user", "content": prompt}],
+                "stream": False,
+            }
+            rc = httpx.post(f"{url}/api/chat", json=chat_payload, timeout=45)
+            if rc.is_success:
+                # Newer Ollama chat returns {"message":{"content": "..."}}
+                msg = rc.json().get("message", {}).get("content", "").strip()
+                try:
+                    return json.loads(msg)
+                except Exception:
+                    return {"raw": msg}
+            # surface hint when chat fails too
+            return {"raw_error": f"chat_failed status={rc.status_code} body={rc.text[:200]}"}
+
+        r.raise_for_status()
+        txt = r.json().get("response", "").strip()
+        try:
+            return json.loads(txt)
+        except Exception:
+            return {"raw": txt}
+
     except Exception as e:
-        # Return a dict with the error for graceful degradation
-        return {
-            "raw_error": f"Ollama API error: {str(e)}",
-            "provider": "ollama",
-            "model": model,
-            "ok": False
-        }
+        # network/transport issues
+        return {"raw_error": str(e)}
 
 def _groq_chat(model: str, api_key: str, prompt: str) -> Dict[str, Any]:
     url = "https://api.groq.com/openai/v1/chat/completions"

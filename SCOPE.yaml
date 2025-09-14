@@ -1,0 +1,13 @@
+allow:
+  - valuex-firehose/valuex_firehose/demand/**
+  - valuex-firehose/tests/**
+  - valuex-firehose/linker/**
+  - tools/**
+  - .gitattributes
+  - .gitignore
+  - SCOPE.yaml
+  - VX_NEXT.md
+  - audit/checkpoints/**
+deny:
+  - audit/semantic_matcher.py
+  - audit/thin_slice_v2.py

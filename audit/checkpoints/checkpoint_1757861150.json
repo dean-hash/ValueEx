@@ -1,0 +1,9 @@
+{
+  "timestamp": "2025-09-14T14:45:50.345382+00:00",
+  "label": "ollama-green",
+  "git": {
+    "head": "afa2fce",
+    "branch": "master"
+  },
+  "next_steps": "Tomorrow: add 2 partial-term cases; keep thresholds stable."
+}
