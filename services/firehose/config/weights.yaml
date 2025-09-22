@@ -1,0 +1,14 @@
+thresholds:
+  explicit: 0.65
+  mixed: 0.68
+
+weights:
+  intent_need: 0.35
+  urgency: 0.20
+  contactability: 0.25
+  budget: 0.05
+  recency: 0.15
+  toxicity: 0.20
+  ambiguity: 0.20
+  implicit_boost: 0.10
+  engagement_norm: 0.10

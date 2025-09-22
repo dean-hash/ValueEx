@@ -1,1 +1,0 @@
-# mailer package

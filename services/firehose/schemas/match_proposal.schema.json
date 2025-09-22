@@ -1,0 +1,34 @@
+{
+  "": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MatchProposal",
+  "type": "object",
+  "required": ["id","signal_id","offers","score","evidence"],
+  "properties": {
+    "id": {"type":"string"},
+    "signal_id": {"type":"string"},
+    "offers": {
+      "type":"array",
+      "items": {
+        "type":"object",
+        "required": ["offer_id","fit","deeplink"],
+        "properties": {
+          "offer_id":{"type":"string"},
+          "fit":{"type":"number"},
+          "deeplink":{"type":"string"}
+        }
+      }
+    },
+    "score": {"type":"number"},
+    "policy_flags": {"type":"array","items":{"type":"string"}},
+    "outreach_draft": {"type":"string"},
+    "evidence": {
+      "type":"object",
+      "properties": {
+        "permalink":{"type":"string"},
+        "quote":{"type":"string"},
+        "created_at":{"type":"string","format":"date-time"},
+        "explanations":{"type":"array","items":{"type":"string"}}
+      }
+    }
+  }
+}

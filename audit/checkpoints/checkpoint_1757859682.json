@@ -1,9 +1,0 @@
-{
-  "timestamp": "2025-09-14T14:21:22.775267+00:00",
-  "label": "recovery-start",
-  "git": {
-    "head": "",
-    "branch": ""
-  },
-  "next_steps": "Use Ollama for triage; do NOT edit matcher thresholds."
-}

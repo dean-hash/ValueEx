@@ -1,4 +1,0 @@
-﻿mode: no-git
-started_at: 2025-09-08T11:50:51.0378121-04:00
-wd: C:\ValueX
-

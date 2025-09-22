@@ -1,0 +1,35 @@
+{
+  "": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DemandSignal",
+  "type": "object",
+  "required": ["id","source","permalink","created_at","text","author","features","jurisdiction"],
+  "properties": {
+    "id": {"type":"string"},
+    "source": {"type":"string","enum":["reddit","x","hn","so","github","youtube","producthunt","facebook","tiktok","linkedin","trends","autocomplete"]},
+    "subsource": {"type":"string"},
+    "permalink": {"type":"string"},
+    "created_at": {"type":"string","format":"date-time"},
+    "lang": {"type":"string"},
+    "author": {"type":"string"},
+    "text": {"type":"string"},
+    "raw": {"type":"object"},
+    "jurisdiction": {"type":"string","enum":["US","US-CA"]},
+    "contact_hints": {"type":"array","items":{"type":"string"}},
+    "engagement": {"type":"object"},
+    "features": {
+      "type":"object",
+      "properties": {
+        "intent_need": {"type":"number"},
+        "urgency": {"type":"number"},
+        "budget_present": {"type":"boolean"},
+        "geo": {"type":"string"},
+        "category": {"type":"string"},
+        "entities": {"type":"array","items":{"type":"string"}},
+        "toxicity": {"type":"number"},
+        "duplicate_of": {"type":"string"},
+        "implicit": {"type":"boolean"},
+        "implicit_reason": {"type":"string"}
+      }
+    }
+  }
+}

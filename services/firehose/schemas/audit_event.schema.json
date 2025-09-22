@@ -1,0 +1,13 @@
+{
+  "": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AuditEvent",
+  "type": "object",
+  "required": ["ts","actor","action","ref_id"],
+  "properties": {
+    "ts":{"type":"string","format":"date-time"},
+    "actor":{"type":"string","enum":["system","human"]},
+    "action":{"type":"string"},
+    "ref_id":{"type":"string"},
+    "details":{"type":"object"}
+  }
+}

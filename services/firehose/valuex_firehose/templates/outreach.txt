@@ -1,0 +1,2 @@
+Hey {name_if_known}, saw your post about {need}. Quick suggestion: {merchant} — {value_prop}. Info: {link}.
+US disclosure: We may earn via this link. No pressure—happy to point to alternatives too.

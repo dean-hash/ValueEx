@@ -1,0 +1,8 @@
+[project]
+name = "valuex-firehose"
+version = "0.0.1"
+requires-python = ">=3.10"
+dependencies = ["pydantic>=2", "pyyaml", "fastapi", "uvicorn", "tqdm"]
+
+[tool.setuptools]
+packages = ["valuex_firehose"]

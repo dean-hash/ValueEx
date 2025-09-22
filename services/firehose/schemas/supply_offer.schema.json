@@ -1,0 +1,20 @@
+{
+  "": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SupplyOffer",
+  "type": "object",
+  "required": ["id","network","merchant","categories","geo","commission","deeplink_template"],
+  "properties": {
+    "id": {"type":"string"},
+    "network": {"type":"string","enum":["awin","cj","impact","shareasale","direct","fiverr"]},
+    "program_id": {"type":"string"},
+    "merchant": {"type":"string"},
+    "value_prop": {"type":"string"},
+    "categories": {"type":"array","items":{"type":"string"}},
+    "geo": {"type":"array","items":{"type":"string"}},
+    "commission": {"type":"string"},
+    "cookie_days": {"type":"integer"},
+    "constraints": {"type":"object"},
+    "deeplink_template": {"type":"string"},
+    "compliance_notes": {"type":"string"}
+  }
+}

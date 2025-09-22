@@ -1,15 +1,22 @@
-# Python
+# env
+.env
+*.env
+
+# node/build
+node_modules/
+dist/
+.next/
+coverage/
+
+# logs & cache
+logs/
+.cache/
 __pycache__/
 *.pyc
-*.pyo
-*.pyd
-*.egg-info/
-.dist/
-build/
-.eggs/
-.venv*/
-valuex-firehose/.venv2/
 
-# OS
-.DS_Store
-Thumbs.db
+# python venvs
+.venv/
+venv/
+
+# data
+data/

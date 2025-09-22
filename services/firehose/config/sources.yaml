@@ -1,0 +1,19 @@
+jurisdiction: US
+cadence:
+  light_poll_minutes: 60
+  social_lite_daily_hour: 6
+limits:
+  max_concurrent_tabs: 3
+  cpu_pause_threshold_pct: 85
+
+sources:
+  reddit: {enabled: true}
+  hn: {enabled: true}
+  so: {enabled: true}
+  github: {enabled: true}
+  youtube: {enabled: true}
+  producthunt: {enabled: true}
+  social_lite: {enabled: true}
+  linkedin: {enabled: true, mode: ${LINKEDIN_MODE}}
+  trends: {enabled: true}
+  autocomplete: {enabled: true}
