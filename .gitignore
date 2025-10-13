@@ -20,3 +20,7 @@ venv/
 
 # data
 data/
+# archive holds legacy copies
+archive/*
+!archive/README.md
+.env

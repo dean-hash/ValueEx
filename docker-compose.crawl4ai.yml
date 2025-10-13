@@ -1,0 +1,23 @@
+services:
+  crawl4ai:
+    image: unclecode/crawl4ai:0.7.0
+    container_name: crawl4ai
+    ports:
+      - "11235:11235"
+    shm_size: 1g
+    restart: unless-stopped
+    environment:
+      - LOG_LEVEL=INFO
+      - MAX_CONCURRENT_TASKS=5
+      - BROWSER_POOL_SIZE=2
+    volumes:
+      - crawl4ai_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11235/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  crawl4ai_data:
